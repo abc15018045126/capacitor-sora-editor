@@ -9,7 +9,8 @@
     <script>
         (function () {
             const theme = localStorage.getItem('theme') || 'dark';
-            document.documentElement.style.backgroundColor = theme === 'dark' ? '#121212' : '#f8f9fa';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.style.backgroundColor = theme === 'dark' ? '#000' : '#f8f9fa';
         })();
     </script>
 </head>

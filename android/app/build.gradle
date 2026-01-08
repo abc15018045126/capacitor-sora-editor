@@ -7,8 +7,8 @@ android {
         applicationId "com.abc15018045126.notes"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 5
+        versionName "1.0.5"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
@@ -20,14 +20,6 @@ android {
             storePassword "123456"
             keyAlias "my-notes-alias"
             keyPassword "123456"
-        }
-    }
-    splits {
-        abi {
-            enable true
-            reset()
-            include "arm64-v8a"
-            universalApk true
         }
     }
     buildTypes {
