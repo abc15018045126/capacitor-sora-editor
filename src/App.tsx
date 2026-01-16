@@ -36,11 +36,17 @@ const App: React.FC = () => {
     const [editorThumbTop, setEditorThumbTop] = useState(0);
     const [editorThumbHeight, setEditorThumbHeight] = useState(40);
     const [editorIsScrolling, setEditorIsScrolling] = useState(false);
+    const [tocThumbTop, setTocThumbTop] = useState(0);
+    const [tocThumbHeight, setTocThumbHeight] = useState(40);
+    const [tocIsScrolling, setTocIsScrolling] = useState(false);
     const listScrollTimeoutRef = useRef<number | null>(null);
     const editorScrollTimeoutRef = useRef<number | null>(null);
+    const tocScrollTimeoutRef = useRef<number | null>(null);
     const isDraggingRef = useRef(false);
     const startYRef = useRef(0);
     const startScrollTopRef = useRef(0);
+    const [showRename, setShowRename] = useState(false);
+    const [renameValue, setRenameValue] = useState('');
 
     const t = {
         zh: {
@@ -74,7 +80,9 @@ const App: React.FC = () => {
             chars: '字数',
             modified: '最后修改',
             lines: '总行数',
-            cursorLine: '光标所在行'
+            cursorLine: '光标所在行',
+            ok: '确定',
+            cancel: '取消'
         },
         en: {
             title: 'Notes',
@@ -107,7 +115,9 @@ const App: React.FC = () => {
             chars: 'Characters',
             modified: 'Last Modified',
             lines: 'Total Lines',
-            cursorLine: 'Cursor Line'
+            cursorLine: 'Cursor Line',
+            ok: 'OK',
+            cancel: 'Cancel'
         }
     }[lang];
 
@@ -273,17 +283,7 @@ const App: React.FC = () => {
 
     const curNote = notes.find(n => n.id === curId);
 
-    const deleteNote = async () => {
-        if (!curId) return;
-        if (window.confirm(t.delConfirm)) {
-            try {
-                await Filesystem.deleteFile({ path: `${DIR}/${curId}`, directory: Directory.Documents });
-                setNotes(prev => prev.filter(n => n.id !== curId));
-                setView('list');
-                setCurId(null);
-            } catch (e) { }
-        }
-    };
+
 
     const handleFind = useCallback((text: string, scrollToMatch = true, preferredPos?: number) => {
         if (!text || !textareaRef.current) {
@@ -383,34 +383,41 @@ const App: React.FC = () => {
         textarea.scrollTop = ratio * scrollHeight - 20;
     };
 
-    const renameNote = async () => {
+    const renameNote = () => {
         if (!curId || !curNote) return;
-        const newTitle = window.prompt(t.renamePrompt, curNote.title);
-        if (newTitle && newTitle !== curNote.title) {
-            const finalTitle = newTitle.trim().endsWith('.txt') ? newTitle.trim() : newTitle.trim() + '.txt';
-            try {
-                const { data } = await Filesystem.readFile({
-                    path: `${DIR}/${curId}`,
-                    directory: Directory.Documents,
-                    encoding: Encoding.UTF8
-                });
-                await Filesystem.writeFile({
-                    path: `${DIR}/${finalTitle}`,
-                    data: data as string,
-                    directory: Directory.Documents,
-                    encoding: Encoding.UTF8
-                });
-                await Filesystem.deleteFile({
-                    path: `${DIR}/${curId}`,
-                    directory: Directory.Documents
-                });
-                setCurId(finalTitle);
-                reloadNotes();
-            } catch (e) {
-                alert(e);
-            }
-        }
+        setRenameValue(curNote.id);
+        setShowRename(true);
         setMoreOpen(false);
+    };
+
+    const confirmRename = async () => {
+        if (!curId || !renameValue || renameValue === curId) {
+            setShowRename(false);
+            return;
+        }
+        const finalTitle = renameValue.trim().endsWith('.txt') ? renameValue.trim() : renameValue.trim() + '.txt';
+        try {
+            const { data } = await Filesystem.readFile({
+                path: `${DIR}/${curId}`,
+                directory: Directory.Documents,
+                encoding: Encoding.UTF8
+            });
+            await Filesystem.writeFile({
+                path: `${DIR}/${finalTitle}`,
+                data: data as string,
+                directory: Directory.Documents,
+                encoding: Encoding.UTF8
+            });
+            await Filesystem.deleteFile({
+                path: `${DIR}/${curId}`,
+                directory: Directory.Documents
+            });
+            setCurId(finalTitle);
+            reloadNotes();
+        } catch (e) {
+            alert(e);
+        }
+        setShowRename(false);
     };
 
 
@@ -442,11 +449,15 @@ const App: React.FC = () => {
             const { scrollHeight, clientHeight } = textareaRef.current;
             setEditorThumbHeight(Math.max((clientHeight / (scrollHeight || 1)) * clientHeight, 40));
         }
+        if (tocListRef.current) {
+            const { scrollHeight, clientHeight } = tocListRef.current;
+            setTocThumbHeight(Math.max((clientHeight / (scrollHeight || 1)) * clientHeight, 40));
+        }
     }, []);
 
     useEffect(() => {
         updateScrollbarHeights();
-    }, [filteredNotes, view, curId, updateScrollbarHeights]);
+    }, [filteredNotes, view, curId, updateScrollbarHeights, tocOpen]);
 
     const handleListScroll = useCallback(() => {
         if (!listRef.current || isDraggingRef.current) return;
@@ -470,16 +481,32 @@ const App: React.FC = () => {
         editorScrollTimeoutRef.current = window.setTimeout(() => setEditorIsScrolling(false), 1500);
     }, [editorThumbHeight]);
 
-    const handleDragStart = (e: React.MouseEvent | React.TouchEvent, isEditor: boolean) => {
-        const target = isEditor ? textareaRef.current : listRef.current;
+    const handleTocScroll = useCallback(() => {
+        if (!tocListRef.current || isDraggingRef.current) return;
+        const { scrollTop, scrollHeight, clientHeight } = tocListRef.current;
+        if (scrollHeight <= clientHeight) return;
+        const ratio = scrollTop / (scrollHeight - clientHeight);
+        setTocThumbTop(ratio * (clientHeight - tocThumbHeight));
+        setTocIsScrolling(true);
+        if (tocScrollTimeoutRef.current) window.clearTimeout(tocScrollTimeoutRef.current);
+        tocScrollTimeoutRef.current = window.setTimeout(() => setTocIsScrolling(false), 1500);
+    }, [tocThumbHeight]);
+
+    const handleDragStart = (e: React.MouseEvent | React.TouchEvent, type: 'list' | 'editor' | 'toc') => {
+        const target = type === 'editor' ? textareaRef.current : (type === 'list' ? listRef.current : tocListRef.current);
         if (!target) return;
         isDraggingRef.current = true;
-        if (isEditor) setEditorIsScrolling(true); else setListIsScrolling(true);
+        if (type === 'editor') setEditorIsScrolling(true);
+        else if (type === 'list') setListIsScrolling(true);
+        else setTocIsScrolling(true);
+
         const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
         startYRef.current = clientY;
         startScrollTopRef.current = target.scrollTop;
-        if (isEditor && editorScrollTimeoutRef.current) window.clearTimeout(editorScrollTimeoutRef.current);
-        if (!isEditor && listScrollTimeoutRef.current) window.clearTimeout(listScrollTimeoutRef.current);
+
+        if (type === 'editor' && editorScrollTimeoutRef.current) window.clearTimeout(editorScrollTimeoutRef.current);
+        if (type === 'list' && listScrollTimeoutRef.current) window.clearTimeout(listScrollTimeoutRef.current);
+        if (type === 'toc' && tocScrollTimeoutRef.current) window.clearTimeout(tocScrollTimeoutRef.current);
 
         const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
             if (!isDraggingRef.current || !target) return;
@@ -487,7 +514,7 @@ const App: React.FC = () => {
             const currentY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : (moveEvent as MouseEvent).clientY;
             const deltaY = currentY - startYRef.current;
             const { scrollHeight, clientHeight } = target;
-            const thumbH = isEditor ? editorThumbHeight : listThumbHeight;
+            const thumbH = type === 'editor' ? editorThumbHeight : (type === 'list' ? listThumbHeight : tocThumbHeight);
             const availableSpace = clientHeight - thumbH;
             const scrollRange = scrollHeight - clientHeight;
             if (scrollRange <= 0) return;
@@ -495,13 +522,16 @@ const App: React.FC = () => {
             target.scrollTop = startScrollTopRef.current + scrollDelta;
 
             const ratio = target.scrollTop / (scrollHeight - clientHeight);
-            if (isEditor) setEditorThumbTop(ratio * availableSpace); else setListThumbTop(ratio * availableSpace);
+            if (type === 'editor') setEditorThumbTop(ratio * availableSpace);
+            else if (type === 'list') setListThumbTop(ratio * availableSpace);
+            else setTocThumbTop(ratio * availableSpace);
         };
 
         const endHandler = () => {
             isDraggingRef.current = false;
-            if (isEditor) editorScrollTimeoutRef.current = window.setTimeout(() => setEditorIsScrolling(false), 1500);
-            else listScrollTimeoutRef.current = window.setTimeout(() => setListIsScrolling(false), 1500);
+            if (type === 'editor') editorScrollTimeoutRef.current = window.setTimeout(() => setEditorIsScrolling(false), 1500);
+            else if (type === 'list') listScrollTimeoutRef.current = window.setTimeout(() => setListIsScrolling(false), 1500);
+            else tocScrollTimeoutRef.current = window.setTimeout(() => setTocIsScrolling(false), 1500);
             document.removeEventListener('mousemove', moveHandler);
             document.removeEventListener('mouseup', endHandler);
             document.removeEventListener('touchmove', moveHandler);
@@ -512,6 +542,24 @@ const App: React.FC = () => {
         document.addEventListener('mouseup', endHandler);
         document.addEventListener('touchmove', moveHandler, { passive: false });
         document.addEventListener('touchend', endHandler);
+    };
+
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const deleteNote = () => {
+        if (!curId) return;
+        setShowDeleteConfirm(true);
+        setMoreOpen(false);
+    };
+
+    const confirmDelete = async () => {
+        if (!curId) return;
+        try {
+            await Filesystem.deleteFile({ path: `${DIR}/${curId}`, directory: Directory.Documents });
+            setNotes(prev => prev.filter(n => n.id !== curId));
+            setView('list');
+            setCurId(null);
+        } catch (e) { }
+        setShowDeleteConfirm(false);
     };
 
     if (isLoading) return null;
@@ -551,8 +599,8 @@ const App: React.FC = () => {
                     <div
                         className="scrollbar-thumb"
                         style={{ top: listThumbTop, height: listThumbHeight }}
-                        onMouseDown={(e) => handleDragStart(e, false)}
-                        onTouchStart={(e) => handleDragStart(e, false)}
+                        onMouseDown={(e) => handleDragStart(e, 'list')}
+                        onTouchStart={(e) => handleDragStart(e, 'list')}
                     />
                 </div>
                 <button id="fab" onClick={createNewNote}>+</button>
@@ -638,8 +686,8 @@ const App: React.FC = () => {
                         <div
                             className="scrollbar-thumb"
                             style={{ top: editorThumbTop, height: editorThumbHeight }}
-                            onMouseDown={(e) => handleDragStart(e, true)}
-                            onTouchStart={(e) => handleDragStart(e, true)}
+                            onMouseDown={(e) => handleDragStart(e, 'editor')}
+                            onTouchStart={(e) => handleDragStart(e, 'editor')}
                         />
                     </div>
                 </div>
@@ -651,7 +699,7 @@ const App: React.FC = () => {
                                 <h3>{t.toc}</h3>
                                 <button className="btn-icon" onClick={() => setTocOpen(false)}>✕</button>
                             </div>
-                            <div className="toc-list" ref={tocListRef}>
+                            <div className="toc-list" ref={tocListRef} onScroll={handleTocScroll}>
                                 {chapters.map(ch => (
                                     <div
                                         key={ch.index}
@@ -661,6 +709,14 @@ const App: React.FC = () => {
                                         {ch.title}
                                     </div>
                                 ))}
+                            </div>
+                            <div className={`custom-scrollbar ${tocIsScrolling ? 'visible' : ''}`} style={{ top: '60px' }}>
+                                <div
+                                    className="scrollbar-thumb"
+                                    style={{ top: tocThumbTop, height: tocThumbHeight }}
+                                    onMouseDown={(e) => handleDragStart(e, 'toc')}
+                                    onTouchStart={(e) => handleDragStart(e, 'toc')}
+                                />
                             </div>
                         </div>
                     </div>
@@ -708,6 +764,37 @@ const App: React.FC = () => {
                             <div className="prop-row"><span>{t.toc}:</span> {propInfo.chapter}</div>
                             <div className="prop-row"><span>{t.modified}:</span> {new Date(curNote.time).toLocaleString()}</div>
                             <button className="modal-close" onClick={() => setShowProps(false)}>{t.close}</button>
+                        </div>
+                    </div>
+                )}
+
+                {showRename && (
+                    <div className="modal-overlay" onClick={() => setShowRename(false)}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()}>
+                            <h4>{t.rename}</h4>
+                            <input
+                                className="search-input"
+                                value={renameValue}
+                                onChange={e => setRenameValue(e.target.value)}
+                                autoFocus
+                                style={{ marginBottom: '20px' }}
+                            />
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button className="modal-close" style={{ background: 'var(--surface)', color: 'var(--text)', flex: 1, marginTop: 0 }} onClick={() => setShowRename(false)}>{t.cancel}</button>
+                                <button className="modal-close" style={{ flex: 1, marginTop: 0 }} onClick={confirmRename}>{t.ok}</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {showDeleteConfirm && (
+                    <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()}>
+                            <h4>{t.delConfirm}</h4>
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                <button className="modal-close" style={{ background: 'var(--surface)', color: 'var(--text)', flex: 1, marginTop: 0 }} onClick={() => setShowDeleteConfirm(false)}>{t.cancel}</button>
+                                <button className="modal-close" style={{ background: '#ff4d4f', flex: 1, marginTop: 0 }} onClick={confirmDelete}>{t.ok}</button>
+                            </div>
                         </div>
                     </div>
                 )}
