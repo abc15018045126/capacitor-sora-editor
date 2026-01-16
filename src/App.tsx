@@ -121,6 +121,7 @@ const App: React.FC = () => {
     const [showProps, setShowProps] = useState(false);
     const [propInfo, setPropInfo] = useState({ lines: 0, cursorLine: 0, chapter: '' });
     const [curChapterIndex, setCurChapterIndex] = useState(0);
+    const [lastEditorPos, setLastEditorPos] = useState(0);
     const tocListRef = useRef<HTMLDivElement>(null);
 
     const openToc = () => {
@@ -299,13 +300,14 @@ const App: React.FC = () => {
         }
         setMatches(newMatches);
         if (newMatches.length > 0) {
+            let bestMatchIdx = 0;
+            if (preferredPos !== undefined) {
+                const idx = newMatches.findIndex(m => m >= preferredPos);
+                if (idx !== -1) bestMatchIdx = idx;
+            }
+            setMatchIndex(bestMatchIdx);
+
             if (scrollToMatch) {
-                let bestMatchIdx = 0;
-                if (preferredPos !== undefined) {
-                    const idx = newMatches.findIndex(m => m >= preferredPos);
-                    if (idx !== -1) bestMatchIdx = idx;
-                }
-                setMatchIndex(bestMatchIdx);
                 const index = newMatches[bestMatchIdx];
                 textareaRef.current.focus();
                 textareaRef.current.setSelectionRange(index, index + text.length);
@@ -319,9 +321,10 @@ const App: React.FC = () => {
     const toggleSearch = (open: boolean) => {
         setSearchOpen(open);
         if (open) {
-            const currentPos = textareaRef.current?.selectionStart || 0;
+            const pos = textareaRef.current?.selectionStart || 0;
+            setLastEditorPos(pos);
             if (findText) {
-                setTimeout(() => handleFind(findText, true, currentPos), 0);
+                setTimeout(() => handleFind(findText, true, pos), 0);
             }
         } else {
             setMatches([]);
@@ -583,14 +586,20 @@ const App: React.FC = () => {
                     <div className="search-replace-panel">
                         <div className="search-row">
                             <div className="search-input-wrapper">
-                                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ margin: '0 8px' }}>
-                                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-                                </svg>
+                                <div onClick={() => {
+                                    const pos = textareaRef.current?.selectionStart || 0;
+                                    setLastEditorPos(pos);
+                                    handleFind(findText, true, pos);
+                                }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ margin: '0 8px' }}>
+                                        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+                                    </svg>
+                                </div>
                                 <input
                                     placeholder={t.find}
                                     value={findText}
-                                    onChange={(e) => { setFindText(e.target.value); handleFind(e.target.value, false); }}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') handleFind(findText, true, textareaRef.current?.selectionStart); }}
+                                    onChange={(e) => { setFindText(e.target.value); handleFind(e.target.value, false, lastEditorPos); }}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') handleFind(findText, true, lastEditorPos); }}
                                     autoFocus
                                 />
                                 <div className="search-meta">
@@ -813,14 +822,14 @@ const App: React.FC = () => {
         .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2); }
 
         /* Search & Replace Panel */
-        .search-replace-panel { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 15px; animation: slideDown 0.3s ease-out; }
+        .search-replace-panel { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 12px; animation: slideDown 0.3s ease-out; width: 100%; overflow: hidden; }
         @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .search-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; width: 100%; }
         .search-row:last-child { margin-bottom: 0; }
-        .search-input-wrapper { flex: 1; display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding-right: 10px; }
-        .search-input-wrapper input { flex: 1; background: transparent; border: none; color: var(--text); padding: 8px 10px; font-size: 0.9rem; outline: none; }
-        .search-meta { font-size: 0.75rem; color: var(--text-dim); font-family: monospace; }
-        .btn-small { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; }
+        .search-input-wrapper { flex: 1; display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; position: relative; min-width: 0; }
+        .search-input-wrapper input { flex: 1; background: transparent; border: none; color: var(--text); padding: 8px 8px; font-size: 0.9rem; outline: none; padding-right: 65px; min-width: 0; }
+        .search-meta { position: absolute; right: 8px; font-size: 0.7rem; color: var(--text-dim); font-family: monospace; pointer-events: none; white-space: nowrap; }
+        .btn-small { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 5px 8px; font-size: 0.8rem; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
         .btn-small:active { background: var(--bg); }
         .btn-action { background: var(--primary); color: var(--bg); border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
 
