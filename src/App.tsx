@@ -119,9 +119,40 @@ const App: React.FC = () => {
     const [matchIndex, setMatchIndex] = useState(-1);
     const [matches, setMatches] = useState<number[]>([]);
     const [showProps, setShowProps] = useState(false);
-    const [propInfo, setPropInfo] = useState({ lines: 0, cursorLine: 0 });
+    const [propInfo, setPropInfo] = useState({ lines: 0, cursorLine: 0, chapter: '' });
+    const [curChapterIndex, setCurChapterIndex] = useState(0);
+    const tocListRef = useRef<HTMLDivElement>(null);
 
+    const openToc = () => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        const ratio = textarea.scrollTop / (textarea.scrollHeight - textarea.clientHeight || 1);
+        const pos = ratio * textarea.value.length;
+        setCurChapterIndex(Math.floor(pos / 2000));
+        setTocOpen(true);
+    };
 
+    useEffect(() => {
+        if (tocOpen && tocListRef.current) {
+            setTimeout(() => {
+                const activeItem = tocListRef.current?.querySelector('.toc-item.active');
+                activeItem?.scrollIntoView({ block: 'center' });
+            }, 100);
+        }
+    }, [tocOpen]);
+
+    const handleShowProps = () => {
+        if (!textareaRef.current) return;
+        const text = textareaRef.current.value;
+        const lines = text.split('\n').length;
+        const selectionStart = textareaRef.current.selectionStart;
+        const cursorLine = text.substring(0, selectionStart).split('\n').length;
+        const chapterIdx = Math.floor(selectionStart / 2000);
+        const chapterTitle = t.chapter.replace('{0}', (chapterIdx + 1).toString());
+        setPropInfo({ lines, cursorLine, chapter: chapterTitle });
+        setShowProps(true);
+        setMoreOpen(false);
+    };
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -166,7 +197,6 @@ const App: React.FC = () => {
     useEffect(() => {
         reloadNotes();
     }, [reloadNotes]);
-
 
     const saveToDisk = useCallback(async (id: string, content: string) => {
         try {
@@ -254,7 +284,7 @@ const App: React.FC = () => {
         }
     };
 
-    const handleFind = useCallback((text: string) => {
+    const handleFind = useCallback((text: string, scrollToMatch = true, preferredPos?: number) => {
         if (!text || !textareaRef.current) {
             setMatches([]);
             setMatchIndex(-1);
@@ -269,11 +299,18 @@ const App: React.FC = () => {
         }
         setMatches(newMatches);
         if (newMatches.length > 0) {
-            setMatchIndex(0);
-            const index = newMatches[0];
-            textareaRef.current.focus();
-            textareaRef.current.setSelectionRange(index, index + text.length);
-            scrollToPos(index);
+            if (scrollToMatch) {
+                let bestMatchIdx = 0;
+                if (preferredPos !== undefined) {
+                    const idx = newMatches.findIndex(m => m >= preferredPos);
+                    if (idx !== -1) bestMatchIdx = idx;
+                }
+                setMatchIndex(bestMatchIdx);
+                const index = newMatches[bestMatchIdx];
+                textareaRef.current.focus();
+                textareaRef.current.setSelectionRange(index, index + text.length);
+                scrollToPos(index);
+            }
         } else {
             setMatchIndex(-1);
         }
@@ -281,22 +318,14 @@ const App: React.FC = () => {
 
     const toggleSearch = (open: boolean) => {
         setSearchOpen(open);
-        if (open && findText) {
-            setTimeout(() => handleFind(findText), 0);
-        } else if (!open) {
+        if (open) {
+            const currentPos = textareaRef.current?.selectionStart || 0;
+            if (findText) {
+                setTimeout(() => handleFind(findText, true, currentPos), 0);
+            }
+        } else {
             setMatches([]);
         }
-    };
-
-    const handleShowProps = () => {
-        if (!textareaRef.current) return;
-        const text = textareaRef.current.value;
-        const lines = text.split('\n').length;
-        const selectionStart = textareaRef.current.selectionStart;
-        const cursorLine = text.substring(0, selectionStart).split('\n').length;
-        setPropInfo({ lines, cursorLine });
-        setShowProps(true);
-        setMoreOpen(false);
     };
 
     const findNext = () => {
@@ -326,9 +355,8 @@ const App: React.FC = () => {
         const newContent = content.substring(0, start) + replaceText + content.substring(start + findText.length);
         textareaRef.current.value = newContent;
         handleInput({ target: { value: newContent } } as any);
-        // Refresh matches after a short delay or immediately
-        const newPos = start + replaceText.length;
-        setTimeout(() => handleFind(findText), 0);
+        // Refresh matches without jumping
+        setTimeout(() => handleFind(findText, false), 0);
     };
 
     const handleReplaceAll = () => {
@@ -349,7 +377,6 @@ const App: React.FC = () => {
         const scrollHeight = textarea.scrollHeight;
         const ratio = pos / total;
 
-        // Use approximate ratio for scrolling, it's more reliable for wrapping text
         textarea.scrollTop = ratio * scrollHeight - 20;
     };
 
@@ -493,7 +520,7 @@ const App: React.FC = () => {
                     <h1>{t.title}</h1>
                     <button className="btn-icon" onClick={() => setView('settings')}>
                         <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+                            <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0Map0-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
                         </svg>
                     </button>
                 </header>
@@ -531,7 +558,7 @@ const App: React.FC = () => {
             <div className={`view ${view === 'editor' ? '' : 'view-hidden'}`}>
                 <header>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <button className="btn-icon" onClick={() => setTocOpen(true)}>
+                        <button className="btn-icon" onClick={openToc}>
                             <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                 <path d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
@@ -571,8 +598,6 @@ const App: React.FC = () => {
                             </div>
                             <button className="btn-small" onClick={findPrev}>↑</button>
                             <button className="btn-small" onClick={findNext}>↓</button>
-                            <button className="btn-small">⚙️</button>
-                            <button className="btn-small" onClick={() => toggleSearch(false)}>✕</button>
                         </div>
                         <div className="search-row">
                             <div className="search-input-wrapper">
@@ -616,9 +641,13 @@ const App: React.FC = () => {
                                 <h3>{t.toc}</h3>
                                 <button className="btn-icon" onClick={() => setTocOpen(false)}>✕</button>
                             </div>
-                            <div className="toc-list">
+                            <div className="toc-list" ref={tocListRef}>
                                 {chapters.map(ch => (
-                                    <div key={ch.index} className="toc-item" onClick={() => { scrollToPos(ch.pos); setTocOpen(false); }}>
+                                    <div
+                                        key={ch.index}
+                                        className={`toc-item ${ch.index === curChapterIndex ? 'active' : ''}`}
+                                        onClick={() => { scrollToPos(ch.pos); setTocOpen(false); }}
+                                    >
                                         {ch.title}
                                     </div>
                                 ))}
@@ -648,6 +677,12 @@ const App: React.FC = () => {
                                 </svg>
                                 {t.properties}
                             </div>
+                            <div className="menu-item" onClick={() => { setView('settings'); setMoreOpen(false); }}>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ marginRight: '12px' }}>
+                                    <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                                </svg>
+                                {t.settings}
+                            </div>
                         </div>
                     </div>
                 )}
@@ -660,6 +695,7 @@ const App: React.FC = () => {
                             <div className="prop-row"><span>{t.chars}:</span> {curNote.content.length}</div>
                             <div className="prop-row"><span>{t.lines}:</span> {propInfo.lines}</div>
                             <div className="prop-row"><span>{t.cursorLine}:</span> {propInfo.cursorLine}</div>
+                            <div className="prop-row"><span>{t.toc}:</span> {propInfo.chapter}</div>
                             <div className="prop-row"><span>{t.modified}:</span> {new Date(curNote.time).toLocaleString()}</div>
                             <button className="modal-close" onClick={() => setShowProps(false)}>{t.close}</button>
                         </div>
@@ -710,6 +746,26 @@ const App: React.FC = () => {
             </div>
 
             <style>{`
+        :root {
+          --primary: #ffffff;
+          --primary-rgb: 255, 255, 255;
+          --bg: #000000;
+          --surface: #121212;
+          --text: #ffffff;
+          --text-dim: #888888;
+          --border: #222222;
+        }
+        [data-theme='light'] {
+          --primary: #000000;
+          --primary-rgb: 0, 0, 0;
+          --bg: #ffffff;
+          --surface: #f5f5f5;
+          --text: #000000;
+          --text-dim: #666666;
+          --border: #dddddd;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Inter', system-ui, sans-serif; overflow: hidden; background: var(--bg); color: var(--text); }
         .app { 
           height: 100%; width: 100%; position: relative; 
           background: var(--bg);
@@ -750,44 +806,48 @@ const App: React.FC = () => {
         .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--surface); border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); }
         .path-label { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px; display: block; }
         .path-text { background: rgba(128,128,128,0.1); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 0.75rem; color: var(--primary); word-break: break-all; }
-        .theme-btn { background: var(--primary); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .theme-btn { background: var(--primary); color: var(--bg); border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
         .search-bar-container { padding: 10px 15px; background: var(--bg); border-bottom: 1px solid var(--border); }
         .search-input { width: 100%; padding: 10px 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 0.95rem; outline: none; }
         .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2); }
 
         /* Search & Replace Panel */
-        .search-replace-panel { background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 12px; z-index: 50; }
-        .search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-        .search-input-wrapper { flex: 1; display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; height: 36px; overflow: hidden; }
-        .search-input-wrapper input { flex: 1; height: 100%; border: none; background: transparent; color: var(--text); font-size: 0.9rem; outline: none; padding-right: 8px; }
-        .search-meta { font-size: 0.75rem; color: var(--text-dim); padding-right: 8px; white-space: nowrap; }
-        .btn-small { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.85rem; height: 36px; display: flex; align-items: center; justify-content: center; }
-        .btn-action { background: var(--primary); color: #fff; border: none; border-radius: 4px; padding: 0 12px; height: 36px; cursor: pointer; font-size: 0.85rem; font-weight: 500; white-space: nowrap; }
+        .search-replace-panel { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 15px; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .search-row:last-child { margin-bottom: 0; }
+        .search-input-wrapper { flex: 1; display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding-right: 10px; }
+        .search-input-wrapper input { flex: 1; background: transparent; border: none; color: var(--text); padding: 8px 10px; font-size: 0.9rem; outline: none; }
+        .search-meta { font-size: 0.75rem; color: var(--text-dim); font-family: monospace; }
+        .btn-small { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer; }
+        .btn-small:active { background: var(--bg); }
+        .btn-action { background: var(--primary); color: var(--bg); border: none; border-radius: 6px; padding: 6px 14px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
 
-        /* ToC Styles */
-        .toc-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; display: flex; justify-content: flex-start; }
-        .toc-sidebar { width: 75%; max-width: 300px; height: 100%; background: var(--bg); box-shadow: 2px 0 10px rgba(0,0,0,0.3); display: flex; flex-direction: column; animation: slideIn 0.3s ease-out; }
+        /* TOC Sidebar */
+        .toc-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 200; backdrop-filter: blur(2px); }
+        .toc-sidebar { width: 280px; height: 100%; background: var(--bg); box-shadow: 4px 0 12px rgba(0,0,0,0.3); display: flex; flex-direction: column; animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         .toc-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .toc-list { flex: 1; overflow-y: auto; padding: 10px 0; }
-        .toc-item { padding: 15px 20px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 1rem; }
+        .toc-item { padding: 15px 20px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 1rem; color: var(--text); }
+        .toc-item.active { background: rgba(var(--primary-rgb), 0.1); border-left: 4px solid var(--primary); font-weight: 700; color: var(--primary); }
         .toc-item:active { background: var(--surface); }
 
         /* More Menu Styles */
-        .more-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 900; }
-        .more-menu { position: absolute; top: calc(50px + env(safe-area-inset-top)); right: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); width: 160px; overflow: hidden; animation: fadeIn 0.15s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .menu-item { padding: 12px 16px; display: flex; align-items: center; cursor: pointer; font-size: 0.95rem; border-bottom: 1px solid var(--border); }
-        .menu-item:last-child { border-bottom: none; }
-        .menu-item:active { background: rgba(128,128,128,0.1); }
+        .more-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 150; }
+        .more-menu { position: absolute; top: calc(55px + env(safe-area-inset-top)); right: 15px; width: 180px; background: var(--surface); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 1px solid var(--border); padding: 8px 0; overflow: hidden; animation: menuFade 0.2s ease-out; }
+        @keyframes menuFade { from { opacity: 0; transform: translateY(-10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .menu-item { padding: 12px 18px; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; color: var(--text); }
+        .menu-item:active { background: rgba(255,255,255,0.05); }
 
         /* Modal Styles */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: var(--surface); padding: 24px; border-radius: 16px; width: 100%; max-width: 320px; border: 1px solid var(--border); }
-        .modal-content h4 { margin: 0 0 16px 0; font-size: 1.1rem; }
-        .prop-row { margin-bottom: 10px; font-size: 0.9rem; color: var(--text); }
-        .prop-row span { color: var(--text-dim); margin-right: 8px; }
-        .modal-close { margin-top: 20px; width: 100%; background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 10px; font-weight: 600; cursor: pointer; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 300; padding: 20px; backdrop-filter: blur(4px); }
+        .modal-content { background: var(--surface); width: 100%; max-width: 320px; border-radius: 20px; padding: 25px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5); animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes modalIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-content h4 { margin: 0 0 20px 0; font-size: 1.2rem; text-align: center; }
+        .prop-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.9rem; color: var(--text-dim); }
+        .prop-row span { font-weight: 600; color: var(--text); }
+        .modal-close { width: 100%; margin-top: 20px; background: var(--primary); color: var(--bg); border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; }
       `}</style>
         </div>
     );
