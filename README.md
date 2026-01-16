@@ -6,6 +6,8 @@ A lightweight, offline-first note-taking application built with Capacitor and Re
 
 - **Completely Offline**: All data is stored locally on your device; no network transmission occurs.
 - **Privacy Guaranteed**: No trackers, no ads, and no user data collection.
+- **Organization**: Support for **Note Groups** (folder-based) to keep your notes organized by category.
+- **Recycle Bin**: Deleted notes are moved to a trash folder first, allowing for easy recovery.
 - **Open Format**: Notes are saved as `.txt` files in the `Documents/QuickNotes` directory, making them easily accessible, backable, and syncable with any third-party tools.
 - **Cross-Platform**: Built with modern web technologies, compatible with Android, iOS, and Web.
 
@@ -13,9 +15,11 @@ A lightweight, offline-first note-taking application built with Capacitor and Re
 
 1.  **Create**: Tap the `+` button at the bottom right.
 2.  **Edit**: Tap a note in the list to enter editor mode. Changes are saved automatically in real-time.
-3.  **Delete**: Tap the trash icon while in editor mode to delete a note.
-4.  **Search**: Use the search bar on the main screen to quickly find notes by content or title.
-5.  **Export/Backup**: Since notes are stored as plain text files in your local storage, you can access them directly via any file manager.
+3.  **Delete**: Use the "Move to Trash" option in the editor's menu. Notes in the **Recycle Bin** can be permanently deleted or restored.
+4.  **Organize**: Open the sidebar (left swipe or top-left icon) to create and manage note groups.
+5.  **Multi-Select**: **Long press** any note in the list to enter selection mode. Select multiple items to move them to a group or delete them in bulk.
+6.  **Search**: Use the search bar on the main screen to quickly find notes by content or title.
+7.  **Export/Backup**: Since notes are stored as plain text files in your local storage, you can access them directly via any file manager.
 
 ## Development & Deployment
 
