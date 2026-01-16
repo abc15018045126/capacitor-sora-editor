@@ -58,7 +58,23 @@ const App: React.FC = () => {
             light: '浅色',
             back: '返回',
             newNote: '新便签.txt',
-            repo: '开源地址 (GitHub)'
+            repo: '开源地址 (GitHub)',
+            deleteNote: '删除',
+            toc: '目录',
+            find: '查找',
+            replace: '替换',
+            replaceAll: '全部替换',
+            more: '更多',
+            rename: '重命名',
+            properties: '属性',
+            renamePrompt: '请输入新文件名',
+            fileInfo: '文件信息',
+            close: '关闭',
+            chapter: '第 {0} 章',
+            chars: '字数',
+            modified: '最后修改',
+            lines: '总行数',
+            cursorLine: '光标所在行'
         },
         en: {
             title: 'Notes',
@@ -75,9 +91,37 @@ const App: React.FC = () => {
             light: 'Light',
             back: 'Back',
             newNote: 'New Note.txt',
-            repo: 'Source Code (GitHub)'
+            repo: 'Source Code (GitHub)',
+            deleteNote: 'Delete',
+            toc: 'Contents',
+            find: 'Find',
+            replace: 'Replace',
+            replaceAll: 'Replace All',
+            more: 'More',
+            rename: 'Rename',
+            properties: 'Properties',
+            renamePrompt: 'Enter new filename',
+            fileInfo: 'File Info',
+            close: 'Close',
+            chapter: 'Chapter {0}',
+            chars: 'Characters',
+            modified: 'Last Modified',
+            lines: 'Total Lines',
+            cursorLine: 'Cursor Line'
         }
     }[lang];
+
+    const [tocOpen, setTocOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [moreOpen, setMoreOpen] = useState(false);
+    const [findText, setFindText] = useState('');
+    const [replaceText, setReplaceText] = useState('');
+    const [matchIndex, setMatchIndex] = useState(-1);
+    const [matches, setMatches] = useState<number[]>([]);
+    const [showProps, setShowProps] = useState(false);
+    const [propInfo, setPropInfo] = useState({ lines: 0, cursorLine: 0 });
+
+
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -196,6 +240,8 @@ const App: React.FC = () => {
         return () => { backHandler.then(h => h.remove()); };
     }, [view, closeEditor]);
 
+    const curNote = notes.find(n => n.id === curId);
+
     const deleteNote = async () => {
         if (!curId) return;
         if (window.confirm(t.delConfirm)) {
@@ -208,7 +254,139 @@ const App: React.FC = () => {
         }
     };
 
-    const curNote = notes.find(n => n.id === curId);
+    const handleFind = useCallback((text: string) => {
+        if (!text || !textareaRef.current) {
+            setMatches([]);
+            setMatchIndex(-1);
+            return;
+        }
+        const content = textareaRef.current.value;
+        const newMatches: number[] = [];
+        let pos = content.indexOf(text);
+        while (pos !== -1) {
+            newMatches.push(pos);
+            pos = content.indexOf(text, pos + 1);
+        }
+        setMatches(newMatches);
+        if (newMatches.length > 0) {
+            setMatchIndex(0);
+            const index = newMatches[0];
+            textareaRef.current.focus();
+            textareaRef.current.setSelectionRange(index, index + text.length);
+            scrollToPos(index);
+        } else {
+            setMatchIndex(-1);
+        }
+    }, [curNote?.content]);
+
+    const toggleSearch = (open: boolean) => {
+        setSearchOpen(open);
+        if (open && findText) {
+            setTimeout(() => handleFind(findText), 0);
+        } else if (!open) {
+            setMatches([]);
+        }
+    };
+
+    const handleShowProps = () => {
+        if (!textareaRef.current) return;
+        const text = textareaRef.current.value;
+        const lines = text.split('\n').length;
+        const selectionStart = textareaRef.current.selectionStart;
+        const cursorLine = text.substring(0, selectionStart).split('\n').length;
+        setPropInfo({ lines, cursorLine });
+        setShowProps(true);
+        setMoreOpen(false);
+    };
+
+    const findNext = () => {
+        if (matches.length === 0) return;
+        const next = (matchIndex + 1) % matches.length;
+        setMatchIndex(next);
+        const index = matches[next];
+        textareaRef.current?.focus();
+        textareaRef.current?.setSelectionRange(index, index + findText.length);
+        scrollToPos(index);
+    };
+
+    const findPrev = () => {
+        if (matches.length === 0) return;
+        const prev = (matchIndex - 1 + matches.length) % matches.length;
+        setMatchIndex(prev);
+        const index = matches[prev];
+        textareaRef.current?.focus();
+        textareaRef.current?.setSelectionRange(index, index + findText.length);
+        scrollToPos(index);
+    };
+
+    const handleReplace = () => {
+        if (!textareaRef.current || matchIndex === -1) return;
+        const content = textareaRef.current.value;
+        const start = matches[matchIndex];
+        const newContent = content.substring(0, start) + replaceText + content.substring(start + findText.length);
+        textareaRef.current.value = newContent;
+        handleInput({ target: { value: newContent } } as any);
+        // Refresh matches after a short delay or immediately
+        const newPos = start + replaceText.length;
+        setTimeout(() => handleFind(findText), 0);
+    };
+
+    const handleReplaceAll = () => {
+        if (!textareaRef.current || !findText) return;
+        const content = textareaRef.current.value;
+        const newContent = content.split(findText).join(replaceText);
+        textareaRef.current.value = newContent;
+        handleInput({ target: { value: newContent } } as any);
+        setTimeout(() => handleFind(findText), 0);
+    };
+
+    const scrollToPos = (pos: number) => {
+        if (!textareaRef.current) return;
+        const text = textareaRef.current.value.substring(0, pos);
+        const lines = text.split('\n').length;
+        const lineHeight = 24.8; // 1.15rem line-height * 1.6
+        textareaRef.current.scrollTop = (lines - 1) * lineHeight - 100;
+    };
+
+    const renameNote = async () => {
+        if (!curId || !curNote) return;
+        const newTitle = window.prompt(t.renamePrompt, curNote.title);
+        if (newTitle && newTitle !== curNote.title) {
+            const finalTitle = newTitle.trim().endsWith('.txt') ? newTitle.trim() : newTitle.trim() + '.txt';
+            try {
+                const { data } = await Filesystem.readFile({
+                    path: `${DIR}/${curId}`,
+                    directory: Directory.Documents,
+                    encoding: Encoding.UTF8
+                });
+                await Filesystem.writeFile({
+                    path: `${DIR}/${finalTitle}`,
+                    data: data as string,
+                    directory: Directory.Documents,
+                    encoding: Encoding.UTF8
+                });
+                await Filesystem.deleteFile({
+                    path: `${DIR}/${curId}`,
+                    directory: Directory.Documents
+                });
+                setCurId(finalTitle);
+                reloadNotes();
+            } catch (e) {
+                alert(e);
+            }
+        }
+        setMoreOpen(false);
+    };
+
+
+    const chapters = React.useMemo(() => {
+        const content = curNote?.content || '';
+        return Array.from({ length: Math.ceil(content.length / 2000) }, (_, i) => ({
+            index: i,
+            pos: i * 2000,
+            title: t.chapter.replace('{0}', (i + 1).toString())
+        }));
+    }, [curNote?.content, t.chapter]);
 
     const filteredNotes = React.useMemo(() => {
         const query = searchQuery.toLowerCase().trim();
@@ -347,29 +525,141 @@ const App: React.FC = () => {
 
             <div className={`view ${view === 'editor' ? '' : 'view-hidden'}`}>
                 <header>
-                    <button className="btn-icon" onClick={closeEditor}>✕</button>
-                    <div style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 10px' }}>
-                        {curNote?.title || 'Note'}
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <button className="btn-icon" onClick={() => setTocOpen(true)}>
+                            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
                     </div>
-                    <button className="btn-icon" onClick={deleteNote}>🗑️</button>
+
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <button className="btn-icon" onClick={() => toggleSearch(!searchOpen)}>
+                            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+                            </svg>
+                        </button>
+                        <button className="btn-icon" onClick={() => setMoreOpen(!moreOpen)} style={{ marginLeft: '10px' }}>
+                            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" />
+                            </svg>
+                        </button>
+                    </div>
                 </header>
-                <textarea
-                    key={curId || 'none'}
-                    ref={textareaRef}
-                    id="editor-area"
-                    placeholder={t.placeholder}
-                    defaultValue={curNote?.content || ''}
-                    onChange={(e) => { handleInput(e); updateScrollbarHeights(); }}
-                    onScroll={handleEditorScroll}
-                />
-                <div className={`custom-scrollbar ${editorIsScrolling ? 'visible' : ''}`} style={{ top: 'calc(44px + env(safe-area-inset-top))' }}>
-                    <div
-                        className="scrollbar-thumb"
-                        style={{ top: editorThumbTop, height: editorThumbHeight }}
-                        onMouseDown={(e) => handleDragStart(e, true)}
-                        onTouchStart={(e) => handleDragStart(e, true)}
+
+                {searchOpen && (
+                    <div className="search-replace-panel">
+                        <div className="search-row">
+                            <div className="search-input-wrapper">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ margin: '0 8px' }}>
+                                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+                                </svg>
+                                <input
+                                    placeholder={t.find}
+                                    value={findText}
+                                    onChange={(e) => { setFindText(e.target.value); handleFind(e.target.value); }}
+                                    autoFocus
+                                />
+                                <div className="search-meta">
+                                    {matches.length > 0 ? `${matchIndex + 1}/${matches.length}` : '0/0'}
+                                </div>
+                            </div>
+                            <button className="btn-small" onClick={findPrev}>↑</button>
+                            <button className="btn-small" onClick={findNext}>↓</button>
+                            <button className="btn-small">⚙️</button>
+                            <button className="btn-small" onClick={() => toggleSearch(false)}>✕</button>
+                        </div>
+                        <div className="search-row">
+                            <div className="search-input-wrapper">
+                                <input
+                                    placeholder={t.replace}
+                                    style={{ paddingLeft: '12px' }}
+                                    value={replaceText}
+                                    onChange={(e) => setReplaceText(e.target.value)}
+                                />
+                            </div>
+                            <button className="btn-action" onClick={handleReplace}>{t.replace}</button>
+                            <button className="btn-action" onClick={handleReplaceAll}>{t.replaceAll}</button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="editor-container" style={{ position: 'relative', flex: 1, display: 'flex' }}>
+                    <textarea
+                        key={curId || 'none'}
+                        ref={textareaRef}
+                        id="editor-area"
+                        placeholder={t.placeholder}
+                        defaultValue={curNote?.content || ''}
+                        onChange={(e) => { handleInput(e); updateScrollbarHeights(); }}
+                        onScroll={handleEditorScroll}
                     />
+                    <div className={`custom-scrollbar ${editorIsScrolling ? 'visible' : ''}`} style={{ top: 0 }}>
+                        <div
+                            className="scrollbar-thumb"
+                            style={{ top: editorThumbTop, height: editorThumbHeight }}
+                            onMouseDown={(e) => handleDragStart(e, true)}
+                            onTouchStart={(e) => handleDragStart(e, true)}
+                        />
+                    </div>
                 </div>
+
+                {tocOpen && (
+                    <div className="toc-overlay" onClick={() => setTocOpen(false)}>
+                        <div className="toc-sidebar" onClick={e => e.stopPropagation()}>
+                            <div className="toc-header">
+                                <h3>{t.toc}</h3>
+                                <button className="btn-icon" onClick={() => setTocOpen(false)}>✕</button>
+                            </div>
+                            <div className="toc-list">
+                                {chapters.map(ch => (
+                                    <div key={ch.index} className="toc-item" onClick={() => { scrollToPos(ch.pos); setTocOpen(false); }}>
+                                        {ch.title}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {moreOpen && (
+                    <div className="more-menu-overlay" onClick={() => setMoreOpen(false)}>
+                        <div className="more-menu" onClick={e => e.stopPropagation()}>
+                            <div className="menu-item" onClick={renameNote}>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ marginRight: '12px' }}>
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                                {t.rename}
+                            </div>
+                            <div className="menu-item" onClick={deleteNote} style={{ color: '#ff4d4f' }}>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ marginRight: '12px' }}>
+                                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                                {t.deleteNote || t.delConfirm.split('？')[0]}
+                            </div>
+                            <div className="menu-item" onClick={handleShowProps}>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ marginRight: '12px' }}>
+                                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+                                </svg>
+                                {t.properties}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {showProps && curNote && (
+                    <div className="modal-overlay" onClick={() => setShowProps(false)}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()}>
+                            <h4>{t.fileInfo}</h4>
+                            <div className="prop-row"><span>{t.title}:</span> {curNote.title}</div>
+                            <div className="prop-row"><span>{t.chars}:</span> {curNote.content.length}</div>
+                            <div className="prop-row"><span>{t.lines}:</span> {propInfo.lines}</div>
+                            <div className="prop-row"><span>{t.cursorLine}:</span> {propInfo.cursorLine}</div>
+                            <div className="prop-row"><span>{t.modified}:</span> {new Date(curNote.time).toLocaleString()}</div>
+                            <button className="modal-close" onClick={() => setShowProps(false)}>{t.close}</button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className={`view ${view === 'settings' ? '' : 'view-hidden'}`}>
@@ -459,6 +749,40 @@ const App: React.FC = () => {
         .search-bar-container { padding: 10px 15px; background: var(--bg); border-bottom: 1px solid var(--border); }
         .search-input { width: 100%; padding: 10px 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 0.95rem; outline: none; }
         .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2); }
+
+        /* Search & Replace Panel */
+        .search-replace-panel { background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 12px; z-index: 50; }
+        .search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .search-input-wrapper { flex: 1; display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; height: 36px; overflow: hidden; }
+        .search-input-wrapper input { flex: 1; height: 100%; border: none; background: transparent; color: var(--text); font-size: 0.9rem; outline: none; padding-right: 8px; }
+        .search-meta { font-size: 0.75rem; color: var(--text-dim); padding-right: 8px; white-space: nowrap; }
+        .btn-small { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.85rem; height: 36px; display: flex; align-items: center; justify-content: center; }
+        .btn-action { background: var(--primary); color: #fff; border: none; border-radius: 4px; padding: 0 12px; height: 36px; cursor: pointer; font-size: 0.85rem; font-weight: 500; white-space: nowrap; }
+
+        /* ToC Styles */
+        .toc-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; display: flex; justify-content: flex-start; }
+        .toc-sidebar { width: 75%; max-width: 300px; height: 100%; background: var(--bg); box-shadow: 2px 0 10px rgba(0,0,0,0.3); display: flex; flex-direction: column; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        .toc-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .toc-list { flex: 1; overflow-y: auto; padding: 10px 0; }
+        .toc-item { padding: 15px 20px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 1rem; }
+        .toc-item:active { background: var(--surface); }
+
+        /* More Menu Styles */
+        .more-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 900; }
+        .more-menu { position: absolute; top: calc(50px + env(safe-area-inset-top)); right: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); width: 160px; overflow: hidden; animation: fadeIn 0.15s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .menu-item { padding: 12px 16px; display: flex; align-items: center; cursor: pointer; font-size: 0.95rem; border-bottom: 1px solid var(--border); }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:active { background: rgba(128,128,128,0.1); }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: var(--surface); padding: 24px; border-radius: 16px; width: 100%; max-width: 320px; border: 1px solid var(--border); }
+        .modal-content h4 { margin: 0 0 16px 0; font-size: 1.1rem; }
+        .prop-row { margin-bottom: 10px; font-size: 0.9rem; color: var(--text); }
+        .prop-row span { color: var(--text-dim); margin-right: 8px; }
+        .modal-close { margin-top: 20px; width: 100%; background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 10px; font-weight: 600; cursor: pointer; }
       `}</style>
         </div>
     );
