@@ -342,10 +342,15 @@ const App: React.FC = () => {
 
     const scrollToPos = (pos: number) => {
         if (!textareaRef.current) return;
-        const text = textareaRef.current.value.substring(0, pos);
-        const lines = text.split('\n').length;
-        const lineHeight = 24.8; // 1.15rem line-height * 1.6
-        textareaRef.current.scrollTop = (lines - 1) * lineHeight - 100;
+        const textarea = textareaRef.current;
+        const total = textarea.value.length;
+        if (total === 0) return;
+
+        const scrollHeight = textarea.scrollHeight;
+        const ratio = pos / total;
+
+        // Use approximate ratio for scrolling, it's more reliable for wrapping text
+        textarea.scrollTop = ratio * scrollHeight - 20;
     };
 
     const renameNote = async () => {
