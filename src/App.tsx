@@ -589,7 +589,8 @@ const App: React.FC = () => {
                                 <input
                                     placeholder={t.find}
                                     value={findText}
-                                    onChange={(e) => { setFindText(e.target.value); handleFind(e.target.value); }}
+                                    onChange={(e) => { setFindText(e.target.value); handleFind(e.target.value, false); }}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') handleFind(findText, true, textareaRef.current?.selectionStart); }}
                                     autoFocus
                                 />
                                 <div className="search-meta">
@@ -608,8 +609,8 @@ const App: React.FC = () => {
                                     onChange={(e) => setReplaceText(e.target.value)}
                                 />
                             </div>
-                            <button className="btn-action" onClick={handleReplace}>{t.replace}</button>
-                            <button className="btn-action" onClick={handleReplaceAll}>{t.replaceAll}</button>
+                            <button className="btn-small" onClick={handleReplace}>{t.replace}</button>
+                            <button className="btn-small" onClick={handleReplaceAll}>{t.replaceAll}</button>
                         </div>
                     </div>
                 )}
