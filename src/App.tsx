@@ -53,6 +53,7 @@ const App: React.FC = () => {
     const [autoSave, setAutoSave] = useState<boolean>(() => localStorage.getItem('autoSave') !== 'false');
     const [showLineNums, setShowLineNums] = useState<boolean>(() => localStorage.getItem('showLineNums') === 'true');
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [liveLineCount, setLiveLineCount] = useState(0);
 
     // --- State: Scrollbars ---
     const [listScroll, setListScroll] = useState({ top: 0, height: 40, active: false });
@@ -143,6 +144,13 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        if (curId && view === 'editor') {
+            const content = notes.find(n => n.id === curId)?.content || '';
+            setLiveLineCount(content.split('\n').length);
+        }
+    }, [curId, view, notes]);
+
+    useEffect(() => {
         const checkPerms = async () => {
             try {
                 const status = await Filesystem.checkPermissions();
@@ -164,7 +172,9 @@ const App: React.FC = () => {
     }, []);
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        if (!curId || !autoSave) return;
+        if (!curId) return;
+        setLiveLineCount(e.target.value.split('\n').length);
+        if (!autoSave) return;
         window.clearTimeout(timeouts.current.save);
         timeouts.current.save = window.setTimeout(() => saveToDisk(curId, e.target.value), 300);
     };
@@ -291,7 +301,9 @@ const App: React.FC = () => {
 
     const scrollToPos = (pos: number) => {
         const ta = textareaRef.current; if (!ta) return;
-        ta.scrollTop = (pos / (ta.value.length || 1)) * ta.scrollHeight - 20;
+        const ratio = pos / (ta.value.length || 1);
+        ta.scrollTop = ratio * ta.scrollHeight;
+        if (lineNumsRef.current) lineNumsRef.current.scrollTop = ta.scrollTop;
     };
 
     const filteredNotes = useMemo(() => {
@@ -394,6 +406,13 @@ const App: React.FC = () => {
 
     useEffect(() => { updateScrollHeights(); }, [filteredNotes, view, curId, tocOpen, updateScrollHeights]);
 
+    useEffect(() => {
+        if (tocOpen && tocListRef.current) {
+            const activeItem = tocListRef.current.querySelector('.toc-item.active');
+            if (activeItem) (activeItem as HTMLElement).scrollIntoView({ block: 'center' });
+        }
+    }, [tocOpen]);
+
     const handleDrag = (e: React.MouseEvent | React.TouchEvent, type: 'list' | 'editor' | 'toc') => {
         const el = { list: listRef, editor: textareaRef, toc: tocListRef }[type].current;
         const setter = { list: setListScroll, editor: setEditorScroll, toc: setTocScroll }[type];
@@ -420,6 +439,11 @@ const App: React.FC = () => {
 
     const curNote = useMemo(() => notes.find(n => n.id === curId), [notes, curId]);
     const chapters = useMemo(() => Array.from({ length: Math.ceil((curNote?.content.length || 0) / 2000) }, (_, i) => ({ index: i, pos: i * 2000, title: t.chapter.replace('{0}', (i + 1).toString()) })), [curNote?.content, t.chapter]);
+    const lineNumbers = useMemo(() => {
+        let s = '';
+        for (let i = 1; i <= liveLineCount; i++) s += i + '\n';
+        return s;
+    }, [liveLineCount]);
     const Icon = ({ d, size = 24, color = "currentColor", style = {} }: { d: string, size?: number, color?: string, style?: any }) => <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24" style={style}><path d={d} /></svg>;
 
     if (isLoading) return null;
@@ -524,8 +548,8 @@ const App: React.FC = () => {
                         style={{ fontSize: `${fontSize}px`, backgroundColor: editorBg === 'default' ? 'transparent' : editorBg, color: editorBg === '#000000' ? '#ffffff' : (editorBg === 'default' ? 'var(--text)' : '#000000'), paddingLeft: showLineNums ? 60 : 20 }}
                         onChange={e => { handleInput(e); updateScrollHeights(); }} onScroll={() => syncScroll('editor')} />
                     {showLineNums && (
-                        <div id="line-nums" ref={lineNumsRef} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 50, background: 'rgba(128,128,128,0.05)', color: 'var(--text-dim)', fontSize: fontSize * 0.7, padding: '20px 5px', textAlign: 'right', pointerEvents: 'none', lineHeight: 1.6, overflow: 'hidden', borderRight: '1px solid var(--border)' }}>
-                            {(textareaRef.current?.value || curNote?.content || '').split('\n').map((_, i) => <div key={i}>{i + 1}</div>)}
+                        <div id="line-nums" ref={lineNumsRef} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 50, background: 'rgba(128,128,128,0.05)', color: 'var(--text-dim)', fontSize: fontSize * 0.7, padding: '20px 5px', textAlign: 'right', pointerEvents: 'none', lineHeight: 1.6, overflow: 'hidden', borderRight: '1px solid var(--border)', whiteSpace: 'pre' }}>
+                            {lineNumbers}
                         </div>
                     )}
                     <div className={`custom-scrollbar ${editorScroll.active ? 'visible' : ''}`} style={{ top: 0, right: 2 }}><div className="scrollbar-thumb" style={{ top: editorScroll.top, height: editorScroll.height }} onMouseDown={e => handleDrag(e, 'editor')} onTouchStart={e => handleDrag(e, 'editor')} /></div>
