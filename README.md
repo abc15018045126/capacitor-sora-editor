@@ -8,8 +8,26 @@ A lightweight, offline-first note-taking application built with Capacitor and Re
 - **Privacy Guaranteed**: No trackers, no ads, and no user data collection.
 - **Organization**: Support for **Note Groups** (folder-based) to keep your notes organized by category.
 - **Recycle Bin**: Deleted notes are moved to a trash folder first, allowing for easy recovery.
-- **Open Format**: Notes are saved as `.txt` files in the `Documents/QuickNotes` directory, making them easily accessible, backable, and syncable with any third-party tools.
+- **Open Format**: Notes are saved in the `Documents/Notes` directory, making them easily accessible, backable, and syncable with any third-party tools. Data survives app uninstalls.
 - **Cross-Platform**: Built with modern web technologies, compatible with Android, iOS, and Web.
+
+## Version History
+
+- **v1.0.9 (Latest)**
+  - **Performance Optimization**: Deeply optimized for large files (millions of characters). Line numbers and editor remain smooth.
+  - **Improved TOC**: Chapter list now automatically scrolls to the active chapter when opened.
+  - **Better Jump Logic**: More accurate positioning when jumping to a chapter in large files.
+  - **Undo Feature**: Dedicated undo button in the editor menu.
+- **v1.0.8**
+  - support for all file extension (not just .txt).
+  - Storage moved to public `Documents/Notes` to survive uninstalls.
+  - Request full file access for Android 11+.
+  - Added line numbers toggle and auto-save toggle.
+- **v1.0.7**
+  - Added Recycle Bin and Trash recovery.
+  - Added Group management (rename/delete).
+  - Added Multi-select mode for batch operations.
+  - Added Editor settings: Custom font size and background colors (White, Beige, Green, Blue, Black).
 
 ## Usage
 
@@ -19,7 +37,7 @@ A lightweight, offline-first note-taking application built with Capacitor and Re
 4.  **Organize**: Open the sidebar (left swipe or top-left icon) to create and manage note groups.
 5.  **Multi-Select**: **Long press** any note in the list to enter selection mode. Select multiple items to move them to a group or delete them in bulk.
 6.  **Search**: Use the search bar on the main screen to quickly find notes by content or title.
-7.  **Export/Backup**: Since notes are stored as plain text files in your local storage, you can access them directly via any file manager.
+7.  **Export/Backup**: Since notes are stored as files in your local storage, you can access them directly via any file manager at `Documents/Notes`.
 
 ## Development & Deployment
 
@@ -38,31 +56,6 @@ npx cap sync android
 # Run on a connected Android device
 npx cap run android
 ```
-
-### Automated Release (GitHub Actions)
-
-This repository is configured with a GitHub Actions workflow that automatically builds, signs, and publishes a new release whenever a tag is pushed.
-
-To release a new version (e.g., `v1.0.1`):
-
-1.  **Commit your changes:**
-    ```bash
-    git add .
-    git commit -m "Update something"
-    ```
-
-2.  **Push to GitHub:**
-    ```bash
-    git push
-    ```
-
-3.  **Create and push a version tag:**
-    ```bash
-    git tag v1.0.1
-    git push origin v1.0.1
-    ```
-
-Once the tag is pushed, you can monitor the progress in the **Actions** tab of your GitHub repository. When finished, the signed APKs (`arm64-v8a` and `universal`) will be automatically available in the **Releases** section.
 
 ## License
 
