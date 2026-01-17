@@ -47,6 +47,9 @@ const App: React.FC = () => {
     const [propInfo, setPropInfo] = useState({ lines: 0, cursorLine: 0, chapter: '' });
     const [curChapterIndex, setCurChapterIndex] = useState(0);
     const [lastEditorPos, setLastEditorPos] = useState(0);
+    const [fontSize, setFontSize] = useState<number>(() => Number(localStorage.getItem('fontSize')) || 18);
+    const [editorBg, setEditorBg] = useState<string>(() => localStorage.getItem('editorBg') || 'default');
+    const [showEditorSettings, setShowEditorSettings] = useState(false);
 
     // --- State: Scrollbars ---
     const [listScroll, setListScroll] = useState({ top: 0, height: 40, active: false });
@@ -73,7 +76,8 @@ const App: React.FC = () => {
             trash: '回收站', moveToTrash: '移入回收站', permDelete: '彻底删除', restore: '恢复', trashConfirm: '彻底删除无法恢复，确认？',
             groupRename: '重命名分组', groupDelete: '删除分组', groupDelConfirm: '分组内文件将移入回收站，确认删除？',
             selectAll: '全选', deselectAll: '取消全选', moveTo: '移动到', batchDelete: '彻底删除', batchTrash: '移入回收站',
-            selectItems: '已选择 {0} 项', moveNote: '移动便签'
+            selectItems: '已选择 {0} 项', moveNote: '移动便签', editorSettings: '编辑器设置', fontSize: '字体大小',
+            reset: '重置', bgColor: '背景颜色', white: '白色', yellow: '米黄', green: '豆绿', blue: '清爽', black: '黑色'
         },
         en: {
             title: 'Notes', search: 'Search...', noNotes: 'No notes found', noMatch: 'No matches found', settings: 'Settings',
@@ -87,7 +91,8 @@ const App: React.FC = () => {
             trash: 'Recycle Bin', moveToTrash: 'Move to Trash', permDelete: 'Delete Permanently', restore: 'Restore', trashConfirm: 'Cannot undo. Delete?',
             groupRename: 'Rename Group', groupDelete: 'Delete Group', groupDelConfirm: 'Files will be moved to trash. Delete?',
             selectAll: 'All', deselectAll: 'None', moveTo: 'Move To', batchDelete: 'Delete', batchTrash: 'Trash',
-            selectItems: '{0} Selected', moveNote: 'Move Notes'
+            selectItems: '{0} Selected', moveNote: 'Move Notes', editorSettings: 'Editor Settings', fontSize: 'Font Size',
+            reset: 'Reset', bgColor: 'Background Color', white: 'White', yellow: 'Yellow', green: 'Green', blue: 'Blue', black: 'Black'
         }
     }[lang]);
 
@@ -95,7 +100,9 @@ const App: React.FC = () => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
         localStorage.setItem('lang', lang);
-    }, [theme, lang]);
+        localStorage.setItem('fontSize', fontSize.toString());
+        localStorage.setItem('editorBg', editorBg);
+    }, [theme, lang, fontSize, editorBg]);
 
     // --- File Operations ---
     const reloadNotes = useCallback(async () => {
@@ -380,7 +387,7 @@ const App: React.FC = () => {
 
     const curNote = useMemo(() => notes.find(n => n.id === curId), [notes, curId]);
     const chapters = useMemo(() => Array.from({ length: Math.ceil((curNote?.content.length || 0) / 2000) }, (_, i) => ({ index: i, pos: i * 2000, title: t.chapter.replace('{0}', (i + 1).toString()) })), [curNote?.content, t.chapter]);
-    const Icon = ({ d, size = 24, style = {} }: { d: string, size?: number, style?: any }) => <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={style}><path d={d} /></svg>;
+    const Icon = ({ d, size = 24, color = "currentColor", style = {} }: { d: string, size?: number, color?: string, style?: any }) => <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24" style={style}><path d={d} /></svg>;
 
     if (isLoading) return null;
 
@@ -480,7 +487,9 @@ const App: React.FC = () => {
                     </div>
                 )}
                 <div className="editor-container" style={{ position: 'relative', flex: 1, display: 'flex' }}>
-                    <textarea key={curId || 'none'} ref={textareaRef} id="editor-area" placeholder={t.placeholder} defaultValue={curNote?.content || ''} onChange={e => { handleInput(e); updateScrollHeights(); }} onScroll={() => syncScroll('editor')} />
+                    <textarea key={curId || 'none'} ref={textareaRef} id="editor-area" placeholder={t.placeholder} defaultValue={curNote?.content || ''}
+                        style={{ fontSize: `${fontSize}px`, backgroundColor: editorBg === 'default' ? 'transparent' : editorBg, color: editorBg === '#000000' ? '#ffffff' : (editorBg === 'default' ? 'var(--text)' : '#000000') }}
+                        onChange={e => { handleInput(e); updateScrollHeights(); }} onScroll={() => syncScroll('editor')} />
                     <div className={`custom-scrollbar ${editorScroll.active ? 'visible' : ''}`} style={{ top: 0 }}><div className="scrollbar-thumb" style={{ top: editorScroll.top, height: editorScroll.height }} onMouseDown={e => handleDrag(e, 'editor')} onTouchStart={e => handleDrag(e, 'editor')} /></div>
                 </div>
                 {tocOpen && <div className="toc-overlay" onClick={() => setTocOpen(false)}><div className="toc-sidebar" onClick={e => e.stopPropagation()}><div className="toc-header"><h3>{t.toc}</h3><button className="btn-icon" onClick={() => setTocOpen(false)}>✕</button></div><div className="toc-list" ref={tocListRef} onScroll={() => syncScroll('toc')}>{chapters.map(ch => <div key={ch.index} className={`toc-item ${ch.index === curChapterIndex ? 'active' : ''}`} onClick={() => { scrollToPos(ch.pos); setTocOpen(false); }}>{ch.title}</div>)}</div><div className={`custom-scrollbar ${tocScroll.active ? 'visible' : ''}`} style={{ top: 60 }}><div className="scrollbar-thumb" style={{ top: tocScroll.top, height: tocScroll.height }} onMouseDown={e => handleDrag(e, 'toc')} onTouchStart={e => handleDrag(e, 'toc')} /></div></div></div>}
@@ -493,6 +502,7 @@ const App: React.FC = () => {
                         {curNote?.inTrash && <div className="menu-item" onClick={() => { recoverNote(); setMoreOpen(false); }} style={{ color: '#4caf50' }}><Icon d="M9 14l-4-4 4-4" style={{ marginRight: 12 }} size={20} />{t.restore}</div>}
                         <div className="menu-item" onClick={() => { setShowDeleteConfirm(true); setMoreOpen(false); }} style={{ color: '#ff4d4f' }}><Icon d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" style={{ marginRight: 12 }} size={20} />{curNote?.inTrash ? t.permDelete : t.moveToTrash}</div>
                         <div className="menu-item" onClick={handleShowProps}><Icon d="M12 12m-9 0a9 9 0 1 0 18 0 9 9 0 1 0-18 0 M12 16v-4 M12 8h.01" style={{ marginRight: 12 }} size={20} />{t.properties}</div>
+                        <div className="menu-item" onClick={() => { setShowEditorSettings(true); setMoreOpen(false); }}><Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M12 12m-3 0a3 3 0 1 0 6 0 3 3 0 1 0-6 0" style={{ marginRight: 12 }} size={20} />{t.editorSettings}</div>
                         <div className="menu-item" onClick={() => { setCurGroup(null); closeEditor(); }}><Icon d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" style={{ marginRight: 12 }} size={20} />{t.allNotes}</div>
                         <div className="menu-item" onClick={() => { setView('settings'); setMoreOpen(false); }}><Icon d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" style={{ marginRight: 12 }} size={20} />{t.settings}</div>
                     </div></div>
@@ -532,6 +542,32 @@ const App: React.FC = () => {
                         {groups.map(g => <div key={g} className="toc-item" onClick={() => bulkProcess('move', g)}>{g}</div>)}
                     </div>
                     <button className="modal-close" onClick={() => setShowMoveToModal(false)}>{t.cancel}</button>
+                </div></div>
+            )}
+            {showEditorSettings && (
+                <div className="modal-overlay" onClick={() => setShowEditorSettings(false)}><div className="modal-content" onClick={e => e.stopPropagation()}>
+                    <h4>{t.editorSettings}</h4>
+                    <div style={{ marginBottom: 20 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}><span>{t.fontSize}: {fontSize}px</span><button className="btn-small" onClick={() => setFontSize(18)}>{t.reset}</button></div>
+                        <input type="range" min="12" max="36" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                    </div>
+                    <div>
+                        <div style={{ marginBottom: 10 }}>{t.bgColor}</div>
+                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                            {[
+                                { name: t.white, color: '#FFFFFF' },
+                                { name: t.yellow, color: '#F8F1E7' },
+                                { name: t.green, color: '#E1EAD2' },
+                                { name: t.blue, color: '#D1D7DA' },
+                                { name: t.black, color: '#000000' }
+                            ].map(c => (
+                                <div key={c.color} onClick={() => setEditorBg(c.color)} style={{ width: 44, height: 44, borderRadius: '50%', background: c.color, border: editorBg === c.color ? '3px solid var(--primary)' : '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyItems: 'center', transition: 'transform 0.2s' }} className={editorBg === c.color ? 'scale-up' : ''}>
+                                    {editorBg === c.color && <Icon d="M5 13l4 4L19 7" color={c.color === '#000000' ? 'white' : 'black'} style={{ margin: 'auto' }} size={24} />}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <button className="modal-close" onClick={() => setShowEditorSettings(false)}>{t.close}</button>
                 </div></div>
             )}
 
