@@ -4,7 +4,7 @@ import { App as CapApp } from '@capacitor/app';
 import { registerPlugin } from '@capacitor/core';
 
 const OpenFolder = registerPlugin<any>('OpenFolder');
-const DIR = 'QuickNotes';
+const DIR = 'Notes';
 
 interface Note { id: string; title: string; content: string; time: number; isNew?: boolean; inTrash?: boolean; }
 
@@ -50,6 +50,9 @@ const App: React.FC = () => {
     const [fontSize, setFontSize] = useState<number>(() => Number(localStorage.getItem('fontSize')) || 18);
     const [editorBg, setEditorBg] = useState<string>(() => localStorage.getItem('editorBg') || 'default');
     const [showEditorSettings, setShowEditorSettings] = useState(false);
+    const [autoSave, setAutoSave] = useState<boolean>(() => localStorage.getItem('autoSave') !== 'false');
+    const [showLineNums, setShowLineNums] = useState<boolean>(() => localStorage.getItem('showLineNums') === 'true');
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     // --- State: Scrollbars ---
     const [listScroll, setListScroll] = useState({ top: 0, height: 40, active: false });
@@ -60,6 +63,7 @@ const App: React.FC = () => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
     const tocListRef = useRef<HTMLDivElement>(null);
+    const lineNumsRef = useRef<HTMLDivElement>(null);
     const timeouts = useRef<Record<string, number>>({});
     const drag = useRef({ active: false, startY: 0, startScroll: 0 });
 
@@ -77,7 +81,8 @@ const App: React.FC = () => {
             groupRename: '重命名分组', groupDelete: '删除分组', groupDelConfirm: '分组内文件将移入回收站，确认删除？',
             selectAll: '全选', deselectAll: '取消全选', moveTo: '移动到', batchDelete: '彻底删除', batchTrash: '移入回收站',
             selectItems: '已选择 {0} 项', moveNote: '移动便签', editorSettings: '编辑器设置', fontSize: '字体大小',
-            reset: '重置', bgColor: '背景颜色', white: '白色', yellow: '米黄', green: '豆绿', blue: '清爽', black: '黑色'
+            reset: '重置', bgColor: '背景颜色', white: '白色', yellow: '米黄', green: '豆绿', blue: '清爽', black: '黑色',
+            undo: '撤销', autoSave: '自动保存', lineNum: '显示行号', saveConfirm: '是否保存当前修改？', save: '保存', discard: '放弃'
         },
         en: {
             title: 'Notes', search: 'Search...', noNotes: 'No notes found', noMatch: 'No matches found', settings: 'Settings',
@@ -92,7 +97,8 @@ const App: React.FC = () => {
             groupRename: 'Rename Group', groupDelete: 'Delete Group', groupDelConfirm: 'Files will be moved to trash. Delete?',
             selectAll: 'All', deselectAll: 'None', moveTo: 'Move To', batchDelete: 'Delete', batchTrash: 'Trash',
             selectItems: '{0} Selected', moveNote: 'Move Notes', editorSettings: 'Editor Settings', fontSize: 'Font Size',
-            reset: 'Reset', bgColor: 'Background Color', white: 'White', yellow: 'Yellow', green: 'Green', blue: 'Blue', black: 'Black'
+            reset: 'Reset', bgColor: 'Background Color', white: 'White', yellow: 'Yellow', green: 'Green', blue: 'Blue', black: 'Black',
+            undo: 'Undo', autoSave: 'Auto Save', lineNum: 'Line Numbers', saveConfirm: 'Save changes?', save: 'Save', discard: 'Discard'
         }
     }[lang]);
 
@@ -102,7 +108,9 @@ const App: React.FC = () => {
         localStorage.setItem('lang', lang);
         localStorage.setItem('fontSize', fontSize.toString());
         localStorage.setItem('editorBg', editorBg);
-    }, [theme, lang, fontSize, editorBg]);
+        localStorage.setItem('autoSave', autoSave.toString());
+        localStorage.setItem('showLineNums', showLineNums.toString());
+    }, [theme, lang, fontSize, editorBg, autoSave, showLineNums]);
 
     // --- File Operations ---
     const reloadNotes = useCallback(async () => {
@@ -120,13 +128,13 @@ const App: React.FC = () => {
                 return { id: folder ? `${folder}/${name}` : name, title: name, content: data as string, time: Date.now(), inTrash: isTrash };
             };
 
-            const rootNotes = await Promise.all(files.filter(f => f.name.endsWith('.txt')).map(f => loadFile(f.name)));
+            const rootNotes = await Promise.all(files.filter(f => f.name !== '.trash' && !f.name.startsWith('.') && f.type !== 'directory' && !dirs.includes(f.name)).map(f => loadFile(f.name)));
             const groupNotesArrays = await Promise.all(dirs.map(async d => {
                 const { files: subFiles } = await Filesystem.readdir({ path: `${DIR}/${d}`, directory: Directory.Documents });
-                return Promise.all(subFiles.filter(f => f.name.endsWith('.txt')).map(f => loadFile(f.name, d)));
+                return Promise.all(subFiles.filter(f => f.type !== 'directory' && !f.name.startsWith('.')).map(f => loadFile(f.name, d)));
             }));
             const { files: trashFiles } = await Filesystem.readdir({ path: `${DIR}/.trash`, directory: Directory.Documents }).catch(() => ({ files: [] }));
-            const trashNotes = await Promise.all(trashFiles.filter(f => f.name.endsWith('.txt')).map(f => loadFile(f.name, '.trash', true)));
+            const trashNotes = await Promise.all(trashFiles.filter(f => f.type !== 'directory' && !f.name.startsWith('.')).map(f => loadFile(f.name, '.trash', true)));
 
             setNotes([...rootNotes, ...groupNotesArrays.flat(), ...trashNotes].sort((a, b) => b.time - a.time));
             const { uri } = await Filesystem.getUri({ path: DIR, directory: Directory.Documents });
@@ -134,7 +142,19 @@ const App: React.FC = () => {
         } catch (e) { console.error(e); } finally { setIsLoading(false); }
     }, []);
 
-    useEffect(() => { reloadNotes(); }, [reloadNotes]);
+    useEffect(() => {
+        const checkPerms = async () => {
+            try {
+                const status = await Filesystem.checkPermissions();
+                if (status.publicStorage !== 'granted') {
+                    await Filesystem.requestPermissions();
+                }
+                await OpenFolder.requestAllFilesAccess();
+            } catch (e) { console.error('Permission check failed', e); }
+        };
+        checkPerms();
+        reloadNotes();
+    }, [reloadNotes]);
 
     const saveToDisk = useCallback(async (id: string, content: string) => {
         try {
@@ -144,7 +164,7 @@ const App: React.FC = () => {
     }, []);
 
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        if (!curId) return;
+        if (!curId || !autoSave) return;
         window.clearTimeout(timeouts.current.save);
         timeouts.current.save = window.setTimeout(() => saveToDisk(curId, e.target.value), 300);
     };
@@ -192,8 +212,8 @@ const App: React.FC = () => {
         setShowGroupDeleteConfirm(false); setTargetGroup(null);
     };
 
-    const closeEditor = useCallback(async () => {
-        if (curId && textareaRef.current) {
+    const closeEditor = useCallback(async (save = true) => {
+        if (curId && textareaRef.current && save) {
             const content = textareaRef.current.value;
             const note = notes.find(n => n.id === curId);
             let finalId = curId;
@@ -210,17 +230,29 @@ const App: React.FC = () => {
                 }
             } catch (e) { }
         }
-        setView('list'); setCurId(null); reloadNotes();
-    }, [curId, notes, reloadNotes]);
+        if (!autoSave && save === undefined && curId && textareaRef.current) {
+            const content = textareaRef.current.value;
+            const original = notes.find(n => n.id === curId)?.content || '';
+            if (content !== original) { setShowSaveConfirm(true); return; }
+        }
+        setView('list'); setCurId(null); reloadNotes(); setShowSaveConfirm(false);
+    }, [curId, notes, reloadNotes, autoSave]);
 
     useEffect(() => {
         const sub = CapApp.addListener('backButton', () => {
-            if (view === 'editor') closeEditor();
+            if (view === 'editor') {
+                if (!autoSave) {
+                    const content = textareaRef.current?.value || '';
+                    const original = notes.find(n => n.id === curId)?.content || '';
+                    if (content !== original) { setShowSaveConfirm(true); return; }
+                }
+                closeEditor();
+            }
             else if (view === 'settings' || sidebarOpen) { setView('list'); setSidebarOpen(false); }
             else CapApp.exitApp();
         });
         return () => { sub.then(h => h.remove()); };
-    }, [view, closeEditor, sidebarOpen]);
+    }, [view, closeEditor, sidebarOpen, autoSave, notes, curId]);
 
     // --- Search & Find & UI Logic ---
     const handleFind = useCallback((text: string, scroll = true, prefPos?: number) => {
@@ -344,6 +376,7 @@ const App: React.FC = () => {
         const state = { list: listScroll, editor: editorScroll, toc: tocScroll }[type];
         const setter = { list: setListScroll, editor: setEditorScroll, toc: setTocScroll }[type];
         if (!el || drag.current.active) return;
+        if (type === 'editor' && lineNumsRef.current) lineNumsRef.current.scrollTop = el.scrollTop;
         const ratio = el.scrollTop / (el.scrollHeight - el.clientHeight || 1);
         setter({ ...state, top: ratio * (el.clientHeight - state.height), active: true });
         window.clearTimeout(timeouts.current[type]);
@@ -486,18 +519,24 @@ const App: React.FC = () => {
                         <div className="search-row"><div className="search-input-wrapper"><input placeholder={t.replace} style={{ paddingLeft: 12 }} value={replaceText} onChange={e => setReplaceText(e.target.value)} /></div><button className="btn-small" onClick={() => handleReplace()}>{t.replace}</button><button className="btn-small" onClick={() => handleReplace(true)}>{t.replaceAll}</button></div>
                     </div>
                 )}
-                <div className="editor-container" style={{ position: 'relative', flex: 1, display: 'flex' }}>
+                <div className="editor-container" style={{ position: 'relative', flex: 1, display: 'flex', overflow: 'hidden' }}>
                     <textarea key={curId || 'none'} ref={textareaRef} id="editor-area" placeholder={t.placeholder} defaultValue={curNote?.content || ''}
-                        style={{ fontSize: `${fontSize}px`, backgroundColor: editorBg === 'default' ? 'transparent' : editorBg, color: editorBg === '#000000' ? '#ffffff' : (editorBg === 'default' ? 'var(--text)' : '#000000') }}
+                        style={{ fontSize: `${fontSize}px`, backgroundColor: editorBg === 'default' ? 'transparent' : editorBg, color: editorBg === '#000000' ? '#ffffff' : (editorBg === 'default' ? 'var(--text)' : '#000000'), paddingLeft: showLineNums ? 60 : 20 }}
                         onChange={e => { handleInput(e); updateScrollHeights(); }} onScroll={() => syncScroll('editor')} />
-                    <div className={`custom-scrollbar ${editorScroll.active ? 'visible' : ''}`} style={{ top: 0 }}><div className="scrollbar-thumb" style={{ top: editorScroll.top, height: editorScroll.height }} onMouseDown={e => handleDrag(e, 'editor')} onTouchStart={e => handleDrag(e, 'editor')} /></div>
+                    {showLineNums && (
+                        <div id="line-nums" ref={lineNumsRef} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 50, background: 'rgba(128,128,128,0.05)', color: 'var(--text-dim)', fontSize: fontSize * 0.7, padding: '20px 5px', textAlign: 'right', pointerEvents: 'none', lineHeight: 1.6, overflow: 'hidden', borderRight: '1px solid var(--border)' }}>
+                            {(textareaRef.current?.value || curNote?.content || '').split('\n').map((_, i) => <div key={i}>{i + 1}</div>)}
+                        </div>
+                    )}
+                    <div className={`custom-scrollbar ${editorScroll.active ? 'visible' : ''}`} style={{ top: 0, right: 2 }}><div className="scrollbar-thumb" style={{ top: editorScroll.top, height: editorScroll.height }} onMouseDown={e => handleDrag(e, 'editor')} onTouchStart={e => handleDrag(e, 'editor')} /></div>
                 </div>
                 {tocOpen && <div className="toc-overlay" onClick={() => setTocOpen(false)}><div className="toc-sidebar" onClick={e => e.stopPropagation()}><div className="toc-header"><h3>{t.toc}</h3><button className="btn-icon" onClick={() => setTocOpen(false)}>✕</button></div><div className="toc-list" ref={tocListRef} onScroll={() => syncScroll('toc')}>{chapters.map(ch => <div key={ch.index} className={`toc-item ${ch.index === curChapterIndex ? 'active' : ''}`} onClick={() => { scrollToPos(ch.pos); setTocOpen(false); }}>{ch.title}</div>)}</div><div className={`custom-scrollbar ${tocScroll.active ? 'visible' : ''}`} style={{ top: 60 }}><div className="scrollbar-thumb" style={{ top: tocScroll.top, height: tocScroll.height }} onMouseDown={e => handleDrag(e, 'toc')} onTouchStart={e => handleDrag(e, 'toc')} /></div></div></div>}
 
 
                 {moreOpen && (
                     <div className="more-menu-overlay" onClick={() => setMoreOpen(false)}><div className="more-menu" onClick={e => e.stopPropagation()}>
-                        <div className="menu-item" onClick={closeEditor}><Icon d="M19 12H5M12 19l-7-7 7-7" style={{ marginRight: 12 }} size={20} />{t.back}</div>
+                        <div className="menu-item" onClick={() => closeEditor()}><Icon d="M19 12H5M12 19l-7-7 7-7" style={{ marginRight: 12 }} size={20} />{t.back}</div>
+                        <div className="menu-item" onClick={() => { textareaRef.current?.focus(); document.execCommand('undo'); setMoreOpen(false); }}><Icon d="M9 13l-4-4 4-4M5 9h11a4 4 0 010 8h-1" style={{ marginRight: 12 }} size={20} />{t.undo}</div>
                         {!curNote?.inTrash && <div className="menu-item" onClick={() => { setRenameValue(curNote?.id || ''); setShowRename(true); setMoreOpen(false); }}><Icon d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7 M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" style={{ marginRight: 12 }} size={20} />{t.rename}</div>}
                         {curNote?.inTrash && <div className="menu-item" onClick={() => { recoverNote(); setMoreOpen(false); }} style={{ color: '#4caf50' }}><Icon d="M9 14l-4-4 4-4" style={{ marginRight: 12 }} size={20} />{t.restore}</div>}
                         <div className="menu-item" onClick={() => { setShowDeleteConfirm(true); setMoreOpen(false); }} style={{ color: '#ff4d4f' }}><Icon d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" style={{ marginRight: 12 }} size={20} />{curNote?.inTrash ? t.permDelete : t.moveToTrash}</div>
@@ -567,7 +606,20 @@ const App: React.FC = () => {
                             ))}
                         </div>
                     </div>
+                    <div style={{ display: 'flex', gap: 15, marginTop: 20 }}>
+                        <button className={`theme-btn ${autoSave ? '' : 'btn-dim'}`} onClick={() => setAutoSave(!autoSave)} style={{ flex: 1, fontSize: '0.8rem' }}>{t.autoSave}: {autoSave ? 'ON' : 'OFF'}</button>
+                        <button className={`theme-btn ${showLineNums ? '' : 'btn-dim'}`} onClick={() => setShowLineNums(!showLineNums)} style={{ flex: 1, fontSize: '0.8rem' }}>{t.lineNum}: {showLineNums ? 'ON' : 'OFF'}</button>
+                    </div>
                     <button className="modal-close" onClick={() => setShowEditorSettings(false)}>{t.close}</button>
+                </div></div>
+            )}
+            {showSaveConfirm && (
+                <div className="modal-overlay" onClick={() => setShowSaveConfirm(false)}><div className="modal-content" onClick={e => e.stopPropagation()}>
+                    <h4>{t.saveConfirm}</h4>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                        <button className="modal-close" style={{ background: 'var(--surface)', color: 'var(--text)', flex: 1, marginTop: 0 }} onClick={() => closeEditor(false)}>{t.discard}</button>
+                        <button className="modal-close" style={{ flex: 1, marginTop: 0 }} onClick={() => closeEditor(true)}>{t.save}</button>
+                    </div>
                 </div></div>
             )}
 
@@ -609,6 +661,7 @@ const App: React.FC = () => {
                 .path-label { font-size: 0.8rem; color: var(--text-dim); margin: 0 0 10px; display: block; }
                 .path-text { background: rgba(128,128,128,.1); padding: 12px; border-radius: 8px; font-family: monospace; font-size: .75rem; color: var(--primary); word-break: break-all; }
                 .theme-btn { background: var(--primary); color: var(--bg); border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; }
+                .theme-btn.btn-dim { background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); }
                 .search-bar-container { padding: 10px 15px; border-bottom: 1px solid var(--border); }
                 .search-input { width: 100%; padding: 10px 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: .95rem; outline: none; }
                 .search-replace-panel { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 12px; animation: slideDown 0.3s ease-out; width: 100%; overflow: hidden; }

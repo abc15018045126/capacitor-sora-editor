@@ -19,9 +19,9 @@ public class OpenFolderPlugin extends Plugin {
         try {
             Context context = getContext();
             
-            // 重要：获取 Capacitor Filesystem 插件使用的 Documents 根目录
-            File docFolder = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
-            File quickNotesFolder = new File(docFolder, "QuickNotes");
+            // 获取公共的 Documents 目录，这样卸载软件后数据依然存在
+            File docFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+            File quickNotesFolder = new File(docFolder, "Notes");
             
             if (!quickNotesFolder.exists()) {
                 quickNotesFolder.mkdirs();
@@ -60,6 +60,23 @@ public class OpenFolderPlugin extends Plugin {
             }
         } catch (Exception e) {
             call.reject("无法打开管理器: " + e.getMessage());
+        }
+    }
+
+    @PluginMethod
+    public void requestAllFilesAccess(PluginCall call) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                intent.setData(Uri.parse("package:" + getContext().getPackageName()));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(intent);
+                call.resolve();
+            } else {
+                call.resolve();
+            }
+        } else {
+            call.resolve();
         }
     }
 }
