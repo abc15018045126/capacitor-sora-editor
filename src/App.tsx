@@ -143,14 +143,11 @@ const App: React.FC = () => {
         const path = `${docPath.replace('file://', '')}/${note.id}`;
         SoraEditor.open({
             path,
-            content: note.content,
+            content: note.content.length > 500000 ? null : note.content,
             title: note.title
-        }).then((res: any) => {
-            if (res && res.content !== undefined) {
-                reloadNotes();
-            }
-        }).catch((err: any) => {
-            // If cancelled, just reload in case external changes happened
+        }).then(() => {
+            reloadNotes();
+        }).catch(() => {
             reloadNotes();
         });
     };

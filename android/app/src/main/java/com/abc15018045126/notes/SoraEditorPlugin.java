@@ -20,7 +20,14 @@ public class SoraEditorPlugin extends Plugin {
 
         Intent intent = new Intent(getContext(), SoraEditorActivity.class);
         intent.putExtra("path", path);
-        intent.putExtra("content", content);
+        
+        // 如果内容太大，就在 Intent 中传 null，让 Activity 自己去读文件
+        if (content != null && content.length() > 500000) {
+            intent.putExtra("content", (String)null);
+        } else {
+            intent.putExtra("content", content);
+        }
+        
         intent.putExtra("title", title);
 
         startActivityForResult(call, intent, "editorCallback");
@@ -31,8 +38,9 @@ public class SoraEditorPlugin extends Plugin {
         if (call == null) return;
 
         JSObject ret = new JSObject();
-        if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
-            ret.put("content", result.getData().getStringExtra("content"));
+        if (result.getResultCode() == android.app.Activity.RESULT_OK) {
+            // 注意：不再传回内容，直接让前端 reloadNotes 读文件
+            ret.put("success", true);
             call.resolve(ret);
         } else {
             call.reject("Cancelled or failed");
