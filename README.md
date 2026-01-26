@@ -1,62 +1,74 @@
 # Notes
 
-A lightweight, offline-first note-taking application built with Capacitor and React.
+A modern, lightweight, offline-first note-taking application. This project combines a React-based frontend with a powerful native Android editor powered by Jetpack Compose.
 
-## Features
+## 🚀 Key Features
 
-- **Completely Offline**: All data is stored locally on your device; no network transmission occurs.
-- **Privacy Guaranteed**: No trackers, no ads, and no user data collection.
-- **Organization**: Support for **Note Groups** (folder-based) to keep your notes organized by category.
-- **Recycle Bin**: Deleted notes are moved to a trash folder first, allowing for easy recovery.
-- **Open Format**: Notes are saved in the `Documents/Notes` directory, making them easily accessible, backable, and syncable with any third-party tools. Data survives app uninstalls.
-- **Cross-Platform**: Built with modern web technologies, compatible with Android, iOS, and Web.
+- **Jetpack Compose Native Editor**: High-performance editor supporting large files with smooth scrolling and real-time line numbers.
+- **Deep Theme Customization**: 
+  - Independent color settings for Editor, UI (Toolbars), TOC Panel, Search Panel, and Menus.
+  - One-click "Sync All" to match all panels with the main UI theme.
+- **JSON Configuration Engine**: All settings are persisted via JSON. Advanced users can manually edit the JSON config for pixel-perfect customization.
+- **Smart TOC (Table of Contents)**: Intelligent chapter generation for long documents with auto-scrolling synchronization.
+- **Privacy & Performance**: 
+  - 100% Offline: No data leaves your device.
+  - Storage: Notes are saved in `Documents/Notes` to survive app uninstalls and allow external backups.
+- **Advanced Search & Replace**: Real-time matching with navigation.
 
-## Version History
+## 🛠 Technology Stack
 
-- **v1.0.9 (Latest)**
-  - **Performance Optimization**: Deeply optimized for large files (millions of characters). Line numbers and editor remain smooth.
-  - **Improved TOC**: Chapter list now automatically scrolls to the active chapter when opened.
-  - **Better Jump Logic**: More accurate positioning when jumping to a chapter in large files.
-  - **Undo Feature**: Dedicated undo button in the editor menu.
-- **v1.0.8**
-  - support for all file extension (not just .txt).
-  - Storage moved to public `Documents/Notes` to survive uninstalls.
-  - Request full file access for Android 11+.
-  - Added line numbers toggle and auto-save toggle.
-- **v1.0.7**
-  - Added Recycle Bin and Trash recovery.
-  - Added Group management (rename/delete).
-  - Added Multi-select mode for batch operations.
-  - Added Editor settings: Custom font size and background colors (White, Beige, Green, Blue, Black).
+- **Frontend**: [React](https://reactjs.org/) + [Vite](https://vitejs.dev/)
+- **Native Bridge**: [Capacitor](https://capacitorjs.com/)
+- **Android UI**: [Jetpack Compose](https://developer.android.com/jetpack/compose)
+- **Editor Core**: Custom integration with Jetpack Compose LazyColumn and PointerInput for high-performance interactions.
 
-## Usage
+## 📦 Build Environment
 
-1.  **Create**: Tap the `+` button at the bottom right.
-2.  **Edit**: Tap a note in the list to enter editor mode. Changes are saved automatically in real-time.
-3.  **Delete**: Use the "Move to Trash" option in the editor's menu. Notes in the **Recycle Bin** can be permanently deleted or restored.
-4.  **Organize**: Open the sidebar (left swipe or top-left icon) to create and manage note groups.
-5.  **Multi-Select**: **Long press** any note in the list to enter selection mode. Select multiple items to move them to a group or delete them in bulk.
-6.  **Search**: Use the search bar on the main screen to quickly find notes by content or title.
-7.  **Export/Backup**: Since notes are stored as files in your local storage, you can access them directly via any file manager at `Documents/Notes`.
+- **JDK**: 17+
+- **Node.js**: 18+
+- **Android SDK**: API Level 34+
+- **Gradle**: 8.x
 
-## Development & Deployment
+## 🚀 How to Build
 
-The project uses [Capacitor](https://capacitorjs.com/) to wrap the React application into a native Android app.
+We provide automated scripts to help you build the project.
 
-### Local Development
+### Windows
+Run `build_win.bat` in the root directory.
 
+### Linux / macOS
 ```bash
-# Install dependencies
-npm install
-
-# Build web assets and sync to Android project
-npm run build
-npx cap sync android
-
-# Run on a connected Android device
-npx cap run android
+chmod +x build_linux.sh
+./build_linux.sh
 ```
 
-## License
+### Manual Steps
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Build web assets
+npm run build
+
+# 3. Sync to Android project
+npx cap sync android
+
+# 4. Build Release APK
+cd android
+./gradlew :app:assembleRelease
+```
+
+## 📈 Version History
+
+- **v1.2.2 (Latest)**
+  - **Full Theme Customization**: UI, TOC, and Search panels now support independent coloring.
+  - **JSON Persistence**: Settings are now saved automatically and can be manually edited.
+  - **Reset Feature**: One-click to restore all default settings.
+  - **Improved Scrollbar**: Now support dragging and auto-hide with better touch area.
+- **v1.0.9**
+  - Performance optimization for massive text files.
+  - TOC auto-scroll synchronization.
+
+## 📄 License
 
 This project is open-source and licensed under the [GPL-3.0](LICENSE) License.
