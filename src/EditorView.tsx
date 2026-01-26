@@ -37,7 +37,7 @@ const EditorView: React.FC<EditorViewProps> = ({
     const [findText, setFindText] = useState('');
     const [replaceText, setReplaceText] = useState('');
     const [matchIndex, setMatchIndex] = useState(-1);
-    const [matches, setMatches] = useState<number[]>([]);
+
     const [showProps, setShowProps] = useState(false);
     const [showRename, setShowRename] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -56,9 +56,15 @@ const EditorView: React.FC<EditorViewProps> = ({
     // --- State: Scrollbars ---
     const [editorScroll, setEditorScroll] = useState({ top: 0, height: 40, active: false });
     const [tocScroll, setTocScroll] = useState({ top: 0, height: 40, active: false });
+    const lastSelection = useRef({ line: 0, col: 0 });
+    const pendingJump = useRef<number | null>(null);
 
     // --- Refs ---
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const [content, setContent] = useState('');
+    const [matches, setMatches] = useState<number[]>([]);
+
+    // --- Refs ---
+
     const tocListRef = useRef<HTMLDivElement>(null);
     const lineNumsRef = useRef<HTMLDivElement>(null);
     const timeouts = useRef<Record<string, number>>({});
@@ -67,13 +73,18 @@ const EditorView: React.FC<EditorViewProps> = ({
 
     const curNote = useMemo(() => notes.find(n => n.id === curId), [notes, curId]);
 
+    useEffect(() => {
+        if (curNote?.content) setContent(curNote.content);
+    }, [curNote]);
+
     const syncNativeText = async () => {
         try {
             const { content } = await SoraEditor.getText();
-            if (content !== undefined && textareaRef.current) {
-                textareaRef.current.value = content;
-            }
-        } catch (e) { }
+            if (content !== undefined) setContent(content);
+            const sel = await SoraEditor.getSelection();
+            if (sel) lastSelection.current = { line: sel.line, col: sel.column };
+            return content;
+        } catch (e) { return ''; }
     };
 
     const getLineCol = (text: string, pos: number) => {
@@ -103,18 +114,41 @@ const EditorView: React.FC<EditorViewProps> = ({
         return () => { if (uiTimeout.current) window.clearTimeout(uiTimeout.current); };
     }, [isReadOnly, showReadOnlyUI]);
 
+    const getPosFromLineCol = (text: string, line: number, col: number) => {
+        const lines = text.split('\n');
+        let pos = 0;
+        for (let i = 0; i < line; i++) pos += lines[i].length + 1;
+        return pos + col;
+    };
+
+    const handleAutoSave = useCallback((newContent: string) => {
+        setLiveLineCount(newContent.split('\n').length);
+        if (!autoSave) return;
+        window.clearTimeout(timeouts.current.save);
+        timeouts.current.save = window.setTimeout(async () => {
+            try {
+                await Filesystem.writeFile({ path: `${DIR}/${curId}`, data: newContent, directory: Directory.Documents, encoding: Encoding.UTF8 });
+            } catch (e) { }
+        }, 300);
+    }, [autoSave, curId]);
+
+    useEffect(() => {
+        const sub = SoraEditor.addListener('onContentChange', async () => {
+            const { content } = await SoraEditor.getText();
+            setContent(content);
+            handleAutoSave(content);
+        });
+        return () => { sub.then((h: any) => h.remove()); };
+    }, [handleAutoSave]);
+
     useEffect(() => {
         const shouldHideNative = moreOpen || tocOpen || showEditorSettings || showSaveConfirm || showRename || showProps;
         if (shouldHideNative) {
             syncNativeText().then(() => {
                 SoraEditor.close().catch(() => { });
-                if (textareaRef.current) {
-                    textareaRef.current.style.opacity = '1';
-                    textareaRef.current.style.pointerEvents = 'auto';
-                }
             });
         } else {
-            setTimeout(() => {
+            setTimeout(async () => {
                 const header = document.getElementById('editor-header');
                 let topOffset = (isReadOnly && !showReadOnlyUI) ? 0 : (header ? header.clientHeight : 60);
                 if (searchOpen && (!isReadOnly || showReadOnlyUI)) {
@@ -122,114 +156,111 @@ const EditorView: React.FC<EditorViewProps> = ({
                     if (searchPanel) topOffset += searchPanel.clientHeight;
                     else topOffset += 100;
                 }
-                const currentContent = textareaRef.current ? textareaRef.current.value : (curNote?.content || '');
-                const cursor = textareaRef.current ? textareaRef.current.selectionStart : 0;
 
                 let bgToPass = editorBg;
                 if (bgToPass === 'default' || bgToPass === 'transparent') {
                     bgToPass = theme === 'dark' ? '#000000' : '#FFFFFF';
                 }
 
+                let targetLine = lastSelection.current.line;
+                let targetCol = lastSelection.current.col;
+
+                if (pendingJump.current !== null) {
+                    const lc = getLineCol(content || curNote?.content || '', pendingJump.current);
+                    targetLine = lc.line;
+                    targetCol = lc.col;
+                    pendingJump.current = null;
+                }
+
                 SoraEditor.start({
-                    content: currentContent,
+                    content: content || curNote?.content || '',
                     top: topOffset,
                     left: showLineNums ? 0 : 12,
                     fontSize: fontSize,
                     showLineNumbers: showLineNums,
                     backgroundColor: bgToPass,
                     wordWrap: wordWrap,
-                    editable: !isReadOnly
+                    editable: !isReadOnly,
+                    selectionLine: targetLine,
+                    selectionColumn: targetCol
                 }).then(() => {
-                    const { line, col } = getLineCol(currentContent, cursor);
-                    SoraEditor.setSelection({ line, column: col });
-                    lastNativeState.current = { curId: curId || '', top: topOffset, left: 0, fontSize };
+                    // Update tracker
+                    lastSelection.current = { line: targetLine, col: targetCol };
                 }).catch((e: any) => console.error("Sora start failed", e));
-
-                if (textareaRef.current) {
-                    textareaRef.current.style.opacity = '0';
-                    textareaRef.current.style.pointerEvents = 'none';
-                }
             }, 100);
         }
-    }, [moreOpen, tocOpen, searchOpen, showEditorSettings, showSaveConfirm, showRename, showProps, curId, curNote, fontSize, showLineNums, editorBg, theme, wordWrap, isReadOnly, showReadOnlyUI]);
+    }, [moreOpen, tocOpen, searchOpen, showEditorSettings, showSaveConfirm, showRename, showProps, curId, curNote, fontSize, showLineNums, editorBg, theme, wordWrap, isReadOnly, showReadOnlyUI, content]);
 
-    useEffect(() => {
-        if (curNote?.content) {
-            setLiveLineCount(curNote.content.split('\n').length);
-        }
-    }, [curNote]);
-
-    const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setLiveLineCount(e.target.value.split('\n').length);
-        if (!autoSave) return;
-        window.clearTimeout(timeouts.current.save);
-        timeouts.current.save = window.setTimeout(async () => {
-            try {
-                await Filesystem.writeFile({ path: `${DIR}/${curId}`, data: e.target.value, directory: Directory.Documents, encoding: Encoding.UTF8 });
-            } catch (e) { }
-        }, 300);
-    };
-
-    const handleFind = useCallback((text: string, scroll = true, prefPos?: number) => {
-        if (!text || !textareaRef.current) { setMatches([]); setMatchIndex(-1); return; }
-        const val = textareaRef.current.value, newM: number[] = [];
+    const handleFind = useCallback(async (text: string, scroll = true, prefPos?: number) => {
+        if (!text) { setMatches([]); setMatchIndex(-1); return; }
+        const val = content; // use state
+        const newM: number[] = [];
         let p = val.indexOf(text);
         while (p !== -1) { newM.push(p); p = val.indexOf(text, p + 1); }
         setMatches(newM);
         if (newM.length) {
-            const idx = prefPos !== undefined ? Math.max(0, newM.findIndex(m => m >= prefPos)) : 0;
+            let idx = 0;
+            if (prefPos !== undefined) {
+                idx = Math.max(0, newM.findIndex(m => m >= prefPos));
+            } else {
+                // Try to get current cursor from native to find next match relative to it
+                try {
+                    const sel = await SoraEditor.getSelection();
+                    if (sel) {
+                        const currentPos = getPosFromLineCol(val, sel.line, sel.column);
+                        idx = Math.max(0, newM.findIndex(m => m >= currentPos));
+                    }
+                } catch (e) { }
+            }
             setMatchIndex(idx);
             if (scroll) {
-                const pos = newM[idx];
-                textareaRef.current.focus(); textareaRef.current.setSelectionRange(pos, pos + text.length);
-                scrollToPos(pos);
+                scrollToPos(newM[idx]);
             }
         } else setMatchIndex(-1);
-    }, []);
+    }, [content]);
 
     const moveMatch = (delta: number) => {
         if (!matches.length) return;
         const next = (matchIndex + delta + matches.length) % matches.length;
         setMatchIndex(next);
-        const pos = matches[next];
-        textareaRef.current?.focus(); textareaRef.current?.setSelectionRange(pos, pos + findText.length);
-        scrollToPos(pos);
+        scrollToPos(matches[next]);
     };
 
     const handleReplace = (all = false) => {
-        if (!textareaRef.current || (!all && matchIndex === -1)) return;
-        const ta = textareaRef.current, content = ta.value;
+        // Logic needs native update. 
+        // We can update state 'content' then calling syncNativeText? No, we set Text.
+        // Or setText on SoraEditor.
+        if (!matches.length && !all) return;
         const nextVal = all ? content.split(findText).join(replaceText) : content.substring(0, matches[matchIndex]) + replaceText + content.substring(matches[matchIndex] + findText.length);
-        ta.value = nextVal; handleInput({ target: { value: nextVal } } as any);
+
+        setContent(nextVal);
+        SoraEditor.setText({ content: nextVal });
+        handleAutoSave(nextVal);
         setTimeout(() => handleFind(findText, !all), 0);
     };
 
     const scrollToPos = (pos: number) => {
-        const ta = textareaRef.current; if (!ta) return;
-        const ratio = pos / (ta.value.length || 1);
-        ta.scrollTop = ratio * ta.scrollHeight;
-        if (lineNumsRef.current) lineNumsRef.current.scrollTop = ta.scrollTop;
-        const { line, col } = getLineCol(ta.value, pos);
+        const { line, col } = getLineCol(content, pos);
         SoraEditor.setSelection({ line, column: col });
     };
 
-    const syncScroll = (type: 'editor' | 'toc') => {
-        const el = { editor: textareaRef, toc: tocListRef }[type].current;
-        const state = { editor: editorScroll, toc: tocScroll }[type];
-        const setter = { editor: setEditorScroll, toc: setTocScroll }[type];
+    // Toc scroll sync (one way, sidebar only)
+    const syncScroll = (type: 'toc') => {
+        const el = tocListRef.current;
         if (!el || drag.current.active) return;
-        if (type === 'editor' && lineNumsRef.current) lineNumsRef.current.scrollTop = el.scrollTop;
         const ratio = el.scrollTop / (el.scrollHeight - el.clientHeight || 1);
-        setter({ ...state, top: ratio * (el.clientHeight - state.height), active: true });
+        setTocScroll(s => ({ ...s, top: ratio * (el.clientHeight - s.height), active: true }));
         window.clearTimeout(timeouts.current[type]);
-        timeouts.current[type] = window.setTimeout(() => setter(s => ({ ...s, active: false })), 3000);
+        timeouts.current[type] = window.setTimeout(() => setTocScroll(s => ({ ...s, active: false })), 3000);
     };
 
-    const handleDrag = (e: React.MouseEvent | React.TouchEvent, type: 'editor' | 'toc') => {
-        const el = { editor: textareaRef, toc: tocListRef }[type].current;
-        const setter = { editor: setEditorScroll, toc: setTocScroll }[type];
-        const state = { editor: editorScroll, toc: tocScroll }[type];
+    const handleDrag = (e: React.MouseEvent | React.TouchEvent, type: 'toc') => {
+        // ... existing drag logic for toc ...
+        const el = tocListRef.current;
         if (!el) return;
+        // ... (keep logic, simplified for brevity in replacement if needed, but I'll try to preserve)
+        const setter = setTocScroll;
+        const state = tocScroll;
         drag.current = { active: true, startY: 'touches' in e ? e.touches[0].clientY : e.clientY, startScroll: el.scrollTop };
         setter(s => ({ ...s, active: true }));
         const onMove = (me: MouseEvent | TouchEvent) => {
@@ -250,15 +281,15 @@ const EditorView: React.FC<EditorViewProps> = ({
     };
 
     const chapters = useMemo(() => {
-        if (!curNote?.content) return [];
+        if (!content) return [];
         if (tocMode === 'chars') {
-            const len = curNote.content.length;
+            const len = content.length;
             const count = Math.ceil(len / 2000);
             return Array.from({ length: count }, (_, i) => ({
                 index: i, pos: i * 2000, title: t.chapter.replace('{0}', (i + 1).toString())
             }));
         } else {
-            const lines = curNote.content.split('\n');
+            const lines = content.split('\n');
             const count = Math.ceil(lines.length / 100);
             return Array.from({ length: count }, (_, i) => {
                 const lineIndex = i * 100;
@@ -266,12 +297,21 @@ const EditorView: React.FC<EditorViewProps> = ({
                 return { index: i, pos, title: lang === 'zh' ? `第 ${i * 100 + 1} 行` : `Line ${i * 100 + 1}` };
             });
         }
-    }, [curNote?.content, t.chapter, tocMode, lang]);
+    }, [content, t.chapter, tocMode, lang]);
 
-    const handleShowProps = () => {
-        if (!textareaRef.current) return;
-        const txt = textareaRef.current.value, sel = textareaRef.current.selectionStart;
-        setPropInfo({ lines: txt.split('\n').length, cursorLine: txt.substring(0, sel).split('\n').length, chapter: t.chapter.replace('{0}', (Math.floor(sel / 2000) + 1).toString()) });
+    const handleShowProps = async () => {
+        let lines = content.split('\n').length;
+        let cursorLine = 1;
+        let chapter = '';
+        try {
+            const sel = await SoraEditor.getSelection();
+            if (sel) {
+                cursorLine = sel.line + 1;
+                const pos = getPosFromLineCol(content, sel.line, sel.column);
+                chapter = t.chapter.replace('{0}', (Math.floor(pos / 2000) + 1).toString());
+            }
+        } catch (e) { }
+        setPropInfo({ lines, cursorLine, chapter });
         setShowProps(true); setMoreOpen(false);
     };
 
@@ -303,34 +343,25 @@ const EditorView: React.FC<EditorViewProps> = ({
 
     useEffect(() => {
         const sub = CapApp.addListener('backButton', async () => {
-            // In EditorView, handle back
             if (autoSave) {
                 await syncNativeText();
                 handleCloseEditor(true);
             } else {
                 await syncNativeText();
-                const ta = textareaRef.current;
-                const content = ta?.value || '';
+                const currentContent = content || '';
                 const original = curNote?.content || '';
-                if (content !== original) { setShowSaveConfirm(true); }
+                if (currentContent !== original) { setShowSaveConfirm(true); }
                 else handleCloseEditor(false);
             }
         });
         return () => {
             sub?.then((h: any) => h.remove());
-            // Crucial: Close native editor when unmounting!
             SoraEditor.close().catch(() => { });
-            // Restore textarea visibility just in case
-            if (textareaRef.current) {
-                textareaRef.current.style.opacity = '1';
-                textareaRef.current.style.pointerEvents = 'auto';
-            }
         };
-    }, [autoSave, curNote]);
+    }, [autoSave, curNote, content]);
 
     const handleCloseEditor = async (save = true) => {
-        if (curId && textareaRef.current && save) {
-            const content = textareaRef.current.value;
+        if (curId && save) {
             const note = notes.find(n => n.id === curId);
             let finalId = curId;
             if (note?.isNew && content.trim()) {
@@ -359,9 +390,22 @@ const EditorView: React.FC<EditorViewProps> = ({
     return (
         <div className={`view ${curId ? '' : 'view-hidden'}`} onClick={() => { if (isReadOnly) setShowReadOnlyUI(prev => !prev); }}>
             <header id="editor-header" style={{ transform: (isReadOnly && !showReadOnlyUI) ? 'translateY(-100%)' : 'none', transition: 'transform 0.3s' }}>
-                <button className="btn-icon" onClick={() => { if (!textareaRef.current) return; setCurChapterIndex(Math.floor((textareaRef.current.value.substring(0, textareaRef.current.selectionStart).split('\n').length - 1) / 100)); setTocOpen(true); }}><Icon d="M4 6h16M4 12h16M4 18h16" /></button>
+                <button className="btn-icon" onClick={async () => {
+                    try {
+                        const sel = await SoraEditor.getSelection();
+                        if (sel) {
+                            const lines = content.split('\n');
+                            const pos = getPosFromLineCol(content, sel.line, sel.column);
+                            setCurChapterIndex(Math.floor(lines.slice(0, sel.line).length / 100)); // Rough estimate if line mode or calc from pos
+                            // Re-calc chapter index based on MODE.
+                            if (tocMode === 'chars') setCurChapterIndex(Math.floor(pos / 2000));
+                            else setCurChapterIndex(Math.floor(sel.line / 100));
+                        }
+                    } catch (e) { }
+                    setTocOpen(true);
+                }}><Icon d="M4 6h16M4 12h16M4 18h16" /></button>
                 <div style={{ display: 'flex' }}>
-                    <button className="btn-icon" onClick={() => { setSearchOpen(!searchOpen); if (!searchOpen && findText) setTimeout(() => { const p = textareaRef.current?.selectionStart || 0; setLastEditorPos(p); handleFind(findText, true, p); }, 0); }} style={{ marginLeft: 10 }}><Icon d="M21 21l-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" /></button>
+                    <button className="btn-icon" onClick={() => { setSearchOpen(!searchOpen); }} style={{ marginLeft: 10 }}><Icon d="M21 21l-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" /></button>
                     <button className="btn-icon" onClick={() => setMoreOpen(!moreOpen)} style={{ marginLeft: 10 }}><Icon d="M12 12m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0 M12 5m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0 M12 19m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0" /></button>
                 </div>
             </header>
@@ -369,8 +413,8 @@ const EditorView: React.FC<EditorViewProps> = ({
                 <div className="search-replace-panel">
                     <div className="search-row">
                         <div className="search-input-wrapper">
-                            <div onClick={() => { const p = textareaRef.current?.selectionStart || 0; setLastEditorPos(p); handleFind(findText, true, p); }} style={{ cursor: 'pointer', display: 'flex' }}><Icon d="M21 21l-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" size={16} style={{ margin: '0 8px' }} /></div>
-                            <input placeholder={t.find} value={findText} onChange={e => { setFindText(e.target.value); handleFind(e.target.value, false, lastEditorPos); }} onKeyDown={e => e.key === 'Enter' && handleFind(findText, true, lastEditorPos)} autoFocus />
+                            <div onClick={() => { handleFind(findText, true); }} style={{ cursor: 'pointer', display: 'flex' }}><Icon d="M21 21l-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" size={16} style={{ margin: '0 8px' }} /></div>
+                            <input placeholder={t.find} value={findText} onChange={e => { setFindText(e.target.value); handleFind(e.target.value, false); }} onKeyDown={e => e.key === 'Enter' && handleFind(findText, true)} autoFocus />
                             <div className="search-meta">{matches.length ? `${matchIndex + 1}/${matches.length}` : '0/0'}</div>
                         </div>
                         <button className="btn-small" onClick={() => moveMatch(-1)}>↑</button><button className="btn-small" onClick={() => moveMatch(1)}>↓</button>
@@ -379,15 +423,11 @@ const EditorView: React.FC<EditorViewProps> = ({
                 </div>
             )}
             <div className="editor-container" style={{ position: 'relative', flex: 1, display: 'flex', overflow: 'hidden' }}>
-                <textarea key={curId} ref={textareaRef} id="editor-area" placeholder={t.placeholder} defaultValue={curNote?.content || ''}
-                    style={{ fontSize: `${fontSize}px`, paddingLeft: showLineNums ? 60 : 32, whiteSpace: wordWrap ? 'pre-wrap' : 'pre' }}
-                    onChange={handleInput} onScroll={() => syncScroll('editor')} />
-                {showLineNums && (
-                    <div id="line-nums" ref={lineNumsRef} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 50, background: 'rgba(128,128,128,0.05)', color: 'var(--text-dim)', fontSize: fontSize * 0.7, padding: '20px 5px', textAlign: 'right', pointerEvents: 'none', lineHeight: 1.6, overflow: 'hidden', borderRight: '1px solid var(--border)', whiteSpace: 'pre' }}>
-                        {lineNumbers}
-                    </div>
-                )}
-                <div className={`custom-scrollbar ${editorScroll.active ? 'visible' : ''}`} style={{ top: 0, right: 2 }}><div className="scrollbar-thumb" style={{ top: editorScroll.top, height: editorScroll.height }} onMouseDown={e => handleDrag(e, 'editor')} onTouchStart={e => handleDrag(e, 'editor')} /></div>
+                {/* Native editor occupies this space. We leave it empty or show a placeholder? 
+                   Actually, SoraEditor is a separate view on top. 
+                   We keep this container to define the layout area, but it's empty.
+                   Maybe show loading if native hasn't started?
+               */}
             </div>
 
             {tocOpen && (
@@ -403,7 +443,10 @@ const EditorView: React.FC<EditorViewProps> = ({
                         </div>
                         <div className="toc-list" ref={tocListRef} onScroll={() => syncScroll('toc')} style={{ flex: 1, overflowY: 'auto' }}>
                             {chapters.map(ch => (
-                                <div key={ch.index} className={`toc-item ${ch.index === curChapterIndex ? 'active' : ''}`} onClick={() => { if (textareaRef.current) { textareaRef.current.setSelectionRange(ch.pos, ch.pos); scrollToPos(ch.pos); } setTocOpen(false); }}>{ch.title}</div>
+                                <div key={ch.index} className={`toc-item ${ch.index === curChapterIndex ? 'active' : ''}`} onClick={() => {
+                                    // alert("TOC Clicked: " + ch.pos); 
+                                    pendingJump.current = ch.pos; setTocOpen(false);
+                                }}>{ch.title}</div>
                             ))}
                         </div>
                         <div className={`custom-scrollbar ${tocScroll.active ? 'visible' : ''}`} style={{ top: 60 }}><div className="scrollbar-thumb" style={{ top: tocScroll.top, height: tocScroll.height }} onMouseDown={e => handleDrag(e, 'toc')} onTouchStart={e => handleDrag(e, 'toc')} /></div>

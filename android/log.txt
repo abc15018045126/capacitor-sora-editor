@@ -31,23 +31,23 @@ The current default is 'false'.
 > Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :sora-editor-src:language-textmate:writeDebugAarMetadata UP-TO-DATE
-> Task :capacitor-android:preBuild UP-TO-DATE
-> Task :capacitor-android:preDebugBuild UP-TO-DATE
 > Task :sora-editor-src:editor:preBuild UP-TO-DATE
+> Task :capacitor-android:preBuild UP-TO-DATE
 > Task :sora-editor-src:editor:preDebugBuild UP-TO-DATE
+> Task :capacitor-android:preDebugBuild UP-TO-DATE
 > Task :capacitor-android:writeDebugAarMetadata UP-TO-DATE
+> Task :sora-editor-src:editor:writeDebugAarMetadata UP-TO-DATE
 > Task :capacitor-app:preBuild UP-TO-DATE
 > Task :capacitor-app:preDebugBuild UP-TO-DATE
-> Task :sora-editor-src:editor:writeDebugAarMetadata UP-TO-DATE
-> Task :capacitor-app:writeDebugAarMetadata UP-TO-DATE
 > Task :sora-editor-src:language-textmate:processDebugNavigationResources UP-TO-DATE
+> Task :capacitor-app:writeDebugAarMetadata UP-TO-DATE
+> Task :sora-editor-src:editor:processDebugNavigationResources UP-TO-DATE
 > Task :capacitor-cordova-android-plugins:preBuild UP-TO-DATE
 > Task :capacitor-cordova-android-plugins:preDebugBuild UP-TO-DATE
-> Task :sora-editor-src:editor:processDebugNavigationResources UP-TO-DATE
+> Task :sora-editor-src:language-textmate:generateDebugResources UP-TO-DATE
 > Task :capacitor-cordova-android-plugins:writeDebugAarMetadata UP-TO-DATE
 > Task :capacitor-filesystem:preBuild UP-TO-DATE
 > Task :capacitor-filesystem:preDebugBuild UP-TO-DATE
-> Task :sora-editor-src:language-textmate:generateDebugResources UP-TO-DATE
 > Task :capacitor-filesystem:writeDebugAarMetadata UP-TO-DATE
 > Task :sora-editor-src:language-textmate:packageDebugResources UP-TO-DATE
 > Task :sora-editor-src:editor:generateDebugResources UP-TO-DATE
@@ -79,31 +79,15 @@ The current default is 'false'.
 > Task :capacitor-app:packageDebugResources UP-TO-DATE
 > Task :capacitor-cordova-android-plugins:generateDebugResValues UP-TO-DATE
 > Task :capacitor-cordova-android-plugins:generateDebugResources UP-TO-DATE
-> Task :sora-editor-src:editor:compileDebugKotlin UP-TO-DATE
-> Task :sora-editor-src:editor:javaPreCompileDebug UP-TO-DATE
 > Task :capacitor-cordova-android-plugins:packageDebugResources UP-TO-DATE
 > Task :capacitor-filesystem:generateDebugResValues UP-TO-DATE
 > Task :capacitor-filesystem:generateDebugResources UP-TO-DATE
-> Task :sora-editor-src:editor:compileDebugJavaWithJavac UP-TO-DATE
-> Task :sora-editor-src:editor:bundleLibCompileToJarDebug UP-TO-DATE
-> Task :sora-editor-src:language-textmate:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :sora-editor-src:language-textmate:generateDebugBuildConfig UP-TO-DATE
-> Task :sora-editor-src:oniguruma-native:preBuild UP-TO-DATE
-> Task :sora-editor-src:oniguruma-native:preDebugBuild UP-TO-DATE
 > Task :capacitor-filesystem:packageDebugResources UP-TO-DATE
-> Task :sora-editor-src:oniguruma-native:generateDebugResources UP-TO-DATE
-> Task :sora-editor-src:oniguruma-native:packageDebugResources UP-TO-DATE
-> Task :sora-editor-src:oniguruma-native:processDebugNavigationResources UP-TO-DATE
 > Task :app:mapDebugSourceSetPaths UP-TO-DATE
-> Task :sora-editor-src:oniguruma-native:parseDebugLocalResources UP-TO-DATE
 > Task :app:generateDebugResources UP-TO-DATE
-> Task :sora-editor-src:oniguruma-native:generateDebugRFile UP-TO-DATE
-> Task :sora-editor-src:oniguruma-native:javaPreCompileDebug UP-TO-DATE
 > Task :app:mergeDebugResources UP-TO-DATE
 > Task :app:packageDebugResources UP-TO-DATE
-> Task :sora-editor-src:oniguruma-native:compileDebugJavaWithJavac UP-TO-DATE
 > Task :app:parseDebugLocalResources UP-TO-DATE
-> Task :sora-editor-src:oniguruma-native:bundleLibCompileToJarDebug UP-TO-DATE
 > Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
 > Task :app:extractDeepLinksDebug UP-TO-DATE
 > Task :capacitor-android:extractDeepLinksDebug UP-TO-DATE
@@ -120,39 +104,62 @@ The current default is 'false'.
 > Task :capacitor-android:compileDebugLibraryResources UP-TO-DATE
 > Task :capacitor-android:parseDebugLocalResources UP-TO-DATE
 > Task :capacitor-android:generateDebugRFile UP-TO-DATE
+> Task :sora-editor-src:editor:compileDebugKotlin UP-TO-DATE
 > Task :capacitor-app:compileDebugLibraryResources UP-TO-DATE
+> Task :sora-editor-src:editor:javaPreCompileDebug UP-TO-DATE
 > Task :capacitor-app:parseDebugLocalResources UP-TO-DATE
 > Task :capacitor-app:generateDebugRFile UP-TO-DATE
 > Task :capacitor-cordova-android-plugins:compileDebugLibraryResources UP-TO-DATE
+> Task :sora-editor-src:editor:compileDebugJavaWithJavac UP-TO-DATE
 > Task :capacitor-cordova-android-plugins:parseDebugLocalResources UP-TO-DATE
+> Task :sora-editor-src:editor:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :sora-editor-src:language-textmate:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sora-editor-src:language-textmate:generateDebugBuildConfig UP-TO-DATE
 > Task :capacitor-cordova-android-plugins:generateDebugRFile UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:preBuild UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:preDebugBuild UP-TO-DATE
 > Task :capacitor-filesystem:compileDebugLibraryResources UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:generateDebugResources UP-TO-DATE
 > Task :capacitor-filesystem:parseDebugLocalResources UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:packageDebugResources UP-TO-DATE
 > Task :capacitor-filesystem:generateDebugRFile UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:processDebugNavigationResources UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:parseDebugLocalResources UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:generateDebugRFile UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:javaPreCompileDebug UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:compileDebugJavaWithJavac UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:bundleLibCompileToJarDebug UP-TO-DATE
 > Task :app:processDebugResources UP-TO-DATE
 > Task :capacitor-android:javaPreCompileDebug UP-TO-DATE
-> Task :sora-editor-src:language-textmate:compileDebugKotlin UP-TO-DATE
-> Task :sora-editor-src:language-textmate:javaPreCompileDebug UP-TO-DATE
 > Task :capacitor-android:compileDebugJavaWithJavac UP-TO-DATE
 > Task :capacitor-android:bundleLibCompileToJarDebug UP-TO-DATE
 > Task :capacitor-app:javaPreCompileDebug UP-TO-DATE
+> Task :capacitor-app:compileDebugJavaWithJavac UP-TO-DATE
+> Task :capacitor-app:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:javaPreCompileDebug UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:compileDebugJavaWithJavac NO-SOURCE
+> Task :capacitor-cordova-android-plugins:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :capacitor-filesystem:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sora-editor-src:language-textmate:compileDebugKotlin UP-TO-DATE
+> Task :sora-editor-src:language-textmate:javaPreCompileDebug UP-TO-DATE
+> Task :capacitor-filesystem:compileDebugKotlin UP-TO-DATE
+> Task :capacitor-filesystem:javaPreCompileDebug UP-TO-DATE
+> Task :capacitor-filesystem:compileDebugJavaWithJavac NO-SOURCE
 > Task :sora-editor-src:language-textmate:compileDebugJavaWithJavac UP-TO-DATE
+> Task :capacitor-filesystem:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
 > Task :sora-editor-src:language-textmate:bundleLibCompileToJarDebug UP-TO-DATE
 > Task :sora-editor-src:language-textmate:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
 > Task :sora-editor-src:language-textmate:mergeDebugAssets UP-TO-DATE
 > Task :sora-editor-src:editor:generateDebugAssets UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
 > Task :sora-editor-src:editor:mergeDebugAssets UP-TO-DATE
 > Task :sora-editor-src:editor:bundleLibRuntimeToJarDebug UP-TO-DATE
 > Task :sora-editor-src:language-textmate:bundleLibRuntimeToJarDebug UP-TO-DATE
-> Task :capacitor-app:compileDebugJavaWithJavac UP-TO-DATE
 > Task :sora-editor-src:language-textmate:processDebugJavaRes UP-TO-DATE
-> Task :capacitor-app:bundleLibCompileToJarDebug UP-TO-DATE
-> Task :capacitor-cordova-android-plugins:javaPreCompileDebug UP-TO-DATE
 > Task :sora-editor-src:editor:processDebugJavaRes UP-TO-DATE
-> Task :capacitor-cordova-android-plugins:compileDebugJavaWithJavac NO-SOURCE
 > Task :sora-editor-src:editor:bundleLibRuntimeToDirDebug UP-TO-DATE
-> Task :capacitor-cordova-android-plugins:bundleLibCompileToJarDebug UP-TO-DATE
-> Task :capacitor-filesystem:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :sora-editor-src:language-textmate:bundleLibRuntimeToDirDebug UP-TO-DATE
 > Task :sora-editor-src:language-textmate:mergeDebugJniLibFolders UP-TO-DATE
 > Task :sora-editor-src:language-textmate:mergeDebugNativeLibs NO-SOURCE
@@ -160,15 +167,6 @@ The current default is 'false'.
 > Task :sora-editor-src:editor:mergeDebugJniLibFolders UP-TO-DATE
 > Task :sora-editor-src:editor:mergeDebugNativeLibs NO-SOURCE
 > Task :sora-editor-src:editor:copyDebugJniLibsProjectOnly UP-TO-DATE
-> Task :capacitor-filesystem:compileDebugKotlin UP-TO-DATE
-> Task :capacitor-filesystem:javaPreCompileDebug UP-TO-DATE
-> Task :capacitor-filesystem:compileDebugJavaWithJavac NO-SOURCE
-> Task :capacitor-filesystem:bundleLibCompileToJarDebug UP-TO-DATE
-> Task :app:compileDebugKotlin UP-TO-DATE
-> Task :app:javaPreCompileDebug UP-TO-DATE
-> Task :app:compileDebugJavaWithJavac NO-SOURCE
-> Task :app:mergeDebugShaders UP-TO-DATE
-> Task :app:compileDebugShaders NO-SOURCE
 > Task :app:generateDebugAssets UP-TO-DATE
 > Task :capacitor-android:mergeDebugShaders UP-TO-DATE
 > Task :capacitor-android:compileDebugShaders NO-SOURCE
@@ -193,21 +191,16 @@ The current default is 'false'.
 > Task :capacitor-android:bundleLibRuntimeToJarDebug UP-TO-DATE
 > Task :capacitor-cordova-android-plugins:bundleLibRuntimeToJarDebug UP-TO-DATE
 > Task :app:desugarDebugFileDependencies UP-TO-DATE
-> Task :app:dexBuilderDebug UP-TO-DATE
-> Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
-> Task :app:processDebugJavaRes UP-TO-DATE
 > Task :capacitor-android:processDebugJavaRes NO-SOURCE
 > Task :capacitor-app:processDebugJavaRes NO-SOURCE
 > Task :capacitor-cordova-android-plugins:processDebugJavaRes NO-SOURCE
 > Task :capacitor-filesystem:processDebugJavaRes UP-TO-DATE
-> Task :app:mergeDebugJavaResource UP-TO-DATE
 > Task :app:checkDebugDuplicateClasses UP-TO-DATE
 > Task :app:mergeExtDexDebug UP-TO-DATE
 > Task :capacitor-app:bundleLibRuntimeToDirDebug UP-TO-DATE
 > Task :capacitor-filesystem:bundleLibRuntimeToDirDebug UP-TO-DATE
 > Task :capacitor-android:bundleLibRuntimeToDirDebug UP-TO-DATE
 > Task :capacitor-cordova-android-plugins:bundleLibRuntimeToDirDebug UP-TO-DATE
-> Task :app:mergeProjectDexDebug UP-TO-DATE
 > Task :app:mergeDebugJniLibFolders UP-TO-DATE
 > Task :capacitor-android:mergeDebugJniLibFolders UP-TO-DATE
 > Task :app:mergeLibDexDebug UP-TO-DATE
@@ -227,17 +220,18 @@ The current default is 'false'.
 > Task :app:validateSigningDebug UP-TO-DATE
 > Task :app:writeDebugAppMetadata UP-TO-DATE
 > Task :app:writeDebugSigningConfigVersions UP-TO-DATE
-> Task :app:packageDebug FAILED
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///C:/Users/abc15/Documents/GitHub/notes/android/app/src/main/java/com/abc15018045126/notes/compose/ui/EditorScreen.kt:196:40 Unresolved reference 'selection'.
 
 
-[Incubating] Problems report is available at: file:///C:/Users/abc15/Documents/GitHub/notes/android/build/reports/problems/problems-report.html
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Execution failed for task ':app:packageDebug'.
-> java.io.IOException: Unable to delete directory 'C:\Users\abc15\Documents\GitHub\notes\android\app\build\outputs\apk\debug'
-    Failed to delete some children. This might happen because a process has files open or has its working directory set in the target directory.
-    - C:\Users\abc15\Documents\GitHub\notes\android\app\build\outputs\apk\debug\app-debug.apk
+[Incubating] Problems report is available at: file:///C:/Users/abc15/Documents/GitHub/notes/android/build/reports/problems/problems-report.html
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
@@ -251,5 +245,5 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 4s
-168 actionable tasks: 1 executed, 167 up-to-date
+BUILD FAILED in 3s
+162 actionable tasks: 1 executed, 161 up-to-date

@@ -63,6 +63,9 @@ class SoraEditorPlugin : Plugin() {
                         }
                         false // Allow editor to handle the event too
                     }
+                    subscribeEvent(io.github.rosemoe.sora.event.ContentChangeEvent::class.java) { event, _ ->
+                        notifyListeners("onContentChange", JSObject())
+                    }
                 }
                 
                 val params = FrameLayout.LayoutParams(
@@ -120,7 +123,22 @@ class SoraEditorPlugin : Plugin() {
             editor!!.setTextSize(fontSize)
             editor!!.visibility = View.VISIBLE
             editor!!.bringToFront()
+            
+            if (call.hasOption("selectionLine") || call.hasOption("selectionColumn")) {
+                 val l = call.getInt("selectionLine") ?: 0
+                 val c = call.getInt("selectionColumn") ?: 0
+                 editor!!.postDelayed({
+                     try {
+                         editor!!.setSelection(l, c)
+                         editor!!.ensureSelectionVisible()
+                         android.widget.Toast.makeText(context, "Jumping to $l", android.widget.Toast.LENGTH_SHORT).show()
+                     } catch(e: Exception){
+                         android.widget.Toast.makeText(context, "Jump Error: $e", android.widget.Toast.LENGTH_SHORT).show()
+                     }
+                 }, 150)
+            }
         }
+        android.widget.Toast.makeText(context, "Start Called", android.widget.Toast.LENGTH_SHORT).show()
         call.resolve()
     }
 
@@ -140,6 +158,19 @@ class SoraEditorPlugin : Plugin() {
             call.resolve(ret)
         }
     }
+
+    @PluginMethod
+    fun getSelection(call: PluginCall) {
+        val ret = JSObject()
+        activity.runOnUiThread {
+            if (editor != null) {
+                val cursor = editor!!.cursor
+                ret.put("line", cursor.leftLine)
+                ret.put("column", cursor.leftColumn)
+            }
+            call.resolve(ret)
+        }
+    }
     
     @PluginMethod
     fun setText(call: PluginCall) {
@@ -155,7 +186,15 @@ class SoraEditorPlugin : Plugin() {
         val line = call.getInt("line") ?: 0
         val column = call.getInt("column") ?: 0
         activity.runOnUiThread {
-            editor?.setSelection(line, column)
+            editor?.post {
+                try {
+                    editor?.setSelection(line, column)
+                    editor?.ensureSelectionVisible()
+                     android.widget.Toast.makeText(context, "SetSel to ${line+1}", android.widget.Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
         call.resolve()
     }

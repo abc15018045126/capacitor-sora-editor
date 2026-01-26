@@ -7,6 +7,8 @@ import { Icon } from './Icons';
 import ListView from './ListView';
 import EditorView from './EditorView';
 
+import ComposeEditor from './ComposeEditor';
+
 const OpenFolder = registerPlugin<any>('OpenFolder');
 
 const App: React.FC = () => {
@@ -261,7 +263,24 @@ const App: React.FC = () => {
                     t={t} lang={lang} theme={theme} curGroup={curGroup} searchQuery={searchQuery} setSearchQuery={setSearchQuery}
                     filteredNotes={filteredNotes} selectedIds={selectedIds} isSelectMode={isSelectMode}
                     setIsSelectMode={setIsSelectMode} setSelectedIds={setSelectedIds}
-                    onOpenNote={(id) => { setCurId(id); setView('editor'); }}
+                    onOpenNote={async (id) => {
+                        const note = notes.find(n => n.id === id);
+                        if (note) {
+                            try {
+                                // Get the actual file URI
+                                const filePath = `${DIR}/${id}`;
+                                const { uri } = await Filesystem.getUri({
+                                    path: filePath,
+                                    directory: Directory.Documents
+                                });
+                                await ComposeEditor.openEditor({ filePath: uri });
+                                // Reload notes when returning from editor
+                                setTimeout(() => reloadNotes(), 500);
+                            } catch (e) {
+                                console.error('Failed to open editor:', e);
+                            }
+                        }
+                    }}
                     onSidebarOpen={() => setSidebarOpen(true)}
                     onSettingsOpen={() => setView('settings')}
                     onCreateNote={createNewNote}

@@ -1,0 +1,709 @@
+package com.abc15018045126.notes.compose.ui
+
+import android.graphics.Typeface
+import android.view.View
+import androidx.compose.animation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import com.abc15018045126.notes.compose.EditorUiState
+import com.abc15018045126.notes.compose.EditorViewModel
+import io.github.rosemoe.sora.widget.CodeEditor
+import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
+
+class EditorControl {
+    private var editor: CodeEditor? = null
+
+    fun attach(editor: CodeEditor) {
+        this.editor = editor
+    }
+
+    fun jumpTo(pos: Int) {
+        if (editor == null) return 
+        editor?.let {
+            if (androidx.core.view.ViewCompat.isLaidOut(it)) {
+                performJump(it, pos)
+            } else {
+                it.addOnLayoutChangeListener(object : View.OnLayoutChangeListener {
+                    override fun onLayoutChange(v: View?, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int) {
+                        it.removeOnLayoutChangeListener(this)
+                        performJump(it, pos)
+                    }
+                })
+            }
+        }
+    }
+    
+    fun getCurrentCursorPosition(): Int {
+        val editor = this.editor ?: return 0
+        try {
+            val cursor = editor.cursor
+            val targetLine = cursor.leftLine
+            val targetCol = cursor.leftColumn
+            val text = editor.text.toString()
+            
+            var idx = 0
+            var curLine = 0
+            val len = text.length
+            
+            while (idx < len && curLine < targetLine) {
+                if (text[idx] == '\n') {
+                    curLine++
+                }
+                idx++
+            }
+            return (idx + targetCol).coerceAtMost(len)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return 0
+        }
+    }
+
+    private fun performJump(it: CodeEditor, pos: Int) {
+        try {
+            it.requestFocus()
+            val text = it.text.toString()
+            val safePos = pos.coerceIn(0, text.length)
+            
+            var line = 0
+            var col = 0
+            for (i in 0 until safePos) {
+                if (text[i] == '\n') {
+                    line++
+                    col = 0
+                } else {
+                    col++
+                }
+            }
+            
+            it.setSelection(line, col)
+            it.ensureSelectionVisible()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun search(text: String) {
+        try {
+            editor?.searcher?.search(text, io.github.rosemoe.sora.widget.EditorSearcher.SearchOptions(false, false))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun findNext() {
+        try {
+            editor?.searcher?.gotoNext()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun findPrevious() {
+        try {
+            editor?.searcher?.gotoPrevious()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun replace(text: String) {
+        try {
+            editor?.searcher?.replaceThis(text)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun replaceAll(text: String) {
+        try {
+            editor?.searcher?.replaceAll(text)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun stopSearch() {
+        try {
+            editor?.searcher?.stopSearch()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun undo() {
+        editor?.undo()
+    }
+
+    fun redo() {
+        editor?.redo()
+    }
+
+    fun canUndo(): Boolean = editor?.canUndo() ?: false
+    fun canRedo(): Boolean = editor?.canRedo() ?: false
+}
+
+@Composable
+fun SoraEditorView(
+    content: String,
+    onContentChange: (String) -> Unit,
+    onSelectionChange: (Int, Int, Int) -> Unit = { _, _, _ -> },
+    fontSize: Float = 18f,
+    showLineNumbers: Boolean = true,
+    wordWrap: Boolean = false,
+    editable: Boolean = true,
+    backgroundColor: String = "#FFFFFF",
+    modifier: Modifier = Modifier,
+    control: EditorControl? = null,
+    onSearchMatchesChange: (Int, Int) -> Unit = { _, _ -> },
+    onScroll: () -> Unit = {},
+    onTap: () -> Unit = {}
+) {
+    var editorInstance by remember { mutableStateOf<CodeEditor?>(null) }
+    
+    LaunchedEffect(editorInstance, control) {
+        editorInstance?.let { control?.attach(it) }
+    }
+    
+    AndroidView(
+        factory = { context ->
+            CodeEditor(context).apply {
+                setTextSize(fontSize)
+                setTypefaceText(Typeface.MONOSPACE)
+                isLineNumberEnabled = showLineNumbers
+                isWordwrap = wordWrap
+                setEditable(editable)
+                setText(content)
+                
+                setOnClickListener { onTap() }
+                
+                subscribeEvent(io.github.rosemoe.sora.event.SelectionChangeEvent::class.java) { _, _ ->
+                     val cursor = this.cursor
+                     val line = cursor.leftLine
+                     val col = cursor.leftColumn
+                     
+                     val textStr = text.toString()
+                     var charPos = 0
+                     try {
+                         var curL = 0
+                         var i = 0
+                         while (i < textStr.length && curL < line) {
+                             if (textStr[i] == '\n') curL++
+                             i++
+                         }
+                         charPos = i + col
+                     } catch (e: Exception) {}
+                     
+                     onSelectionChange(charPos, line, col)
+                     
+                     if (searcher.hasQuery()) {
+                         onSearchMatchesChange(searcher.currentMatchedPositionIndex + 1, searcher.matchedPositionCount)
+                     }
+                }
+
+                subscribeEvent(io.github.rosemoe.sora.event.PublishSearchResultEvent::class.java) { _, _ ->
+                    onSearchMatchesChange(searcher.currentMatchedPositionIndex + 1, searcher.matchedPositionCount)
+                }
+
+                subscribeEvent(io.github.rosemoe.sora.event.ScrollEvent::class.java) { _, _ ->
+                    onScroll()
+                }
+
+                try {
+                    val color = android.graphics.Color.parseColor(backgroundColor)
+                    val r = android.graphics.Color.red(color)
+                    val g = android.graphics.Color.green(color)
+                    val b = android.graphics.Color.blue(color)
+                    val luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+                    
+                    colorScheme.setColor(EditorColorScheme.WHOLE_BACKGROUND, color)
+                    colorScheme.setColor(EditorColorScheme.LINE_NUMBER_BACKGROUND, color)
+                    
+                    if (luminance < 0.5) {
+                        colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, android.graphics.Color.WHITE)
+                        colorScheme.setColor(EditorColorScheme.LINE_NUMBER, android.graphics.Color.GRAY)
+                    } else {
+                        colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, android.graphics.Color.BLACK)
+                        colorScheme.setColor(EditorColorScheme.LINE_NUMBER, android.graphics.Color.DKGRAY)
+                    }
+                } catch (e: Exception) {}
+                
+                editorInstance = this
+                control?.attach(this)
+            }
+        },
+        update = { view ->
+            view.setTextSize(fontSize)
+            view.isLineNumberEnabled = showLineNumbers
+            view.isWordwrap = wordWrap
+            view.setEditable(editable)
+            
+            if (view.text.toString() != content) {
+                view.setText(content)
+            }
+            
+            try {
+                val color = android.graphics.Color.parseColor(backgroundColor)
+                val r = android.graphics.Color.red(color)
+                val g = android.graphics.Color.green(color)
+                val b = android.graphics.Color.blue(color)
+                val luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+                
+                view.colorScheme.setColor(EditorColorScheme.WHOLE_BACKGROUND, color)
+                view.colorScheme.setColor(EditorColorScheme.LINE_NUMBER_BACKGROUND, color)
+                
+                if (luminance < 0.5) {
+                    view.colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, android.graphics.Color.WHITE)
+                    view.colorScheme.setColor(EditorColorScheme.LINE_NUMBER, android.graphics.Color.GRAY)
+                } else {
+                    view.colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, android.graphics.Color.BLACK)
+                    view.colorScheme.setColor(EditorColorScheme.LINE_NUMBER, android.graphics.Color.DKGRAY)
+                }
+            } catch (e: Exception) {}
+        },
+        modifier = modifier.fillMaxSize()
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditorScreen(
+    uiState: EditorUiState,
+    viewModel: EditorViewModel,
+    onBack: () -> Unit
+) {
+    var showMoreMenu by remember { mutableStateOf(false) }
+    val editorControl = remember { EditorControl() }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    
+    LaunchedEffect(uiState.isReadOnly, uiState.showToolbar) {
+        if (uiState.isReadOnly && uiState.showToolbar) {
+            kotlinx.coroutines.delay(2000)
+            viewModel.setShowToolbar(false)
+        }
+    }
+    
+    val handleBack = {
+        if (uiState.showSettings) {
+            viewModel.setShowSettings(false)
+        } else if (!uiState.autoSave && uiState.isModified) {
+            viewModel.setShowExitConfirmation(true)
+        } else {
+            onBack()
+        }
+    }
+
+    androidx.activity.compose.BackHandler(onBack = handleBack)
+    
+    if (uiState.showSettings) {
+        EditorSettingsScreen(
+            uiState = uiState,
+            viewModel = viewModel,
+            onBack = { viewModel.setShowSettings(false) },
+            onFontSizeChange = { viewModel.setFontSize(it) },
+            onToggleLineNumbers = { viewModel.toggleLineNumbers() },
+            onToggleWordWrap = { viewModel.toggleWordWrap() },
+            onBackgroundColorChange = { viewModel.setBackgroundColor(it) }
+        )
+    } else {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                AnimatedVisibility(
+                    visible = uiState.showToolbar || !uiState.isReadOnly,
+                    enter = slideInVertically() + fadeIn(),
+                    exit = slideOutVertically() + fadeOut()
+                ) {
+                    TopAppBar(
+                        title = { Text(uiState.fileName, fontSize = 16.sp) },
+                        navigationIcon = {
+                            IconButton(onClick = { 
+                                val pos = editorControl.getCurrentCursorPosition()
+                                viewModel.setCursorPosition(pos, uiState.cursorLine - 1, uiState.cursorColumn)
+                                viewModel.setShowToc(true) 
+                            }) {
+                                Icon(Icons.Default.Menu, "目录")
+                            }
+                        },
+                        actions = {
+                        IconButton(onClick = { viewModel.saveFile(context) }) {
+                            Icon(Icons.Default.Save, "保存")
+                        }
+                        IconButton(onClick = { editorControl.undo() }, enabled = editorControl.canUndo()) {
+                            Icon(Icons.Default.Undo, "撤销")
+                        }
+                        IconButton(onClick = { editorControl.redo() }, enabled = editorControl.canRedo()) {
+                            Icon(Icons.Default.Redo, "反撤销")
+                        }
+                        IconButton(onClick = { showMoreMenu = true }) {
+                            Icon(Icons.Default.MoreVert, "More")
+                        }
+                        
+                        DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
+                            DropdownMenuItem(
+                                text = { Text("返回") },
+                                onClick = { showMoreMenu = false; handleBack() },
+                                leadingIcon = { Icon(Icons.Default.ArrowBack, null) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("搜索") },
+                                onClick = { 
+                                    viewModel.setShowSearch(!uiState.showSearch)
+                                    showMoreMenu = false 
+                                },
+                                leadingIcon = { Icon(Icons.Default.Search, null) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("重做 (还原为初始)") },
+                                onClick = { 
+                                    viewModel.updateContent(context, uiState.originalContent)
+                                    showMoreMenu = false 
+                                },
+                                leadingIcon = { Icon(Icons.Default.RestartAlt, null) }
+                            )
+                            DropdownMenuItem(
+                                    text = { Text("只读模式: ${if (uiState.isReadOnly) "ON" else "OFF"}") },
+                                    onClick = { viewModel.toggleReadOnly(); showMoreMenu = false },
+                                    leadingIcon = { Icon(if(uiState.isReadOnly) Icons.Default.Lock else Icons.Default.LockOpen, null) }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("重命名") },
+                                    onClick = { viewModel.setShowRenameDialog(true); showMoreMenu = false },
+                                    leadingIcon = { Icon(Icons.Default.Edit, null) }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("属性") },
+                                    onClick = { viewModel.setShowFileProperties(true); showMoreMenu = false },
+                                    leadingIcon = { Icon(Icons.Default.Info, null) }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("移入回收站") },
+                                    onClick = { viewModel.moveToRecycleBin(); onBack(); showMoreMenu = false },
+                                    leadingIcon = { Icon(Icons.Default.Delete, null, tint = Color.Red) }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("编辑器设置") },
+                                    onClick = { viewModel.setShowSettings(true); showMoreMenu = false },
+                                    leadingIcon = { Icon(Icons.Default.Settings, null) }
+                                )
+                            }
+                        }
+                    )
+                }
+                
+                AnimatedVisibility(visible = uiState.showSearch && uiState.showToolbar) {
+                    SearchPanel(
+                        searchQuery = uiState.searchQuery,
+                        replaceText = uiState.replaceText,
+                        currentMatch = uiState.currentMatch,
+                        totalMatches = uiState.totalMatches,
+                        onSearchQueryChange = { 
+                            viewModel.setSearchQuery(it)
+                            if (it.isNotEmpty()) editorControl.search(it) else editorControl.stopSearch()
+                        },
+                        onReplaceTextChange = { viewModel.setReplaceText(it) },
+                        onFindNext = { editorControl.findNext() },
+                        onFindPrevious = { editorControl.findPrevious() },
+                        onReplace = { editorControl.replace(uiState.replaceText) },
+                        onReplaceAll = { editorControl.replaceAll(uiState.replaceText) },
+                        onClose = { viewModel.setShowSearch(false) }
+                    )
+                }
+                
+                Box(modifier = Modifier.weight(1f)) {
+                    SoraEditorView(
+                        content = uiState.content,
+                        onContentChange = { viewModel.updateContent(context, it) },
+                        onSelectionChange = { pos, line, col -> viewModel.setCursorPosition(pos, line, col) },
+                        fontSize = uiState.fontSize,
+                        showLineNumbers = uiState.showLineNumbers,
+                        wordWrap = uiState.wordWrap,
+                        editable = !uiState.isReadOnly,
+                        backgroundColor = uiState.backgroundColor,
+                        control = editorControl,
+                        onSearchMatchesChange = { current, total -> viewModel.setMatchResults(current, total) },
+                        onScroll = { if (uiState.isReadOnly && uiState.showToolbar) viewModel.setShowToolbar(false) },
+                        onTap = { if (uiState.isReadOnly) viewModel.toggleToolbar() }
+                    )
+                    
+                    // Status Bar
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().height(24.dp).align(Alignment.BottomCenter),
+                        color = Color(0xFFF5F5F5),
+                        border = BorderStroke(0.5.dp, Color.LightGray)
+                    ) {
+                        Row(modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
+                            Text("第 ${uiState.cursorLine} 行, 第 ${uiState.cursorColumn} 列", fontSize = 11.sp, color = Color.DarkGray)
+                        }
+                    }
+                }
+            }
+            
+            if (uiState.showToc) {
+                TocPanel(
+                    content = uiState.content,
+                    currentCursorPos = uiState.currentCursorPos,
+                    tocMode = uiState.tocMode,
+                    onModeChange = { viewModel.setTocMode(it) },
+                    onChapterClick = { pos -> editorControl.jumpTo(pos) },
+                    onDismiss = { viewModel.setShowToc(false) }
+                )
+            }
+            
+            if (uiState.showRenameDialog) {
+                RenameDialog(
+                    currentName = uiState.fileName,
+                    onRename = { viewModel.renameFile(it); viewModel.setShowRenameDialog(false) },
+                    onDismiss = { viewModel.setShowRenameDialog(false) }
+                )
+            }
+
+            if (uiState.showFileProperties) {
+                FilePropertiesDialog(
+                    properties = viewModel.getFileDetails(),
+                    onDismiss = { viewModel.setShowFileProperties(false) }
+                )
+            }
+
+            if (uiState.showExitConfirmation) {
+                ExitConfirmationDialog(
+                    onSave = { viewModel.saveFile(context); onBack() },
+                    onDiscard = { onBack() },
+                    onDismiss = { viewModel.setShowExitConfirmation(false) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SearchPanel(
+    searchQuery: String,
+    replaceText: String,
+    currentMatch: Int,
+    totalMatches: Int,
+    onSearchQueryChange: (String) -> Unit,
+    onReplaceTextChange: (String) -> Unit,
+    onFindNext: () -> Unit,
+    onFindPrevious: () -> Unit,
+    onReplace: () -> Unit,
+    onReplaceAll: () -> Unit,
+    onClose: () -> Unit
+) {
+    Surface(modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface, tonalElevation = 1.dp) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = onSearchQueryChange,
+                    placeholder = { Text("查找文本", fontSize = 14.sp) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    trailingIcon = {
+                        if (totalMatches > 0) Text("${currentMatch.coerceAtLeast(0)}/$totalMatches", fontSize = 12.sp)
+                    }
+                )
+                Button(onClick = onFindPrevious, contentPadding = PaddingValues(0.dp), modifier = Modifier.defaultMinSize(minWidth = 48.dp)) { Text("上个", fontSize = 12.sp) }
+                Button(onClick = onFindNext, contentPadding = PaddingValues(0.dp), modifier = Modifier.defaultMinSize(minWidth = 48.dp)) { Text("下个", fontSize = 12.sp) }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = replaceText,
+                    onValueChange = onReplaceTextChange,
+                    placeholder = { Text("替换到的文本", fontSize = 14.sp) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                TextButton(onClick = onReplace) { Text("替换", fontSize = 13.sp) }
+                TextButton(onClick = onReplaceAll) { Text("全部", fontSize = 13.sp) }
+            }
+        }
+    }
+}
+
+data class Chapter(val index: Int, val pos: Int, val title: String)
+
+@Composable
+fun TocPanel(
+    content: String,
+    currentCursorPos: Int,
+    tocMode: String,
+    onModeChange: (String) -> Unit,
+    onChapterClick: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val chapters = remember(content, tocMode) {
+        if (tocMode == "chars") {
+            val count = kotlin.math.ceil(content.length / 2000.0).toInt()
+            List(count) { i -> Chapter(i, i * 2000, "第 ${i + 1} 章") }
+        } else {
+            val result = mutableListOf<Chapter>()
+            var currentPos = 0
+            var lineCount = 0
+            var chunkStartLine = 1
+            for (i in content.indices) {
+                if (content[i] == '\n') {
+                    lineCount++
+                    if (lineCount % 100 == 0) {
+                        result.add(Chapter(result.size, currentPos, "第 $chunkStartLine - $lineCount 行"))
+                        chunkStartLine = lineCount + 1
+                    }
+                }
+                currentPos++
+            }
+            if (result.isEmpty() || lineCount >= chunkStartLine) {
+                 result.add(Chapter(result.size, if(result.isEmpty()) 0 else currentPos, "第 $chunkStartLine - ${lineCount + 1} 行"))
+            }
+            result
+        }
+    }
+    
+    val activeIndex = chapters.indexOfLast { it.pos <= currentCursorPos }.coerceAtLeast(0)
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    
+    LaunchedEffect(activeIndex) {
+        if (activeIndex > 0) listState.scrollToItem((activeIndex - 5).coerceAtLeast(0))
+    }
+
+    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)).clickable(onClick = onDismiss)) {
+        Surface(Modifier.fillMaxHeight().fillMaxWidth(0.75f).clickable(enabled = false) { }, color = MaterialTheme.colorScheme.surface, tonalElevation = 8.dp) {
+            Column(Modifier.fillMaxSize()) {
+                Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("目录", style = MaterialTheme.typography.titleLarge)
+                    Row(Modifier.background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        listOf("chars" to "按字", "lines" to "按行").forEach { (mode, label) ->
+                            Button(
+                                onClick = { onModeChange(mode) }, 
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (tocMode == mode) Color(0xFFE0E0E0) else Color.Transparent,
+                                    contentColor = if (tocMode == mode) Color.Black else Color.DarkGray
+                                ), 
+                                modifier = Modifier.height(32.dp), 
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                            ) {
+                                Text(label, fontSize = 12.sp)
+                            }
+                        }
+                    }
+                    IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, null) }
+                }
+                HorizontalDivider()
+                androidx.compose.foundation.lazy.LazyColumn(state = listState, modifier = Modifier.weight(1f)) {
+                    items(chapters.size) { index ->
+                        val isActive = index == activeIndex
+                        Surface(
+                            onClick = { onChapterClick(chapters[index].pos); onDismiss() },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = if (isActive) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent
+                        ) {
+                            Text(chapters[index].title, modifier = Modifier.padding(20.dp, 12.dp), fontWeight = if (isActive) androidx.compose.ui.text.font.FontWeight.Bold else null)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun EditorSettingsScreen(
+    uiState: EditorUiState,
+    viewModel: EditorViewModel,
+    onBack: () -> Unit,
+    onFontSizeChange: (Float) -> Unit,
+    onToggleLineNumbers: () -> Unit,
+    onToggleWordWrap: () -> Unit,
+    onBackgroundColorChange: (String) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("编辑器设置") },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }
+            )
+        }
+    ) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            Surface(
+                modifier = Modifier.fillMaxWidth().height(100.dp),
+                color = try { Color(android.graphics.Color.parseColor(uiState.backgroundColor)) } catch(e:Exception) { Color.Gray },
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, Color.LightGray)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text("预览文本效果 Preview Text", fontSize = uiState.fontSize.sp, color = if (uiState.backgroundColor == "#000000") Color.White else Color.Black)
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("字体大小: ${uiState.fontSize.toInt()}px")
+                Slider(value = uiState.fontSize, onValueChange = onFontSizeChange, valueRange = 12f..36f)
+            }
+
+            SettingsSwitchItem("显示行号", "在左侧显示行号", uiState.showLineNumbers) { onToggleLineNumbers() }
+            SettingsSwitchItem("自动换行", "自动折行显示", uiState.wordWrap) { onToggleWordWrap() }
+            SettingsSwitchItem("自动保存", "编辑时自动保存", uiState.autoSave) { viewModel.setAutoSave(it) }
+
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("背景颜色")
+                FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val colors = listOf("#FFFFFF" to "白", "#FFF8DC" to "米", "#E8F5E9" to "绿", "#E3F2FD" to "蓝", "#F5F5F5" to "灰", "#000000" to "黑")
+                    colors.forEach { (color, label) ->
+                        ColorOption(color, label, uiState.backgroundColor == color) { onBackgroundColorChange(color) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsSwitchItem(title: String, desc: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) }.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(desc, style = MaterialTheme.typography.bodySmall)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+fun ColorOption(color: String, label: String, isSelected: Boolean, onClick: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(60.dp).clickable { onClick() }) {
+        Box(Modifier.size(40.dp).background(try { Color(android.graphics.Color.parseColor(color)) } catch(e:Exception) { Color.Gray }, RoundedCornerShape(20.dp)).border(if (isSelected) 2.dp else 1.dp, if (isSelected) MaterialTheme.colorScheme.primary else Color.LightGray, RoundedCornerShape(20.dp)))
+        Text(label, fontSize = 10.sp)
+    }
+}
+
+@Composable
+fun RenameDialog(currentName: String, onRename: (String) -> Unit, onDismiss: () -> Unit) {
+    var name by remember { mutableStateOf(currentName) }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("重命名") }, text = { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("新名字") }) }, confirmButton = { TextButton(onClick = { onRename(name) }) { Text("OK") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
+}
+
+@Composable
+fun FilePropertiesDialog(properties: Map<String, String>, onDismiss: () -> Unit) {
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("属性") }, text = { Column { properties.forEach { (k, v) -> Text("$k: $v") } } }, confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } })
+}
+
+@Composable
+fun ExitConfirmationDialog(onSave: () -> Unit, onDiscard: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("保存？") }, text = { Text("内容已修改") }, confirmButton = { TextButton(onClick = onSave) { Text("保存") } }, dismissButton = { Row { TextButton(onClick = onDiscard) { Text("不保存") }; TextButton(onClick = onDismiss) { Text("取消") } } })
+}
