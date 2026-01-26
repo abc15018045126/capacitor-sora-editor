@@ -20,7 +20,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.border
+import kotlinx.coroutines.launch
 import com.abc15018045126.notes.compose.EditorUiState
 import com.abc15018045126.notes.compose.EditorViewModel
 import io.github.rosemoe.sora.widget.CodeEditor
@@ -156,6 +160,10 @@ class EditorControl {
 
     fun canUndo(): Boolean = editor?.canUndo() ?: false
     fun canRedo(): Boolean = editor?.canRedo() ?: false
+
+    fun insertText(text: String) {
+        editor?.insertText(text, text.length)
+    }
 }
 
 @Composable
@@ -289,7 +297,11 @@ fun EditorScreen(
 ) {
     var showMoreMenu by remember { mutableStateOf(false) }
     val editorControl = remember { EditorControl() }
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val localContext = androidx.compose.ui.platform.LocalContext.current
+    
+    LaunchedEffect(Unit) {
+        viewModel.loadSettings(localContext)
+    }
     
     LaunchedEffect(uiState.isReadOnly, uiState.showToolbar) {
         if (uiState.isReadOnly && uiState.showToolbar) {
@@ -315,10 +327,10 @@ fun EditorScreen(
             uiState = uiState,
             viewModel = viewModel,
             onBack = { viewModel.setShowSettings(false) },
-            onFontSizeChange = { viewModel.setFontSize(it) },
-            onToggleLineNumbers = { viewModel.toggleLineNumbers() },
-            onToggleWordWrap = { viewModel.toggleWordWrap() },
-            onBackgroundColorChange = { viewModel.setBackgroundColor(it) }
+            onFontSizeChange = { viewModel.setFontSize(localContext, it) },
+            onToggleLineNumbers = { viewModel.toggleLineNumbers(localContext) },
+            onToggleWordWrap = { viewModel.toggleWordWrap(localContext) },
+            onBackgroundColorChange = { viewModel.setBackgroundColor(localContext, it) }
         )
     } else {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -329,8 +341,11 @@ fun EditorScreen(
                     exit = slideOutVertically() + fadeOut()
                 ) {
                     TopAppBar(
-                        title = { Text(uiState.fileName, fontSize = 16.sp) },
-                        navigationIcon = {
+                    title = { Text(uiState.fileName, fontSize = 16.sp) },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = try { Color(android.graphics.Color.parseColor(uiState.uiColor)) } catch(e:Exception) { MaterialTheme.colorScheme.surface }
+                    ),
+                    navigationIcon = {
                             IconButton(onClick = { 
                                 val pos = editorControl.getCurrentCursorPosition()
                                 viewModel.setCursorPosition(pos, uiState.cursorLine - 1, uiState.cursorColumn)
@@ -340,7 +355,7 @@ fun EditorScreen(
                             }
                         },
                         actions = {
-                        IconButton(onClick = { viewModel.saveFile(context) }) {
+                        IconButton(onClick = { viewModel.saveFile(localContext) }) {
                             Icon(Icons.Default.Save, "保存")
                         }
                         IconButton(onClick = { editorControl.undo() }, enabled = editorControl.canUndo()) {
@@ -353,7 +368,11 @@ fun EditorScreen(
                             Icon(Icons.Default.MoreVert, "More")
                         }
                         
-                        DropdownMenu(expanded = showMoreMenu, onDismissRequest = { showMoreMenu = false }) {
+                        DropdownMenu(
+                            expanded = showMoreMenu,
+                            onDismissRequest = { showMoreMenu = false },
+                            modifier = Modifier.background(try { Color(android.graphics.Color.parseColor(uiState.menuColor)) } catch(e:Exception) { MaterialTheme.colorScheme.surface })
+                        ) {
                             DropdownMenuItem(
                                 text = { Text("返回") },
                                 onClick = { showMoreMenu = false; handleBack() },
@@ -370,7 +389,7 @@ fun EditorScreen(
                             DropdownMenuItem(
                                 text = { Text("重做 (还原为初始)") },
                                 onClick = { 
-                                    viewModel.updateContent(context, uiState.originalContent)
+                                    viewModel.updateContent(localContext, uiState.originalContent)
                                     showMoreMenu = false 
                                 },
                                 leadingIcon = { Icon(Icons.Default.RestartAlt, null) }
@@ -391,11 +410,6 @@ fun EditorScreen(
                                     leadingIcon = { Icon(Icons.Default.Info, null) }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("移入回收站") },
-                                    onClick = { viewModel.moveToRecycleBin(); onBack(); showMoreMenu = false },
-                                    leadingIcon = { Icon(Icons.Default.Delete, null, tint = Color.Red) }
-                                )
-                                DropdownMenuItem(
                                     text = { Text("编辑器设置") },
                                     onClick = { viewModel.setShowSettings(true); showMoreMenu = false },
                                     leadingIcon = { Icon(Icons.Default.Settings, null) }
@@ -405,12 +419,13 @@ fun EditorScreen(
                     )
                 }
                 
-                AnimatedVisibility(visible = uiState.showSearch && uiState.showToolbar) {
+                if (uiState.showSearch) {
                     SearchPanel(
                         searchQuery = uiState.searchQuery,
                         replaceText = uiState.replaceText,
                         currentMatch = uiState.currentMatch,
                         totalMatches = uiState.totalMatches,
+                        backgroundColor = uiState.searchColor,
                         onSearchQueryChange = { 
                             viewModel.setSearchQuery(it)
                             if (it.isNotEmpty()) editorControl.search(it) else editorControl.stopSearch()
@@ -427,7 +442,7 @@ fun EditorScreen(
                 Box(modifier = Modifier.weight(1f)) {
                     SoraEditorView(
                         content = uiState.content,
-                        onContentChange = { viewModel.updateContent(context, it) },
+                        onContentChange = { viewModel.updateContent(localContext, it) },
                         onSelectionChange = { pos, line, col -> viewModel.setCursorPosition(pos, line, col) },
                         fontSize = uiState.fontSize,
                         showLineNumbers = uiState.showLineNumbers,
@@ -440,15 +455,21 @@ fun EditorScreen(
                         onTap = { if (uiState.isReadOnly) viewModel.toggleToolbar() }
                     )
                     
-                    // Status Bar
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().height(24.dp).align(Alignment.BottomCenter),
-                        color = Color(0xFFF5F5F5),
-                        border = BorderStroke(0.5.dp, Color.LightGray)
-                    ) {
-                        Row(modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
-                            Text("第 ${uiState.cursorLine} 行, 第 ${uiState.cursorColumn} 列", fontSize = 11.sp, color = Color.DarkGray)
-                        }
+                    Column(modifier = Modifier.align(Alignment.BottomCenter)) {
+                        if (uiState.showSymbolBar && !uiState.isReadOnly) {
+                    SymbolBar(
+                        uiColor = uiState.uiColor,
+                        onSymbolClick = { editorControl.insertText(it) }
+                    )
+                }
+                if (uiState.showStatusBar) {
+                    StatusBar(
+                        uiColor = uiState.uiColor,
+                        cursorLine = uiState.cursorLine,
+                        cursorColumn = uiState.cursorColumn,
+                        currentCursorPos = uiState.currentCursorPos
+                    )
+                }
                     }
                 }
             }
@@ -458,8 +479,9 @@ fun EditorScreen(
                     content = uiState.content,
                     currentCursorPos = uiState.currentCursorPos,
                     tocMode = uiState.tocMode,
+                    surfaceColor = uiState.tocColor,
                     onModeChange = { viewModel.setTocMode(it) },
-                    onChapterClick = { pos -> editorControl.jumpTo(pos) },
+                    onChapterClick = { editorControl.jumpTo(it); viewModel.setShowToc(false) },
                     onDismiss = { viewModel.setShowToc(false) }
                 )
             }
@@ -481,11 +503,59 @@ fun EditorScreen(
 
             if (uiState.showExitConfirmation) {
                 ExitConfirmationDialog(
-                    onSave = { viewModel.saveFile(context); onBack() },
+                    onSave = { viewModel.saveFile(localContext); onBack() },
                     onDiscard = { onBack() },
                     onDismiss = { viewModel.setShowExitConfirmation(false) }
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun SymbolBar(uiColor: String, onSymbolClick: (String) -> Unit) {
+    val symbols = listOf(",", ".", ";", "(", ")", "{", "}", "[", "]", "\"", "'", ":", "/", "<", ">", "=", "+", "-", "*", "&", "|", "!", "?", "#", "@", "$", "%", "^", "~", "`")
+    androidx.compose.foundation.lazy.LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(44.dp)
+            .background(try { Color(android.graphics.Color.parseColor(uiColor)) } catch(e:Exception) { Color(0xFFF0F0F0) })
+            .border(androidx.compose.foundation.BorderStroke(0.5.dp, Color.LightGray.copy(alpha = 0.5f))),
+        contentPadding = PaddingValues(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        items(symbols.size) { index ->
+            Surface(
+                onClick = { onSymbolClick(symbols[index]) },
+                modifier = Modifier
+                    .size(width = 36.dp, height = 36.dp),
+                shape = RoundedCornerShape(4.dp),
+                color = Color.White,
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.LightGray)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(symbols[index], fontSize = 18.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StatusBar(uiColor: String, cursorLine: Int, cursorColumn: Int, currentCursorPos: Int) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().height(24.dp),
+        color = try { Color(android.graphics.Color.parseColor(uiColor)) } catch(e:Exception) { Color(0xFFEEEEEE) },
+        tonalElevation = 2.dp,
+        border = BorderStroke(0.5.dp, Color.LightGray)
+    ) {
+        Row(modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
+            Text(
+                text = "第 ${cursorLine} 行, 第 ${cursorColumn} 列, 第 ${currentCursorPos} 字",
+                fontSize = 11.sp,
+                color = Color.DarkGray
+            )
         }
     }
 }
@@ -496,6 +566,7 @@ fun SearchPanel(
     replaceText: String,
     currentMatch: Int,
     totalMatches: Int,
+    backgroundColor: String,
     onSearchQueryChange: (String) -> Unit,
     onReplaceTextChange: (String) -> Unit,
     onFindNext: () -> Unit,
@@ -504,7 +575,7 @@ fun SearchPanel(
     onReplaceAll: () -> Unit,
     onClose: () -> Unit
 ) {
-    Surface(modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface, tonalElevation = 1.dp) {
+    Surface(modifier = Modifier.fillMaxWidth(), color = try { Color(android.graphics.Color.parseColor(backgroundColor)) } catch(e:Exception) { MaterialTheme.colorScheme.surface }, tonalElevation = 1.dp) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
@@ -543,6 +614,7 @@ fun TocPanel(
     content: String,
     currentCursorPos: Int,
     tocMode: String,
+    surfaceColor: String,
     onModeChange: (String) -> Unit,
     onChapterClick: (Int) -> Unit,
     onDismiss: () -> Unit
@@ -576,12 +648,23 @@ fun TocPanel(
     val activeIndex = chapters.indexOfLast { it.pos <= currentCursorPos }.coerceAtLeast(0)
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     
+    // Auto-hide logic for scrollbar
+    var showScrollbar by remember { mutableStateOf(false) }
+    LaunchedEffect(listState.isScrollInProgress) {
+        if (listState.isScrollInProgress) {
+            showScrollbar = true
+        } else {
+            kotlinx.coroutines.delay(3000)
+            showScrollbar = false
+        }
+    }
+
     LaunchedEffect(activeIndex) {
         if (activeIndex > 0) listState.scrollToItem((activeIndex - 5).coerceAtLeast(0))
     }
 
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)).clickable(onClick = onDismiss)) {
-        Surface(Modifier.fillMaxHeight().fillMaxWidth(0.75f).clickable(enabled = false) { }, color = MaterialTheme.colorScheme.surface, tonalElevation = 8.dp) {
+        Surface(Modifier.fillMaxHeight().fillMaxWidth(0.75f).clickable(enabled = false) { }, color = try { Color(android.graphics.Color.parseColor(surfaceColor)) } catch(e:Exception) { MaterialTheme.colorScheme.surface }, tonalElevation = 8.dp) {
             Column(Modifier.fillMaxSize()) {
                 Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text("目录", style = MaterialTheme.typography.titleLarge)
@@ -603,15 +686,102 @@ fun TocPanel(
                     IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, null) }
                 }
                 HorizontalDivider()
-                androidx.compose.foundation.lazy.LazyColumn(state = listState, modifier = Modifier.weight(1f)) {
-                    items(chapters.size) { index ->
-                        val isActive = index == activeIndex
-                        Surface(
-                            onClick = { onChapterClick(chapters[index].pos); onDismiss() },
-                            modifier = Modifier.fillMaxWidth(),
-                            color = if (isActive) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent
-                        ) {
-                            Text(chapters[index].title, modifier = Modifier.padding(20.dp, 12.dp), fontWeight = if (isActive) androidx.compose.ui.text.font.FontWeight.Bold else null)
+                Box(modifier = Modifier.weight(1f)) {
+                    androidx.compose.foundation.lazy.LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                        items(chapters.size) { index ->
+                            val isActive = index == activeIndex
+                            Surface(
+                                onClick = { onChapterClick(chapters[index].pos); onDismiss() },
+                                modifier = Modifier.fillMaxWidth(),
+                                color = if (isActive) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent
+                            ) {
+                                Text(chapters[index].title, modifier = Modifier.padding(20.dp, 12.dp), fontWeight = if (isActive) androidx.compose.ui.text.font.FontWeight.Bold else null)
+                            }
+                        }
+                    }
+                    
+                    // Improved Draggable Scrollbar with Auto-hide and Enlarge size
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = showScrollbar,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) {
+                        if (chapters.size > 10) {
+                            val scope = rememberCoroutineScope()
+                            val totalItems = chapters.size
+                            
+                            BoxWithConstraints(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .width(50.dp) // Large touch area
+                                    .pointerInput(totalItems) {
+                                        detectDragGestures(
+                                            onDragStart = { showScrollbar = true },
+                                            onDrag = { change, dragAmount ->
+                                                showScrollbar = true
+                                                change.consume()
+                                                val trackHeight = size.height.toFloat()
+                                                val visibleItems = listState.layoutInfo.visibleItemsInfo
+                                                if (visibleItems.isNotEmpty()) {
+                                                    val visibleCount = visibleItems.size
+                                                    val thumbHeight = trackHeight * (visibleCount.toFloat() / totalItems).coerceIn(0.1f, 1f)
+                                                    val travelDistance = (trackHeight - thumbHeight).coerceAtLeast(1f)
+                                                    
+                                                    val deltaPercent = dragAmount.y / travelDistance
+                                                    val currentFirstVisible = listState.firstVisibleItemIndex
+                                                    val currentPercent = currentFirstVisible.toFloat() / (totalItems - visibleCount).coerceAtLeast(1)
+                                                    
+                                                    val newPercent = (currentPercent + deltaPercent).coerceIn(0f, 1f)
+                                                    val targetIndex = (newPercent * (totalItems - visibleCount)).toInt()
+                                                    scope.launch {
+                                                        listState.scrollToItem(targetIndex)
+                                                    }
+                                                }
+                                            },
+                                            onDragEnd = {
+                                                scope.launch {
+                                                    kotlinx.coroutines.delay(3000)
+                                                    showScrollbar = false
+                                                }
+                                            }
+                                        )
+                                    }
+                            ) {
+                                val trackHeightPx = constraints.maxHeight.toFloat()
+                                val layoutInfo = listState.layoutInfo
+                                val visibleItems = layoutInfo.visibleItemsInfo
+                                
+                                if (visibleItems.isNotEmpty()) {
+                                    val firstVisible = listState.firstVisibleItemIndex
+                                    val visibleCount = visibleItems.size
+                                    val thumbHeightPercent = (visibleCount.toFloat() / totalItems).coerceIn(0.1f, 1f)
+                                    val scrollPercent = firstVisible.toFloat() / (totalItems - visibleCount).coerceAtLeast(1)
+                                    
+                                    // Background track
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.CenterEnd)
+                                            .fillMaxHeight()
+                                            .width(12.dp) // Double size (6dp -> 12dp)
+                                            .padding(end = 4.dp, top = 4.dp, bottom = 4.dp)
+                                            .background(Color.LightGray.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
+                                    )
+                                    
+                                    // Thumb
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(end = 4.dp)
+                                            .width(12.dp) // Double size (6dp -> 12dp)
+                                            .fillMaxHeight(thumbHeightPercent)
+                                            .graphicsLayer {
+                                                translationY = trackHeightPx * (1f - thumbHeightPercent) * scrollPercent
+                                            }
+                                            .background(Color.Gray.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -631,6 +801,7 @@ fun EditorSettingsScreen(
     onToggleWordWrap: () -> Unit,
     onBackgroundColorChange: (String) -> Unit
 ) {
+    val localContext = androidx.compose.ui.platform.LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -656,16 +827,97 @@ fun EditorSettingsScreen(
                 Slider(value = uiState.fontSize, onValueChange = onFontSizeChange, valueRange = 12f..36f)
             }
 
-            SettingsSwitchItem("显示行号", "在左侧显示行号", uiState.showLineNumbers) { onToggleLineNumbers() }
-            SettingsSwitchItem("自动换行", "自动折行显示", uiState.wordWrap) { onToggleWordWrap() }
-            SettingsSwitchItem("自动保存", "编辑时自动保存", uiState.autoSave) { viewModel.setAutoSave(it) }
+            SettingsSwitchItem("显示行号", "在左侧显示行号", uiState.showLineNumbers) { viewModel.toggleLineNumbers(localContext) }
+            SettingsSwitchItem("自动换行", "自动折行显示", uiState.wordWrap) { viewModel.toggleWordWrap(localContext) }
+            SettingsSwitchItem("自动保存", "编辑时自动保存", uiState.autoSave) { viewModel.setAutoSave(localContext, it) }
+            SettingsSwitchItem("显示状态栏", "显示底部的行、列、字符数信息", uiState.showStatusBar) { viewModel.toggleStatusBar(localContext) }
+            SettingsSwitchItem("符号快捷键", "在底部显示常用符号栏", uiState.showSymbolBar) { viewModel.toggleSymbolBar(localContext) }
+
+
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text("主题颜色自定义 (也可在下面 JSON 自由配置)", style = MaterialTheme.typography.titleMedium)
+                val colors = listOf("#FFFFFF" to "白", "#F5F5F5" to "灰", "#E0E0E0" to "深灰", "#FFF8DC" to "米", "#E8F5E9" to "绿", "#E3F2FD" to "蓝", "#000000" to "黑")
+                
+                Column {
+                    Text("编辑器背景 (Editor)", fontSize = 12.sp, color = Color.Gray)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        colors.forEach { (c, l) -> 
+                            ColorOption(c, l, uiState.backgroundColor == c) { viewModel.setBackgroundColor(localContext, c) }
+                        }
+                    }
+                }
+
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("应用 UI 颜色 (Toolbar/Bottom)", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { 
+                            viewModel.setTocColor(localContext, uiState.uiColor)
+                            viewModel.setSearchColor(localContext, uiState.uiColor)
+                            viewModel.setMenuColor(localContext, uiState.uiColor)
+                        }) {
+                            Text("同步到所有面板", fontSize = 10.sp)
+                        }
+                    }
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        colors.forEach { (c, l) -> 
+                            ColorOption(c, l, uiState.uiColor == c) { viewModel.setUiColor(localContext, c) }
+                        }
+                    }
+                }
+
+                Column {
+                    Text("更多菜单颜色 (More Menu)", fontSize = 12.sp, color = Color.Gray)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        colors.forEach { (c, l) -> 
+                            ColorOption(c, l, uiState.menuColor == c) { viewModel.setMenuColor(localContext, c) }
+                        }
+                    }
+                }
+
+                Column {
+                    Text("目录面板颜色 (TOC)", fontSize = 12.sp, color = Color.Gray)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        colors.forEach { (c, l) -> 
+                            ColorOption(c, l, uiState.tocColor == c) { viewModel.setTocColor(localContext, c) }
+                        }
+                    }
+                }
+
+                Column {
+                    Text("搜索面板颜色 (Search)", fontSize = 12.sp, color = Color.Gray)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        colors.forEach { (c, l) -> 
+                            ColorOption(c, l, uiState.searchColor == c) { viewModel.setSearchColor(localContext, c) }
+                        }
+                    }
+                }
+            }
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("背景颜色")
-                FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    val colors = listOf("#FFFFFF" to "白", "#FFF8DC" to "米", "#E8F5E9" to "绿", "#E3F2FD" to "蓝", "#F5F5F5" to "灰", "#000000" to "黑")
-                    colors.forEach { (color, label) ->
-                        ColorOption(color, label, uiState.backgroundColor == color) { onBackgroundColorChange(color) }
+                Text("配置 JSON", style = MaterialTheme.typography.titleMedium)
+                var jsonText by remember { mutableStateOf(viewModel.getSettingsJson()) }
+                
+                LaunchedEffect(uiState) {
+                    jsonText = viewModel.getSettingsJson()
+                }
+
+                OutlinedTextField(
+                    value = jsonText,
+                    onValueChange = { jsonText = it },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 12.sp)
+                )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                     TextButton(onClick = { viewModel.resetSettings(localContext) }) {
+                         Text("重置所有设置", color = Color.Red)
+                     }
+                     Spacer(Modifier.width(8.dp))
+                     Button(
+                        onClick = { 
+                            viewModel.applySettingsFromJson(localContext, jsonText)
+                        }
+                    ) {
+                        Text("保存 JSON 设置")
                     }
                 }
             }
