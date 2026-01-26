@@ -1,3 +1,5 @@
+Type-safe project accessors is an incubating feature.
+Project accessors enabled, but root project name not explicitly set for 'android'. Checking out the project in different folders will impact the generated code and implicitly the buildscript classpath, breaking caching.
 
 > Configure project :app
 WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
@@ -5,249 +7,295 @@ WARNING: Using flatDir should be avoided because it doesn't support any meta-dat
 > Configure project :capacitor-cordova-android-plugins
 WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
 
-[Incubating] Problems report is available at: file:///C:/c/file/vscode/js/android/webapk/android/build/reports/problems/problems-report.html
+> Task :sora-editor-src:build-logic:convention:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sora-editor-src:build-logic:convention:generateExternalPluginSpecBuilders UP-TO-DATE
+> Task :sora-editor-src:build-logic:convention:extractPrecompiledScriptPluginPlugins UP-TO-DATE
+> Task :sora-editor-src:build-logic:convention:compilePluginsBlocks UP-TO-DATE
+> Task :sora-editor-src:build-logic:convention:generatePrecompiledScriptPluginAccessors UP-TO-DATE
+> Task :sora-editor-src:build-logic:convention:generateScriptPluginAdapters UP-TO-DATE
+> Task :sora-editor-src:build-logic:convention:compileKotlin UP-TO-DATE
+> Task :sora-editor-src:build-logic:convention:compileJava NO-SOURCE
+> Task :sora-editor-src:build-logic:convention:pluginDescriptors UP-TO-DATE
+> Task :sora-editor-src:build-logic:convention:processResources UP-TO-DATE
+> Task :sora-editor-src:build-logic:convention:classes UP-TO-DATE
+> Task :sora-editor-src:build-logic:convention:jar UP-TO-DATE
 
+> Configure project :sora-editor-src:app
+WARNING: The option setting 'android.enableAppCompileTimeRClass=true' is experimental.
+The current default is 'false'.
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :sora-editor-src:language-textmate:preBuild UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sora-editor-src:language-textmate:preDebugBuild UP-TO-DATE
+> Task :capacitor-android:preBuild UP-TO-DATE
+> Task :capacitor-android:preDebugBuild UP-TO-DATE
+> Task :sora-editor-src:language-textmate:writeDebugAarMetadata UP-TO-DATE
+> Task :sora-editor-src:editor:preBuild UP-TO-DATE
+> Task :sora-editor-src:editor:preDebugBuild UP-TO-DATE
+> Task :sora-editor-src:editor:writeDebugAarMetadata UP-TO-DATE
+> Task :capacitor-android:writeDebugAarMetadata UP-TO-DATE
+> Task :capacitor-app:preBuild UP-TO-DATE
+> Task :sora-editor-src:language-textmate:processDebugNavigationResources UP-TO-DATE
+> Task :capacitor-app:preDebugBuild UP-TO-DATE
+> Task :sora-editor-src:editor:processDebugNavigationResources UP-TO-DATE
+> Task :capacitor-app:writeDebugAarMetadata UP-TO-DATE
+> Task :sora-editor-src:language-textmate:generateDebugResources UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:preBuild UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:preDebugBuild UP-TO-DATE
+> Task :sora-editor-src:language-textmate:packageDebugResources UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:writeDebugAarMetadata UP-TO-DATE
+> Task :sora-editor-src:editor:generateDebugResources UP-TO-DATE
+> Task :capacitor-filesystem:preBuild UP-TO-DATE
+> Task :capacitor-filesystem:preDebugBuild UP-TO-DATE
+> Task :capacitor-filesystem:writeDebugAarMetadata UP-TO-DATE
+> Task :sora-editor-src:editor:packageDebugResources UP-TO-DATE
+> Task :sora-editor-src:language-textmate:extractDeepLinksDebug UP-TO-DATE
+> Task :sora-editor-src:editor:extractDeepLinksDebug UP-TO-DATE
+> Task :sora-editor-src:language-textmate:processDebugManifest UP-TO-DATE
+> Task :sora-editor-src:editor:processDebugManifest UP-TO-DATE
+> Task :sora-editor-src:language-textmate:parseDebugLocalResources UP-TO-DATE
+> Task :sora-editor-src:language-textmate:generateDebugRFile UP-TO-DATE
+> Task :sora-editor-src:editor:parseDebugLocalResources UP-TO-DATE
+> Task :sora-editor-src:editor:generateDebugRFile UP-TO-DATE
+> Task :sora-editor-src:language-textmate:compileDebugLibraryResources UP-TO-DATE
+> Task :sora-editor-src:editor:compileDebugLibraryResources UP-TO-DATE
+> Task :sora-editor-src:editor:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :capacitor-android:processDebugNavigationResources UP-TO-DATE
+> Task :capacitor-app:processDebugNavigationResources UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:processDebugNavigationResources UP-TO-DATE
+> Task :capacitor-filesystem:processDebugNavigationResources UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :capacitor-android:generateDebugResValues UP-TO-DATE
+> Task :capacitor-android:generateDebugResources UP-TO-DATE
+> Task :capacitor-android:packageDebugResources UP-TO-DATE
+> Task :capacitor-app:generateDebugResValues UP-TO-DATE
+> Task :capacitor-app:generateDebugResources UP-TO-DATE
+> Task :capacitor-app:packageDebugResources UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:generateDebugResValues UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:generateDebugResources UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:packageDebugResources UP-TO-DATE
+> Task :capacitor-filesystem:generateDebugResValues UP-TO-DATE
+> Task :capacitor-filesystem:generateDebugResources UP-TO-DATE
+> Task :capacitor-filesystem:packageDebugResources UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :capacitor-android:extractDeepLinksDebug UP-TO-DATE
+> Task :capacitor-android:processDebugManifest UP-TO-DATE
+> Task :capacitor-app:extractDeepLinksDebug UP-TO-DATE
+> Task :capacitor-app:processDebugManifest UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:extractDeepLinksDebug UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:processDebugManifest UP-TO-DATE
+> Task :capacitor-filesystem:extractDeepLinksDebug UP-TO-DATE
+> Task :capacitor-filesystem:processDebugManifest UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :capacitor-android:compileDebugLibraryResources UP-TO-DATE
+> Task :capacitor-android:parseDebugLocalResources UP-TO-DATE
+> Task :capacitor-android:generateDebugRFile UP-TO-DATE
+> Task :capacitor-app:compileDebugLibraryResources UP-TO-DATE
+> Task :capacitor-app:parseDebugLocalResources UP-TO-DATE
+> Task :capacitor-app:generateDebugRFile UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:compileDebugLibraryResources UP-TO-DATE
+> Task :sora-editor-src:editor:compileDebugKotlin UP-TO-DATE
+> Task :sora-editor-src:editor:javaPreCompileDebug UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:parseDebugLocalResources UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:generateDebugRFile UP-TO-DATE
+> Task :capacitor-filesystem:compileDebugLibraryResources UP-TO-DATE
+> Task :capacitor-filesystem:parseDebugLocalResources UP-TO-DATE
+> Task :capacitor-filesystem:generateDebugRFile UP-TO-DATE
+> Task :sora-editor-src:editor:compileDebugJavaWithJavac UP-TO-DATE
+> Task :sora-editor-src:editor:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :sora-editor-src:language-textmate:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sora-editor-src:language-textmate:generateDebugBuildConfig UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:preBuild UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:preDebugBuild UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:generateDebugResources UP-TO-DATE
+> Task :capacitor-android:javaPreCompileDebug UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:packageDebugResources UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:processDebugNavigationResources UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:parseDebugLocalResources UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:generateDebugRFile UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:javaPreCompileDebug UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:compileDebugJavaWithJavac UP-TO-DATE
+> Task :sora-editor-src:oniguruma-native:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :capacitor-android:compileDebugJavaWithJavac UP-TO-DATE
+> Task :capacitor-android:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :capacitor-app:javaPreCompileDebug UP-TO-DATE
+> Task :capacitor-app:compileDebugJavaWithJavac UP-TO-DATE
+> Task :capacitor-app:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:javaPreCompileDebug UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:compileDebugJavaWithJavac NO-SOURCE
+> Task :capacitor-cordova-android-plugins:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :capacitor-filesystem:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :capacitor-filesystem:compileDebugKotlin UP-TO-DATE
+> Task :capacitor-filesystem:javaPreCompileDebug UP-TO-DATE
+> Task :capacitor-filesystem:compileDebugJavaWithJavac NO-SOURCE
+> Task :capacitor-filesystem:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :capacitor-android:mergeDebugShaders UP-TO-DATE
+> Task :capacitor-android:compileDebugShaders NO-SOURCE
+> Task :capacitor-android:generateDebugAssets UP-TO-DATE
+> Task :capacitor-android:mergeDebugAssets UP-TO-DATE
+> Task :capacitor-app:mergeDebugShaders UP-TO-DATE
+> Task :capacitor-app:compileDebugShaders NO-SOURCE
+> Task :capacitor-app:generateDebugAssets UP-TO-DATE
+> Task :capacitor-app:mergeDebugAssets UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:mergeDebugShaders UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:compileDebugShaders NO-SOURCE
+> Task :capacitor-cordova-android-plugins:generateDebugAssets UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:mergeDebugAssets UP-TO-DATE
+> Task :sora-editor-src:language-textmate:compileDebugKotlin UP-TO-DATE
+> Task :sora-editor-src:language-textmate:javaPreCompileDebug UP-TO-DATE
+> Task :capacitor-filesystem:mergeDebugShaders UP-TO-DATE
+> Task :capacitor-filesystem:compileDebugShaders NO-SOURCE
+> Task :capacitor-filesystem:generateDebugAssets UP-TO-DATE
+> Task :capacitor-filesystem:mergeDebugAssets UP-TO-DATE
+> Task :capacitor-app:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :capacitor-filesystem:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :capacitor-android:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :capacitor-android:processDebugJavaRes NO-SOURCE
+> Task :sora-editor-src:language-textmate:compileDebugJavaWithJavac UP-TO-DATE
+> Task :sora-editor-src:language-textmate:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :capacitor-app:processDebugJavaRes NO-SOURCE
+> Task :sora-editor-src:language-textmate:generateDebugAssets UP-TO-DATE
+> Task :sora-editor-src:language-textmate:mergeDebugAssets UP-TO-DATE
+> Task :sora-editor-src:editor:generateDebugAssets UP-TO-DATE
+> Task :sora-editor-src:editor:mergeDebugAssets UP-TO-DATE
+> Task :sora-editor-src:editor:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :sora-editor-src:language-textmate:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :sora-editor-src:language-textmate:processDebugJavaRes UP-TO-DATE
+> Task :sora-editor-src:editor:processDebugJavaRes UP-TO-DATE
+> Task :sora-editor-src:editor:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :sora-editor-src:language-textmate:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :sora-editor-src:language-textmate:mergeDebugJniLibFolders UP-TO-DATE
+> Task :sora-editor-src:language-textmate:mergeDebugNativeLibs NO-SOURCE
+> Task :sora-editor-src:language-textmate:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :sora-editor-src:editor:mergeDebugJniLibFolders UP-TO-DATE
+> Task :sora-editor-src:editor:mergeDebugNativeLibs NO-SOURCE
+> Task :sora-editor-src:editor:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:processDebugJavaRes NO-SOURCE
+> Task :capacitor-filesystem:processDebugJavaRes UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :capacitor-app:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :capacitor-filesystem:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :capacitor-android:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :capacitor-android:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :capacitor-android:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-android:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :capacitor-app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :capacitor-app:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-app:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:mergeDebugJniLibFolders UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-cordova-android-plugins:copyDebugJniLibsProjectOnly
+> Task :capacitor-filesystem:mergeDebugJniLibFolders UP-TO-DATE
+> Task :capacitor-filesystem:mergeDebugNativeLibs NO-SOURCE
+> Task :capacitor-filesystem:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :capacitor-android:checkDebugAarMetadata UP-TO-DATE
+> Task :capacitor-android:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-android:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :capacitor-android:extractDebugAnnotations UP-TO-DATE
+> Task :capacitor-android:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :capacitor-android:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :capacitor-android:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :capacitor-android:prepareDebugArtProfile UP-TO-DATE
+> Task :capacitor-android:prepareLintJarForPublish UP-TO-DATE
+> Task :capacitor-android:mergeDebugJavaResource UP-TO-DATE
+> Task :capacitor-android:syncDebugLibJars UP-TO-DATE
+> Task :capacitor-android:bundleDebugAar UP-TO-DATE
+> Task :capacitor-android:assembleDebug UP-TO-DATE
+> Task :capacitor-app:checkDebugAarMetadata UP-TO-DATE
+> Task :capacitor-app:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-app:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :capacitor-app:extractDebugAnnotations UP-TO-DATE
+> Task :capacitor-app:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :capacitor-app:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :capacitor-app:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :capacitor-app:prepareDebugArtProfile UP-TO-DATE
+> Task :capacitor-app:prepareLintJarForPublish UP-TO-DATE
+> Task :capacitor-app:mergeDebugJavaResource UP-TO-DATE
+> Task :capacitor-app:syncDebugLibJars UP-TO-DATE
+> Task :capacitor-app:bundleDebugAar UP-TO-DATE
+> Task :capacitor-app:assembleDebug UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-cordova-android-plugins:checkDebugAarMetadata
+> Task :capacitor-cordova-android-plugins:copyDebugJniLibsProjectAndLocalJars
+> Task :capacitor-cordova-android-plugins:extractDebugAnnotations
+> Task :capacitor-cordova-android-plugins:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:prepareDebugArtProfile UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:prepareLintJarForPublish UP-TO-DATE
+> Task :capacitor-filesystem:checkDebugAarMetadata UP-TO-DATE
+> Task :capacitor-filesystem:stripDebugDebugSymbols NO-SOURCE
+> Task :capacitor-filesystem:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :capacitor-cordova-android-plugins:mergeDebugJavaResource
+> Task :capacitor-cordova-android-plugins:syncDebugLibJars
+> Task :capacitor-cordova-android-plugins:bundleDebugAar
+> Task :capacitor-cordova-android-plugins:assembleDebug
+> Task :capacitor-filesystem:extractDebugAnnotations UP-TO-DATE
+> Task :capacitor-filesystem:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :capacitor-filesystem:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :capacitor-filesystem:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :capacitor-filesystem:prepareDebugArtProfile UP-TO-DATE
+> Task :capacitor-filesystem:prepareLintJarForPublish UP-TO-DATE
+> Task :capacitor-filesystem:mergeDebugJavaResource UP-TO-DATE
+> Task :capacitor-filesystem:syncDebugLibJars UP-TO-DATE
+> Task :capacitor-filesystem:bundleDebugAar UP-TO-DATE
+> Task :capacitor-filesystem:assembleDebug UP-TO-DATE
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///C:/Users/abc15/Documents/GitHub/notes/android/app/src/main/java/com/abc15018045126/notes/SoraEditorPlugin.kt:64:24 Unresolved reference 'viewGroup'.
+
+
+[Incubating] Problems report is available at: file:///C:/Users/abc15/Documents/GitHub/notes/android/build/reports/problems/problems-report.html
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Could not determine the dependencies of task ':app:packageDebug'.
-> Could not create task ':app:compileDebugJavaWithJavac'.
-   > Failed to calculate the value of task ':app:compileDebugJavaWithJavac' property 'javaCompiler'.
-      > Cannot find a Java installation on your machine (Windows 11 10.0 amd64) matching: {languageVersion=21, vendor=any vendor, implementation=vendor-specific, nativeImageCapable=false}. Toolchain download repositories have not been configured.
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
 
 * Try:
-> Learn more about toolchain auto-detection and auto-provisioning at https://docs.gradle.org/8.14.3/userguide/toolchains.html#sec:auto_detection.
-> Learn more about toolchain repositories at https://docs.gradle.org/8.14.3/userguide/toolchains.html#sub:download_repositories.
+> Run with --stacktrace option to get the stack trace.
 > Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-* Exception is:
-org.gradle.api.internal.tasks.TaskDependencyResolveException: Could not determine the dependencies of task ':app:packageDebug'.
-	at org.gradle.api.internal.tasks.CachingTaskDependencyResolveContext.getDependencies(CachingTaskDependencyResolveContext.java:70)
-	at org.gradle.execution.plan.TaskDependencyResolver.resolveDependenciesFor(TaskDependencyResolver.java:49)
-	at org.gradle.execution.plan.LocalTaskNode.getDependencies(LocalTaskNode.java:151)
-	at org.gradle.execution.plan.LocalTaskNode.resolveDependencies(LocalTaskNode.java:125)
-	at org.gradle.execution.plan.DefaultExecutionPlan.discoverNodeRelationships(DefaultExecutionPlan.java:182)
-	at org.gradle.execution.plan.DefaultExecutionPlan.doAddEntryNodes(DefaultExecutionPlan.java:154)
-	at org.gradle.execution.plan.DefaultExecutionPlan.addEntryTasks(DefaultExecutionPlan.java:129)
-	at org.gradle.execution.plan.DefaultExecutionPlan.addEntryTasks(DefaultExecutionPlan.java:121)
-	at org.gradle.execution.TaskNameResolvingBuildTaskScheduler.scheduleRequestedTasks(TaskNameResolvingBuildTaskScheduler.java:61)
-	at org.gradle.execution.DefaultTasksBuildTaskScheduler.scheduleRequestedTasks(DefaultTasksBuildTaskScheduler.java:72)
-	at org.gradle.initialization.DefaultTaskExecutionPreparer.lambda$scheduleRequestedTasks$0(DefaultTaskExecutionPreparer.java:48)
-	at org.gradle.internal.Factories$1.create(Factories.java:31)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withReplacedLocks(DefaultWorkerLeaseService.java:359)
-	at org.gradle.api.internal.project.DefaultProjectStateRegistry$DefaultBuildProjectRegistry.withMutableStateOfAllProjects(DefaultProjectStateRegistry.java:239)
-	at org.gradle.api.internal.project.DefaultProjectStateRegistry$DefaultBuildProjectRegistry.withMutableStateOfAllProjects(DefaultProjectStateRegistry.java:232)
-	at org.gradle.initialization.DefaultTaskExecutionPreparer.scheduleRequestedTasks(DefaultTaskExecutionPreparer.java:47)
-	at org.gradle.initialization.VintageBuildModelController.lambda$scheduleRequestedTasks$0(VintageBuildModelController.java:76)
-	at org.gradle.internal.model.StateTransitionController.lambda$inState$1(StateTransitionController.java:99)
-	at org.gradle.internal.model.StateTransitionController.lambda$inState$2(StateTransitionController.java:114)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:46)
-	at org.gradle.internal.model.StateTransitionController.inState(StateTransitionController.java:110)
-	at org.gradle.internal.model.StateTransitionController.inState(StateTransitionController.java:98)
-	at org.gradle.initialization.VintageBuildModelController.scheduleRequestedTasks(VintageBuildModelController.java:76)
-	at org.gradle.internal.build.DefaultBuildLifecycleController$DefaultWorkGraphBuilder.addRequestedTasks(DefaultBuildLifecycleController.java:404)
-	at org.gradle.internal.buildtree.DefaultBuildTreeWorkPreparer.lambda$scheduleRequestedTasks$0(DefaultBuildTreeWorkPreparer.java:41)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$populateWorkGraph$7(DefaultBuildLifecycleController.java:189)
-	at org.gradle.internal.build.DefaultBuildWorkPreparer.populateWorkGraph(DefaultBuildWorkPreparer.java:42)
-	at org.gradle.internal.build.BuildOperationFiringBuildWorkPreparer$PopulateWorkGraph.populateTaskGraph(BuildOperationFiringBuildWorkPreparer.java:106)
-	at org.gradle.internal.build.BuildOperationFiringBuildWorkPreparer$PopulateWorkGraph.run(BuildOperationFiringBuildWorkPreparer.java:92)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.internal.build.BuildOperationFiringBuildWorkPreparer.populateWorkGraph(BuildOperationFiringBuildWorkPreparer.java:67)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$populateWorkGraph$8(DefaultBuildLifecycleController.java:189)
-	at org.gradle.internal.model.StateTransitionController.lambda$inState$1(StateTransitionController.java:99)
-	at org.gradle.internal.model.StateTransitionController.lambda$inState$2(StateTransitionController.java:114)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:46)
-	at org.gradle.internal.model.StateTransitionController.inState(StateTransitionController.java:110)
-	at org.gradle.internal.model.StateTransitionController.inState(StateTransitionController.java:98)
-	at org.gradle.internal.build.DefaultBuildLifecycleController.populateWorkGraph(DefaultBuildLifecycleController.java:189)
-	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.populateWorkGraph(DefaultBuildWorkGraphController.java:169)
-	at org.gradle.composite.internal.DefaultBuildController.populateWorkGraph(DefaultBuildController.java:76)
-	at org.gradle.composite.internal.DefaultIncludedBuildTaskGraph$DefaultBuildTreeWorkGraphBuilder.withWorkGraph(DefaultIncludedBuildTaskGraph.java:153)
-	at org.gradle.internal.buildtree.DefaultBuildTreeWorkPreparer.lambda$scheduleRequestedTasks$1(DefaultBuildTreeWorkPreparer.java:41)
-	at org.gradle.composite.internal.DefaultIncludedBuildTaskGraph$DefaultBuildTreeWorkGraph$1.run(DefaultIncludedBuildTaskGraph.java:209)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.composite.internal.DefaultIncludedBuildTaskGraph$DefaultBuildTreeWorkGraph.scheduleWork(DefaultIncludedBuildTaskGraph.java:204)
-	at org.gradle.internal.buildtree.DefaultBuildTreeWorkPreparer.scheduleRequestedTasks(DefaultBuildTreeWorkPreparer.java:37)
-	at org.gradle.internal.cc.impl.VintageBuildTreeWorkController$scheduleAndRunRequestedTasks$1.apply(VintageBuildTreeWorkController.kt:36)
-	at org.gradle.internal.cc.impl.VintageBuildTreeWorkController$scheduleAndRunRequestedTasks$1.apply(VintageBuildTreeWorkController.kt:35)
-	at org.gradle.composite.internal.DefaultIncludedBuildTaskGraph.withNewWorkGraph(DefaultIncludedBuildTaskGraph.java:112)
-	at org.gradle.internal.cc.impl.VintageBuildTreeWorkController.scheduleAndRunRequestedTasks(VintageBuildTreeWorkController.kt:35)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.lambda$scheduleAndRunTasks$1(DefaultBuildTreeLifecycleController.java:77)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.lambda$runBuild$4(DefaultBuildTreeLifecycleController.java:120)
-	at org.gradle.internal.model.StateTransitionController.lambda$transition$6(StateTransitionController.java:169)
-	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
-	at org.gradle.internal.model.StateTransitionController.lambda$transition$7(StateTransitionController.java:169)
-	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:46)
-	at org.gradle.internal.model.StateTransitionController.transition(StateTransitionController.java:169)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.runBuild(DefaultBuildTreeLifecycleController.java:117)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.scheduleAndRunTasks(DefaultBuildTreeLifecycleController.java:77)
-	at org.gradle.internal.buildtree.DefaultBuildTreeLifecycleController.scheduleAndRunTasks(DefaultBuildTreeLifecycleController.java:72)
-	at org.gradle.tooling.internal.provider.ExecuteBuildActionRunner.run(ExecuteBuildActionRunner.java:31)
-	at org.gradle.launcher.exec.ChainingBuildActionRunner.run(ChainingBuildActionRunner.java:35)
-	at org.gradle.internal.buildtree.ProblemReportingBuildActionRunner.run(ProblemReportingBuildActionRunner.java:49)
-	at org.gradle.launcher.exec.BuildOutcomeReportingBuildActionRunner.run(BuildOutcomeReportingBuildActionRunner.java:71)
-	at org.gradle.tooling.internal.provider.FileSystemWatchingBuildActionRunner.run(FileSystemWatchingBuildActionRunner.java:135)
-	at org.gradle.launcher.exec.BuildCompletionNotifyingBuildActionRunner.run(BuildCompletionNotifyingBuildActionRunner.java:41)
-	at org.gradle.launcher.exec.RootBuildLifecycleBuildActionExecutor.lambda$execute$0(RootBuildLifecycleBuildActionExecutor.java:54)
-	at org.gradle.composite.internal.DefaultRootBuildState.run(DefaultRootBuildState.java:130)
-	at org.gradle.launcher.exec.RootBuildLifecycleBuildActionExecutor.execute(RootBuildLifecycleBuildActionExecutor.java:54)
-	at org.gradle.internal.buildtree.InitDeprecationLoggingActionExecutor.execute(InitDeprecationLoggingActionExecutor.java:62)
-	at org.gradle.internal.buildtree.InitProblems.execute(InitProblems.java:36)
-	at org.gradle.internal.buildtree.DefaultBuildTreeContext.execute(DefaultBuildTreeContext.java:40)
-	at org.gradle.launcher.exec.BuildTreeLifecycleBuildActionExecutor.lambda$execute$0(BuildTreeLifecycleBuildActionExecutor.java:71)
-	at org.gradle.internal.buildtree.BuildTreeState.run(BuildTreeState.java:60)
-	at org.gradle.launcher.exec.BuildTreeLifecycleBuildActionExecutor.execute(BuildTreeLifecycleBuildActionExecutor.java:71)
-	at org.gradle.launcher.exec.RunAsBuildOperationBuildActionExecutor$2.call(RunAsBuildOperationBuildActionExecutor.java:67)
-	at org.gradle.launcher.exec.RunAsBuildOperationBuildActionExecutor$2.call(RunAsBuildOperationBuildActionExecutor.java:63)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
-	at org.gradle.launcher.exec.RunAsBuildOperationBuildActionExecutor.execute(RunAsBuildOperationBuildActionExecutor.java:63)
-	at org.gradle.launcher.exec.RunAsWorkerThreadBuildActionExecutor.lambda$execute$0(RunAsWorkerThreadBuildActionExecutor.java:36)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
-	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
-	at org.gradle.launcher.exec.RunAsWorkerThreadBuildActionExecutor.execute(RunAsWorkerThreadBuildActionExecutor.java:36)
-	at org.gradle.tooling.internal.provider.continuous.ContinuousBuildActionExecutor.execute(ContinuousBuildActionExecutor.java:110)
-	at org.gradle.tooling.internal.provider.SubscribableBuildActionExecutor.execute(SubscribableBuildActionExecutor.java:64)
-	at org.gradle.internal.session.DefaultBuildSessionContext.execute(DefaultBuildSessionContext.java:46)
-	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor$ActionImpl.apply(BuildSessionLifecycleBuildActionExecutor.java:92)
-	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor$ActionImpl.apply(BuildSessionLifecycleBuildActionExecutor.java:80)
-	at org.gradle.internal.session.BuildSessionState.run(BuildSessionState.java:73)
-	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor.execute(BuildSessionLifecycleBuildActionExecutor.java:62)
-	at org.gradle.internal.buildprocess.execution.BuildSessionLifecycleBuildActionExecutor.execute(BuildSessionLifecycleBuildActionExecutor.java:41)
-	at org.gradle.internal.buildprocess.execution.StartParamsValidatingActionExecutor.execute(StartParamsValidatingActionExecutor.java:64)
-	at org.gradle.internal.buildprocess.execution.StartParamsValidatingActionExecutor.execute(StartParamsValidatingActionExecutor.java:32)
-	at org.gradle.internal.buildprocess.execution.SessionFailureReportingActionExecutor.execute(SessionFailureReportingActionExecutor.java:51)
-	at org.gradle.internal.buildprocess.execution.SessionFailureReportingActionExecutor.execute(SessionFailureReportingActionExecutor.java:39)
-	at org.gradle.internal.buildprocess.execution.SetupLoggingActionExecutor.execute(SetupLoggingActionExecutor.java:47)
-	at org.gradle.internal.buildprocess.execution.SetupLoggingActionExecutor.execute(SetupLoggingActionExecutor.java:31)
-	at org.gradle.launcher.daemon.server.exec.ExecuteBuild.doBuild(ExecuteBuild.java:70)
-	at org.gradle.launcher.daemon.server.exec.BuildCommandOnly.execute(BuildCommandOnly.java:37)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.WatchForDisconnection.execute(WatchForDisconnection.java:39)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.ResetDeprecationLogger.execute(ResetDeprecationLogger.java:29)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.RequestStopIfSingleUsedDaemon.execute(RequestStopIfSingleUsedDaemon.java:35)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.ForwardClientInput.lambda$execute$0(ForwardClientInput.java:40)
-	at org.gradle.internal.daemon.clientinput.ClientInputForwarder.forwardInput(ClientInputForwarder.java:80)
-	at org.gradle.launcher.daemon.server.exec.ForwardClientInput.execute(ForwardClientInput.java:37)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.LogAndCheckHealth.execute(LogAndCheckHealth.java:64)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.LogToClient.doBuild(LogToClient.java:63)
-	at org.gradle.launcher.daemon.server.exec.BuildCommandOnly.execute(BuildCommandOnly.java:37)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.EstablishBuildEnvironment.doBuild(EstablishBuildEnvironment.java:84)
-	at org.gradle.launcher.daemon.server.exec.BuildCommandOnly.execute(BuildCommandOnly.java:37)
-	at org.gradle.launcher.daemon.server.api.DaemonCommandExecution.proceed(DaemonCommandExecution.java:104)
-	at org.gradle.launcher.daemon.server.exec.StartBuildOrRespondWithBusy$1.run(StartBuildOrRespondWithBusy.java:52)
-	at org.gradle.launcher.daemon.server.DaemonStateCoordinator.lambda$runCommand$0(DaemonStateCoordinator.java:321)
-	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
-	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
-Caused by: org.gradle.api.internal.tasks.DefaultTaskContainer$TaskCreationException: Could not create task ':app:compileDebugJavaWithJavac'.
-	at org.gradle.api.internal.tasks.DefaultTaskContainer.taskCreationException(DefaultTaskContainer.java:729)
-	at org.gradle.api.internal.tasks.DefaultTaskContainer.access$600(DefaultTaskContainer.java:78)
-	at org.gradle.api.internal.tasks.DefaultTaskContainer$TaskCreatingProvider.domainObjectCreationException(DefaultTaskContainer.java:721)
-	at org.gradle.api.internal.DefaultNamedDomainObjectCollection$AbstractDomainObjectCreatingProvider.tryCreate(DefaultNamedDomainObjectCollection.java:1014)
-	at org.gradle.api.internal.tasks.DefaultTaskContainer$TaskCreatingProvider.access$1401(DefaultTaskContainer.java:668)
-	at org.gradle.api.internal.tasks.DefaultTaskContainer$TaskCreatingProvider$1.run(DefaultTaskContainer.java:694)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.api.internal.tasks.DefaultTaskContainer$TaskCreatingProvider.tryCreate(DefaultTaskContainer.java:690)
-	at org.gradle.api.internal.DefaultNamedDomainObjectCollection$AbstractDomainObjectCreatingProvider.calculateOwnValue(DefaultNamedDomainObjectCollection.java:988)
-	at org.gradle.api.internal.provider.AbstractMinimalProvider.calculateOwnPresentValue(AbstractMinimalProvider.java:82)
-	at org.gradle.api.internal.provider.AbstractMinimalProvider.get(AbstractMinimalProvider.java:102)
-	at org.gradle.api.internal.DefaultNamedDomainObjectCollection$AbstractDomainObjectCreatingProvider.get(DefaultNamedDomainObjectCollection.java:974)
-	at org.gradle.api.internal.tasks.DefaultTaskContainer$TaskCreatingProvider.getProducer(DefaultTaskContainer.java:685)
-	at org.gradle.api.internal.tasks.DefaultTaskDependency.visitDependencies(DefaultTaskDependency.java:104)
-	at org.gradle.api.internal.tasks.CachingTaskDependencyResolveContext$TaskGraphImpl.getNodeValues(CachingTaskDependencyResolveContext.java:108)
-	at org.gradle.internal.graph.CachingDirectedGraphWalker$GraphWithEmptyEdges.getNodeValues(CachingDirectedGraphWalker.java:219)
-	at org.gradle.internal.graph.CachingDirectedGraphWalker.doSearch(CachingDirectedGraphWalker.java:127)
-	at org.gradle.internal.graph.CachingDirectedGraphWalker.findValues(CachingDirectedGraphWalker.java:79)
-	at org.gradle.api.internal.tasks.CachingTaskDependencyResolveContext.getDependencies(CachingTaskDependencyResolveContext.java:67)
-	... 139 more
-Caused by: org.gradle.api.internal.provider.AbstractProperty$PropertyQueryException: Failed to calculate the value of task ':app:compileDebugJavaWithJavac' property 'javaCompiler'.
-	at org.gradle.api.internal.provider.AbstractProperty.finalizeNow(AbstractProperty.java:311)
-	at org.gradle.api.internal.provider.AbstractProperty.lambda$beforeRead$0(AbstractProperty.java:303)
-	at org.gradle.api.internal.provider.ValueState.finalizeOnReadIfNeeded(ValueState.java:140)
-	at org.gradle.api.internal.provider.AbstractProperty.beforeRead(AbstractProperty.java:303)
-	at org.gradle.api.internal.provider.AbstractProperty.beforeRead(AbstractProperty.java:295)
-	at org.gradle.api.internal.provider.AbstractProperty.calculateOwnValue(AbstractProperty.java:164)
-	at org.gradle.api.internal.provider.AbstractMinimalProvider.getOrNull(AbstractMinimalProvider.java:107)
-	at com.android.build.gradle.tasks.JavaCompileUtils.configureProperties(JavaCompileUtils.kt:92)
-	at com.android.build.gradle.tasks.JavaCompileCreationAction.configure(JavaCompile.kt:125)
-	at com.android.build.gradle.tasks.JavaCompileCreationAction.configure(JavaCompile.kt:57)
-	at com.android.build.gradle.internal.tasks.factory.TaskConfigurationActions.execute(TaskFactoryUtils.kt:94)
-	at com.android.build.gradle.internal.tasks.factory.TaskConfigurationActions.execute(TaskFactoryUtils.kt:80)
-	at org.gradle.api.internal.DefaultMutationGuard$1.execute(DefaultMutationGuard.java:66)
-	at org.gradle.api.internal.DefaultMutationGuard$1.execute(DefaultMutationGuard.java:66)
-	at org.gradle.internal.code.DefaultUserCodeApplicationContext$CurrentApplication$1.execute(DefaultUserCodeApplicationContext.java:124)
-	at org.gradle.api.internal.DefaultCollectionCallbackActionDecorator$BuildOperationEmittingAction$1.run(DefaultCollectionCallbackActionDecorator.java:110)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
-	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
-	at org.gradle.api.internal.DefaultCollectionCallbackActionDecorator$BuildOperationEmittingAction.execute(DefaultCollectionCallbackActionDecorator.java:107)
-	at org.gradle.internal.ImmutableActionSet$SetWithManyActions.execute(ImmutableActionSet.java:329)
-	at org.gradle.api.internal.DefaultDomainObjectCollection.doAdd(DefaultDomainObjectCollection.java:280)
-	at org.gradle.api.internal.DefaultNamedDomainObjectCollection.doAdd(DefaultNamedDomainObjectCollection.java:125)
-	at org.gradle.api.internal.DefaultNamedDomainObjectCollection$AbstractDomainObjectCreatingProvider.tryCreate(DefaultNamedDomainObjectCollection.java:1008)
-	... 160 more
-Caused by: org.gradle.jvm.toolchain.internal.install.exceptions.ToolchainProvisioningException: Cannot find a Java installation on your machine (Windows 11 10.0 amd64) matching: {languageVersion=21, vendor=any vendor, implementation=vendor-specific, nativeImageCapable=false}. Toolchain download repositories have not been configured.
-	at org.gradle.jvm.toolchain.internal.install.DefaultJavaToolchainProvisioningService.tryInstall(DefaultJavaToolchainProvisioningService.java:103)
-	at org.gradle.jvm.toolchain.internal.JavaToolchainQueryService.downloadToolchain(JavaToolchainQueryService.java:229)
-	at org.gradle.jvm.toolchain.internal.JavaToolchainQueryService.lambda$query$2(JavaToolchainQueryService.java:199)
-	at org.gradle.jvm.toolchain.internal.JavaToolchainQueryService.query(JavaToolchainQueryService.java:199)
-	at org.gradle.jvm.toolchain.internal.JavaToolchainQueryService.lambda$resolveToolchain$1(JavaToolchainQueryService.java:166)
-	at org.gradle.jvm.toolchain.internal.JavaToolchainQueryService.resolveToolchain(JavaToolchainQueryService.java:164)
-	at org.gradle.jvm.toolchain.internal.JavaToolchainQueryService.lambda$findMatchingToolchain$0(JavaToolchainQueryService.java:142)
-	at org.gradle.api.internal.provider.DefaultProvider.calculateOwnValue(DefaultProvider.java:73)
-	at org.gradle.api.internal.provider.AbstractMinimalProvider.calculateValue(AbstractMinimalProvider.java:117)
-	at org.gradle.api.internal.provider.WithSideEffectProvider.calculateOwnValue(WithSideEffectProvider.java:54)
-	at org.gradle.api.internal.provider.AbstractMinimalProvider.calculateValue(AbstractMinimalProvider.java:117)
-	at org.gradle.api.internal.provider.TransformBackedProvider.calculateOwnValue(TransformBackedProvider.java:82)
-	at org.gradle.api.internal.provider.AbstractMinimalProvider.calculateValue(AbstractMinimalProvider.java:117)
-	at org.gradle.api.internal.provider.TransformBackedProvider.calculateOwnValue(TransformBackedProvider.java:82)
-	at org.gradle.api.internal.provider.AbstractMinimalProvider.calculateValue(AbstractMinimalProvider.java:117)
-	at org.gradle.api.internal.provider.AbstractMinimalProvider.withFinalValue(AbstractMinimalProvider.java:182)
-	at org.gradle.api.internal.provider.DefaultProperty.finalValue(DefaultProperty.java:163)
-	at org.gradle.api.internal.provider.DefaultProperty.finalValue(DefaultProperty.java:34)
-	at org.gradle.api.internal.provider.AbstractProperty.finalizeNow(AbstractProperty.java:308)
-	... 187 more
-
-
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
 
 You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
-
-BUILD FAILED in 990ms
+BUILD FAILED in 2s
+206 actionable tasks: 8 executed, 198 up-to-date

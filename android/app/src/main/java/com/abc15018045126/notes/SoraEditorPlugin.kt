@@ -11,14 +11,7 @@ import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 import io.github.rosemoe.sora.widget.CodeEditor
-import io.github.rosemoe.sora.langs.textmate.TextMateColorScheme
-import io.github.rosemoe.sora.langs.textmate.TextMateLanguage
-import io.github.rosemoe.sora.langs.textmate.registry.FileProviderRegistry
-import io.github.rosemoe.sora.langs.textmate.registry.GrammarRegistry
-import io.github.rosemoe.sora.langs.textmate.registry.ThemeRegistry
-import io.github.rosemoe.sora.langs.textmate.registry.model.ThemeModel
-import io.github.rosemoe.sora.langs.textmate.registry.provider.AssetsFileResolver
-import org.eclipse.tm4e.core.registry.IThemeSource
+import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
 
 @CapacitorPlugin(name = "SoraEditor")
 class SoraEditorPlugin : Plugin() {
@@ -35,26 +28,73 @@ class SoraEditorPlugin : Plugin() {
         val width = call.getInt("width") ?: -1 // -1 = MATCH_PARENT
         val height = call.getInt("height") ?: -1 
         val fontSize = call.getFloat("fontSize") ?: 18f
+        val showLineNumbers = call.getBoolean("showLineNumbers") ?: true
+        val wordWrap = call.getBoolean("wordWrap") ?: false
+        val editable = call.getBoolean("editable") ?: true
+        val bgColorStr = call.getString("backgroundColor") // e.g. "#FFFFFF"
         
         activity.runOnUiThread {
             if (editor == null) {
                 editor = CodeEditor(context).apply {
                     setTextSize(fontSize)
                     setTypefaceText(Typeface.MONOSPACE)
-                    isLineNumberEnabled = true
+                    isLineNumberEnabled = showLineNumbers
+                    isWordwrap = wordWrap
+                    setEditable(editable)
+                    
+                    var startX = 0f
+                    var startY = 0f
+                    var startTime = 0L
+                    
+                    setOnTouchListener { _, event ->
+                        when (event.action) {
+                            android.view.MotionEvent.ACTION_DOWN -> {
+                                startX = event.x
+                                startY = event.y
+                                startTime = System.currentTimeMillis()
+                            }
+                            android.view.MotionEvent.ACTION_UP -> {
+                                val duration = System.currentTimeMillis() - startTime
+                                val dist = Math.sqrt(Math.pow((event.x - startX).toDouble(), 2.0) + Math.pow((event.y - startY).toDouble(), 2.0))
+                                if (duration < 300 && dist < 20) {
+                                    notifyListeners("onEditorClick", JSObject())
+                                }
+                            }
+                        }
+                        false // Allow editor to handle the event too
+                    }
                 }
                 
-                try {
-                    // Try to load a theme (optional)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-
                 val params = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT
                 )
                 activity.addContentView(editor, params)
+            }
+
+            editor!!.isLineNumberEnabled = showLineNumbers
+            editor!!.isWordwrap = wordWrap
+            editor!!.setEditable(editable)
+            
+            if (bgColorStr != null) {
+                try {
+                    val color = Color.parseColor(bgColorStr)
+                    val r = Color.red(color)
+                    val g = Color.green(color)
+                    val b = Color.blue(color)
+                    val luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+                    
+                    editor!!.colorScheme.setColor(EditorColorScheme.WHOLE_BACKGROUND, color)
+                    editor!!.colorScheme.setColor(EditorColorScheme.LINE_NUMBER_BACKGROUND, color)
+                    
+                    if (luminance < 0.5) {
+                        editor!!.colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, Color.WHITE)
+                        editor!!.colorScheme.setColor(EditorColorScheme.LINE_NUMBER, Color.GRAY)
+                    } else {
+                        editor!!.colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, Color.BLACK)
+                        editor!!.colorScheme.setColor(EditorColorScheme.LINE_NUMBER, Color.DKGRAY)
+                    }
+                } catch (e: Exception) {}
             }
 
             val density = context.resources.displayMetrics.density
@@ -116,6 +156,21 @@ class SoraEditorPlugin : Plugin() {
         val column = call.getInt("column") ?: 0
         activity.runOnUiThread {
             editor?.setSelection(line, column)
+        }
+        call.resolve()
+    }
+    @PluginMethod
+    fun redo(call: PluginCall) {
+        activity.runOnUiThread {
+            editor?.redo()
+        }
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun undo(call: PluginCall) {
+        activity.runOnUiThread {
+            editor?.undo()
         }
         call.resolve()
     }
