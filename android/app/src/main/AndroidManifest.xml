@@ -28,8 +28,6 @@
             android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
-
-        <activity android:name=".SoraEditorActivity" android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
     </application>
 
     <!-- Permissions -->

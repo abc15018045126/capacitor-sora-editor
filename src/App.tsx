@@ -4,7 +4,6 @@ import { App as CapApp } from '@capacitor/app';
 import { registerPlugin } from '@capacitor/core';
 
 const OpenFolder = registerPlugin<any>('OpenFolder');
-const SoraEditor = registerPlugin<any>('SoraEditor');
 const DIR = 'Notes';
 
 interface Note { id: string; title: string; content: string; time: number; isNew?: boolean; inTrash?: boolean; }
@@ -24,6 +23,15 @@ const App: React.FC = () => {
     // --- State: UI Elements ---
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [tocOpen, setTocOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [moreOpen, setMoreOpen] = useState(false);
+    const [findText, setFindText] = useState('');
+    const [replaceText, setReplaceText] = useState('');
+    const [matchIndex, setMatchIndex] = useState(-1);
+    const [matches, setMatches] = useState<number[]>([]);
+    const [showProps, setShowProps] = useState(false);
+    const [showRename, setShowRename] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [renameValue, setRenameValue] = useState('');
     const [showNewGroup, setShowNewGroup] = useState(false);
@@ -36,14 +44,27 @@ const App: React.FC = () => {
     const [isSelectMode, setIsSelectMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showMoveToModal, setShowMoveToModal] = useState(false);
+    const [propInfo, setPropInfo] = useState({ lines: 0, cursorLine: 0, chapter: '' });
+    const [curChapterIndex, setCurChapterIndex] = useState(0);
+    const [lastEditorPos, setLastEditorPos] = useState(0);
+    const [fontSize, setFontSize] = useState<number>(() => Number(localStorage.getItem('fontSize')) || 18);
+    const [editorBg, setEditorBg] = useState<string>(() => localStorage.getItem('editorBg') || 'default');
+    const [showEditorSettings, setShowEditorSettings] = useState(false);
+    const [autoSave, setAutoSave] = useState<boolean>(() => localStorage.getItem('autoSave') !== 'false');
+    const [showLineNums, setShowLineNums] = useState<boolean>(() => localStorage.getItem('showLineNums') === 'true');
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [liveLineCount, setLiveLineCount] = useState(0);
 
     // --- State: Scrollbars ---
     const [listScroll, setListScroll] = useState({ top: 0, height: 40, active: false });
+    const [editorScroll, setEditorScroll] = useState({ top: 0, height: 40, active: false });
     const [tocScroll, setTocScroll] = useState({ top: 0, height: 40, active: false });
 
     // --- Refs ---
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
     const tocListRef = useRef<HTMLDivElement>(null);
+    const lineNumsRef = useRef<HTMLDivElement>(null);
     const timeouts = useRef<Record<string, number>>({});
     const drag = useRef({ active: false, startY: 0, startScroll: 0 });
 
@@ -86,7 +107,11 @@ const App: React.FC = () => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
         localStorage.setItem('lang', lang);
-    }, [theme, lang]);
+        localStorage.setItem('fontSize', fontSize.toString());
+        localStorage.setItem('editorBg', editorBg);
+        localStorage.setItem('autoSave', autoSave.toString());
+        localStorage.setItem('showLineNums', showLineNums.toString());
+    }, [theme, lang, fontSize, editorBg, autoSave, showLineNums]);
 
     // --- File Operations ---
     const reloadNotes = useCallback(async () => {
@@ -119,6 +144,13 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        if (curId && view === 'editor') {
+            const content = notes.find(n => n.id === curId)?.content || '';
+            setLiveLineCount(content.split('\n').length);
+        }
+    }, [curId, view, notes]);
+
+    useEffect(() => {
         const checkPerms = async () => {
             try {
                 const status = await Filesystem.checkPermissions();
@@ -139,44 +171,19 @@ const App: React.FC = () => {
         } catch (e) { }
     }, []);
 
-    const handleOpenNote = (note: Note) => {
-        const path = `${docPath.replace('file://', '')}/${note.id}`;
-        SoraEditor.open({
-            path,
-            content: note.content.length > 500000 ? null : note.content,
-            title: note.title
-        }).then(() => {
-            reloadNotes();
-        }).catch(() => {
-            reloadNotes();
-        });
+    const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        if (!curId) return;
+        setLiveLineCount(e.target.value.split('\n').length);
+        if (!autoSave) return;
+        window.clearTimeout(timeouts.current.save);
+        timeouts.current.save = window.setTimeout(() => saveToDisk(curId, e.target.value), 300);
     };
 
-    const createNewNote = async () => {
+    const createNewNote = () => {
         const prefix = (curGroup && curGroup !== '') ? `${curGroup}/` : '';
-        const id = `${prefix}NewNote_${Date.now()}.txt`;
-        const path = `${docPath.replace('file://', '')}/${id}`;
-
-        // Create the empty file first so SoraEditor can save to it
-        try {
-            await Filesystem.writeFile({
-                path: `${DIR}/${id}`,
-                data: '',
-                directory: Directory.Documents,
-                encoding: Encoding.UTF8,
-                recursive: true
-            });
-
-            SoraEditor.open({
-                path,
-                content: '',
-                title: t.newNote
-            }).then((res: any) => {
-                reloadNotes();
-            }).catch(() => reloadNotes());
-        } catch (e) {
-            console.error('Failed to create new note', e);
-        }
+        const id = `${prefix}temp_${Date.now()}.txt`;
+        const newNote: Note = { id, title: t.newNote, content: '', time: Date.now(), isNew: true };
+        setNotes(p => [newNote, ...p]); setCurId(id); setView('editor'); setTimeout(() => textareaRef.current?.focus(), 300);
     };
 
     const createGroup = async () => {
@@ -215,15 +222,90 @@ const App: React.FC = () => {
         setShowGroupDeleteConfirm(false); setTargetGroup(null);
     };
 
+    const closeEditor = useCallback(async (save = true) => {
+        if (curId && textareaRef.current && save) {
+            const content = textareaRef.current.value;
+            const note = notes.find(n => n.id === curId);
+            let finalId = curId;
+            if (note?.isNew && content.trim()) {
+                const now = new Date(), date = `${now.getFullYear()}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getDate().toString().padStart(2, '0')}`;
+                const title = content.split('\n')[0].trim().substring(0, 15).replace(/[\\\/:*?"<>|]/g, '');
+                const folder = curId.includes('/') ? curId.split('/')[0] + '/' : '';
+                if (title) finalId = `${folder}${title} ${date}.txt`;
+            }
+            try {
+                await Filesystem.writeFile({ path: `${DIR}/${finalId}`, data: content, directory: Directory.Documents, encoding: Encoding.UTF8 });
+                if (finalId !== curId && curId.includes('temp_')) {
+                    await Filesystem.deleteFile({ path: `${DIR}/${curId}`, directory: Directory.Documents }).catch(() => { });
+                }
+            } catch (e) { }
+        }
+        if (!autoSave && save === undefined && curId && textareaRef.current) {
+            const content = textareaRef.current.value;
+            const original = notes.find(n => n.id === curId)?.content || '';
+            if (content !== original) { setShowSaveConfirm(true); return; }
+        }
+        setView('list'); setCurId(null); reloadNotes(); setShowSaveConfirm(false);
+    }, [curId, notes, reloadNotes, autoSave]);
+
     useEffect(() => {
         const sub = CapApp.addListener('backButton', () => {
-            if (view === 'settings' || sidebarOpen) { setView('list'); setSidebarOpen(false); }
+            if (view === 'editor') {
+                if (!autoSave) {
+                    const content = textareaRef.current?.value || '';
+                    const original = notes.find(n => n.id === curId)?.content || '';
+                    if (content !== original) { setShowSaveConfirm(true); return; }
+                }
+                closeEditor();
+            }
+            else if (view === 'settings' || sidebarOpen) { setView('list'); setSidebarOpen(false); }
             else CapApp.exitApp();
         });
         return () => { sub.then(h => h.remove()); };
-    }, [view, sidebarOpen]);
+    }, [view, closeEditor, sidebarOpen, autoSave, notes, curId]);
 
     // --- Search & Find & UI Logic ---
+    const handleFind = useCallback((text: string, scroll = true, prefPos?: number) => {
+        if (!text || !textareaRef.current) { setMatches([]); setMatchIndex(-1); return; }
+        const val = textareaRef.current.value, newM: number[] = [];
+        let p = val.indexOf(text);
+        while (p !== -1) { newM.push(p); p = val.indexOf(text, p + 1); }
+        setMatches(newM);
+        if (newM.length) {
+            const idx = prefPos !== undefined ? Math.max(0, newM.findIndex(m => m >= prefPos)) : 0;
+            setMatchIndex(idx);
+            if (scroll) {
+                const pos = newM[idx];
+                textareaRef.current.focus(); textareaRef.current.setSelectionRange(pos, pos + text.length);
+                scrollToPos(pos);
+            }
+        } else setMatchIndex(-1);
+    }, []);
+
+    const moveMatch = (delta: number) => {
+        if (!matches.length) return;
+        const next = (matchIndex + delta + matches.length) % matches.length;
+        setMatchIndex(next);
+        const pos = matches[next];
+        textareaRef.current?.focus(); textareaRef.current?.setSelectionRange(pos, pos + findText.length);
+        scrollToPos(pos);
+    };
+
+    const handleReplace = (all = false) => {
+        if (!textareaRef.current || (!all && matchIndex === -1)) return;
+        const ta = textareaRef.current, content = ta.value;
+        const nextVal = all ? content.split(findText).join(replaceText) : content.substring(0, matches[matchIndex]) + replaceText + content.substring(matches[matchIndex] + findText.length);
+        ta.value = nextVal; handleInput({ target: { value: nextVal } } as any);
+        setTimeout(() => handleFind(findText, !all), 0);
+    };
+
+    const scrollToPos = (pos: number) => {
+        const ta = textareaRef.current; if (!ta) return;
+        const ratio = pos / (ta.value.length || 1);
+        ta.scrollTop = ratio * ta.scrollHeight;
+        if (lineNumsRef.current) lineNumsRef.current.scrollTop = ta.scrollTop;
+    };
+
     const filteredNotes = useMemo(() => {
         const q = searchQuery.toLowerCase().trim();
         let list = notes;
@@ -238,8 +320,15 @@ const App: React.FC = () => {
         return q ? list.filter(n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q)) : list;
     }, [notes, searchQuery, curGroup]);
 
+    const handleShowProps = () => {
+        const ta = textareaRef.current; if (!ta) return;
+        const txt = ta.value, sel = ta.selectionStart;
+        setPropInfo({ lines: txt.split('\n').length, cursorLine: txt.substring(0, sel).split('\n').length, chapter: t.chapter.replace('{0}', (Math.floor(sel / 2000) + 1).toString()) });
+        setShowProps(true); setMoreOpen(false);
+    };
+
     const confirmRename = async () => {
-        if (!curId || !renameValue || renameValue === curId) { return; }
+        if (!curId || !renameValue || renameValue === curId) { setShowRename(false); return; }
         const final = renameValue.trim().endsWith('.txt') ? renameValue.trim() : renameValue.trim() + '.txt';
         try {
             const { data } = await Filesystem.readFile({ path: `${DIR}/${curId}`, directory: Directory.Documents, encoding: Encoding.UTF8 });
@@ -247,6 +336,7 @@ const App: React.FC = () => {
             await Filesystem.deleteFile({ path: `${DIR}/${curId}`, directory: Directory.Documents });
             setCurId(final); reloadNotes();
         } catch (e) { alert(e); }
+        setShowRename(false);
     };
 
     const confirmDelete = async () => {
@@ -293,33 +383,40 @@ const App: React.FC = () => {
         } catch (e) { alert(e); }
     };
 
-    const syncScroll = (type: 'list' | 'toc') => {
-        const el = { list: listRef, toc: tocListRef }[type] as any;
-        const state = { list: listScroll, toc: tocScroll }[type] as any;
-        const setter = { list: setListScroll, toc: setTocScroll }[type] as any;
-        const currentEl = el.current;
-        if (!currentEl || drag.current.active) return;
-        const ratio = currentEl.scrollTop / (currentEl.scrollHeight - currentEl.clientHeight || 1);
-        setter({ ...state, top: ratio * (currentEl.clientHeight - state.height), active: true });
+    const syncScroll = (type: 'list' | 'editor' | 'toc') => {
+        const el = { list: listRef, editor: textareaRef, toc: tocListRef }[type].current;
+        const state = { list: listScroll, editor: editorScroll, toc: tocScroll }[type];
+        const setter = { list: setListScroll, editor: setEditorScroll, toc: setTocScroll }[type];
+        if (!el || drag.current.active) return;
+        if (type === 'editor' && lineNumsRef.current) lineNumsRef.current.scrollTop = el.scrollTop;
+        const ratio = el.scrollTop / (el.scrollHeight - el.clientHeight || 1);
+        setter({ ...state, top: ratio * (el.clientHeight - state.height), active: true });
         window.clearTimeout(timeouts.current[type]);
-        timeouts.current[type] = window.setTimeout(() => setter((s: any) => ({ ...s, active: false })), 1500);
+        timeouts.current[type] = window.setTimeout(() => setter(s => ({ ...s, active: false })), 1500);
     };
 
     const updateScrollHeights = useCallback(() => {
-        const update = (type: 'list' | 'toc', ref: React.RefObject<HTMLDivElement | null>, setter: any) => {
+        const update = (type: 'list' | 'editor' | 'toc', ref: React.RefObject<HTMLElement | null>, setter: any) => {
             if (!ref.current) return;
             const { scrollHeight, clientHeight } = ref.current;
             setter((s: any) => ({ ...s, height: Math.max((clientHeight / (scrollHeight || 1)) * clientHeight, 40) }));
         };
-        update('list', listRef, setListScroll); update('toc', tocListRef, setTocScroll);
+        update('list', listRef, setListScroll); update('editor', textareaRef, setEditorScroll); update('toc', tocListRef, setTocScroll);
     }, []);
 
-    useEffect(() => { updateScrollHeights(); }, [filteredNotes, view, curId, updateScrollHeights]);
+    useEffect(() => { updateScrollHeights(); }, [filteredNotes, view, curId, tocOpen, updateScrollHeights]);
 
-    const handleDrag = (e: React.MouseEvent | React.TouchEvent, type: 'list' | 'toc') => {
-        const el = { list: listRef, toc: tocListRef }[type].current;
-        const setter = { list: setListScroll, toc: setTocScroll }[type];
-        const state = { list: listScroll, toc: tocScroll }[type];
+    useEffect(() => {
+        if (tocOpen && tocListRef.current) {
+            const activeItem = tocListRef.current.querySelector('.toc-item.active');
+            if (activeItem) (activeItem as HTMLElement).scrollIntoView({ block: 'center' });
+        }
+    }, [tocOpen]);
+
+    const handleDrag = (e: React.MouseEvent | React.TouchEvent, type: 'list' | 'editor' | 'toc') => {
+        const el = { list: listRef, editor: textareaRef, toc: tocListRef }[type].current;
+        const setter = { list: setListScroll, editor: setEditorScroll, toc: setTocScroll }[type];
+        const state = { list: listScroll, editor: editorScroll, toc: tocScroll }[type];
         if (!el) return;
         drag.current = { active: true, startY: 'touches' in e ? e.touches[0].clientY : e.clientY, startScroll: el.scrollTop };
         setter(s => ({ ...s, active: true }));
@@ -341,6 +438,12 @@ const App: React.FC = () => {
     };
 
     const curNote = useMemo(() => notes.find(n => n.id === curId), [notes, curId]);
+    const chapters = useMemo(() => Array.from({ length: Math.ceil((curNote?.content.length || 0) / 2000) }, (_, i) => ({ index: i, pos: i * 2000, title: t.chapter.replace('{0}', (i + 1).toString()) })), [curNote?.content, t.chapter]);
+    const lineNumbers = useMemo(() => {
+        let s = '';
+        for (let i = 1; i <= liveLineCount; i++) s += i + '\n';
+        return s;
+    }, [liveLineCount]);
     const Icon = ({ d, size = 24, color = "currentColor", style = {} }: { d: string, size?: number, color?: string, style?: any }) => <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24" style={style}><path d={d} /></svg>;
 
     if (isLoading) return null;
@@ -369,7 +472,7 @@ const App: React.FC = () => {
                                 <div key={n.id} className={`note-card ${isSel ? 'selected' : ''}`}
                                     onClick={() => {
                                         if (isSelectMode) setSelectedIds(p => isSel ? p.filter(x => x !== n.id) : [...p, n.id]);
-                                        else { handleOpenNote(n); }
+                                        else { setCurId(n.id); setView('editor'); }
                                     }}
                                     onTouchStart={() => {
                                         if (!isSelectMode) timeouts.current.lp = window.setTimeout(() => { setIsSelectMode(true); setSelectedIds([n.id]); }, 600);
@@ -418,7 +521,59 @@ const App: React.FC = () => {
                 )}
             </div>
 
-            {/* SoraEditor is handled by native plugin */}
+            {/* Editor View */}
+            <div className={`view ${view === 'editor' ? '' : 'view-hidden'}`}>
+                <header>
+                    <button className="btn-icon" onClick={() => { const ta = textareaRef.current; if (!ta) return; setCurChapterIndex(Math.floor((ta.scrollTop / ta.scrollHeight) * (ta.value.length / 2000))); setTocOpen(true); }}><Icon d="M4 6h16M4 12h16M4 18h16" /></button>
+                    <div style={{ display: 'flex' }}>
+                        <button className="btn-icon" onClick={() => { setSearchOpen(!searchOpen); if (!searchOpen && findText) setTimeout(() => { const p = textareaRef.current?.selectionStart || 0; setLastEditorPos(p); handleFind(findText, true, p); }, 0); }}><Icon d="M21 21l-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" /></button>
+                        <button className="btn-icon" onClick={() => setMoreOpen(!moreOpen)} style={{ marginLeft: 10 }}><Icon d="M12 12m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0 M12 5m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0 M12 19m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0" /></button>
+                    </div>
+                </header>
+                {searchOpen && (
+                    <div className="search-replace-panel">
+                        <div className="search-row">
+                            <div className="search-input-wrapper">
+                                <div onClick={() => { const p = textareaRef.current?.selectionStart || 0; setLastEditorPos(p); handleFind(findText, true, p); }} style={{ cursor: 'pointer', display: 'flex' }}><Icon d="M21 21l-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" size={16} style={{ margin: '0 8px' }} /></div>
+                                <input placeholder={t.find} value={findText} onChange={e => { setFindText(e.target.value); handleFind(e.target.value, false, lastEditorPos); }} onKeyDown={e => e.key === 'Enter' && handleFind(findText, true, lastEditorPos)} autoFocus />
+                                <div className="search-meta">{matches.length ? `${matchIndex + 1}/${matches.length}` : '0/0'}</div>
+                            </div>
+                            <button className="btn-small" onClick={() => moveMatch(-1)}>↑</button><button className="btn-small" onClick={() => moveMatch(1)}>↓</button>
+                        </div>
+                        <div className="search-row"><div className="search-input-wrapper"><input placeholder={t.replace} style={{ paddingLeft: 12 }} value={replaceText} onChange={e => setReplaceText(e.target.value)} /></div><button className="btn-small" onClick={() => handleReplace()}>{t.replace}</button><button className="btn-small" onClick={() => handleReplace(true)}>{t.replaceAll}</button></div>
+                    </div>
+                )}
+                <div className="editor-container" style={{ position: 'relative', flex: 1, display: 'flex', overflow: 'hidden' }}>
+                    <textarea key={curId || 'none'} ref={textareaRef} id="editor-area" placeholder={t.placeholder} defaultValue={curNote?.content || ''}
+                        style={{ fontSize: `${fontSize}px`, backgroundColor: editorBg === 'default' ? 'transparent' : editorBg, color: editorBg === '#000000' ? '#ffffff' : (editorBg === 'default' ? 'var(--text)' : '#000000'), paddingLeft: showLineNums ? 60 : 20 }}
+                        onChange={e => { handleInput(e); updateScrollHeights(); }} onScroll={() => syncScroll('editor')} />
+                    {showLineNums && (
+                        <div id="line-nums" ref={lineNumsRef} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 50, background: 'rgba(128,128,128,0.05)', color: 'var(--text-dim)', fontSize: fontSize * 0.7, padding: '20px 5px', textAlign: 'right', pointerEvents: 'none', lineHeight: 1.6, overflow: 'hidden', borderRight: '1px solid var(--border)', whiteSpace: 'pre' }}>
+                            {lineNumbers}
+                        </div>
+                    )}
+                    <div className={`custom-scrollbar ${editorScroll.active ? 'visible' : ''}`} style={{ top: 0, right: 2 }}><div className="scrollbar-thumb" style={{ top: editorScroll.top, height: editorScroll.height }} onMouseDown={e => handleDrag(e, 'editor')} onTouchStart={e => handleDrag(e, 'editor')} /></div>
+                </div>
+                {tocOpen && <div className="toc-overlay" onClick={() => setTocOpen(false)}><div className="toc-sidebar" onClick={e => e.stopPropagation()}><div className="toc-header"><h3>{t.toc}</h3><button className="btn-icon" onClick={() => setTocOpen(false)}>✕</button></div><div className="toc-list" ref={tocListRef} onScroll={() => syncScroll('toc')}>{chapters.map(ch => <div key={ch.index} className={`toc-item ${ch.index === curChapterIndex ? 'active' : ''}`} onClick={() => { scrollToPos(ch.pos); setTocOpen(false); }}>{ch.title}</div>)}</div><div className={`custom-scrollbar ${tocScroll.active ? 'visible' : ''}`} style={{ top: 60 }}><div className="scrollbar-thumb" style={{ top: tocScroll.top, height: tocScroll.height }} onMouseDown={e => handleDrag(e, 'toc')} onTouchStart={e => handleDrag(e, 'toc')} /></div></div></div>}
+
+
+                {moreOpen && (
+                    <div className="more-menu-overlay" onClick={() => setMoreOpen(false)}><div className="more-menu" onClick={e => e.stopPropagation()}>
+                        <div className="menu-item" onClick={() => closeEditor()}><Icon d="M19 12H5M12 19l-7-7 7-7" style={{ marginRight: 12 }} size={20} />{t.back}</div>
+                        <div className="menu-item" onClick={() => { textareaRef.current?.focus(); document.execCommand('undo'); setMoreOpen(false); }}><Icon d="M9 13l-4-4 4-4M5 9h11a4 4 0 010 8h-1" style={{ marginRight: 12 }} size={20} />{t.undo}</div>
+                        {!curNote?.inTrash && <div className="menu-item" onClick={() => { setRenameValue(curNote?.id || ''); setShowRename(true); setMoreOpen(false); }}><Icon d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7 M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" style={{ marginRight: 12 }} size={20} />{t.rename}</div>}
+                        {curNote?.inTrash && <div className="menu-item" onClick={() => { recoverNote(); setMoreOpen(false); }} style={{ color: '#4caf50' }}><Icon d="M9 14l-4-4 4-4" style={{ marginRight: 12 }} size={20} />{t.restore}</div>}
+                        <div className="menu-item" onClick={() => { setShowDeleteConfirm(true); setMoreOpen(false); }} style={{ color: '#ff4d4f' }}><Icon d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" style={{ marginRight: 12 }} size={20} />{curNote?.inTrash ? t.permDelete : t.moveToTrash}</div>
+                        <div className="menu-item" onClick={handleShowProps}><Icon d="M12 12m-9 0a9 9 0 1 0 18 0 9 9 0 1 0-18 0 M12 16v-4 M12 8h.01" style={{ marginRight: 12 }} size={20} />{t.properties}</div>
+                        <div className="menu-item" onClick={() => { setShowEditorSettings(true); setMoreOpen(false); }}><Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M12 12m-3 0a3 3 0 1 0 6 0 3 3 0 1 0-6 0" style={{ marginRight: 12 }} size={20} />{t.editorSettings}</div>
+                        <div className="menu-item" onClick={() => { setCurGroup(null); closeEditor(); }}><Icon d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" style={{ marginRight: 12 }} size={20} />{t.allNotes}</div>
+                        <div className="menu-item" onClick={() => { setView('settings'); setMoreOpen(false); }}><Icon d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" style={{ marginRight: 12 }} size={20} />{t.settings}</div>
+                    </div></div>
+                )}
+                {showProps && curNote && <div className="modal-overlay" onClick={() => setShowProps(false)}><div className="modal-content" onClick={e => e.stopPropagation()}><h4>{t.fileInfo}</h4><div className="prop-row"><span>{t.title}:</span> {curNote.title}</div><div className="prop-row"><span>{t.chars}:</span> {curNote.content.length}</div><div className="prop-row"><span>{t.lines}:</span> {propInfo.lines}</div><div className="prop-row"><span>{t.cursorLine}:</span> {propInfo.cursorLine}</div><div className="prop-row"><span>{t.toc}:</span> {propInfo.chapter}</div><div className="prop-row"><span>{t.modified}:</span> {new Date(curNote.time).toLocaleString()}</div><button className="modal-close" onClick={() => setShowProps(false)}>{t.close}</button></div></div>}
+                {showRename && <div className="modal-overlay" onClick={() => setShowRename(false)}><div className="modal-content" onClick={e => e.stopPropagation()}><h4>{t.rename}</h4><input className="search-input" value={renameValue} onChange={e => setRenameValue(e.target.value)} autoFocus style={{ marginBottom: 20 }} /><div style={{ display: 'flex', gap: 10 }}><button className="modal-close" style={{ background: 'var(--surface)', color: 'var(--text)', flex: 1, marginTop: 0 }} onClick={() => setShowRename(false)}>{t.cancel}</button><button className="modal-close" style={{ flex: 1, marginTop: 0 }} onClick={confirmRename}>{t.ok}</button></div></div></div>}
+                {showDeleteConfirm && <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}><div className="modal-content" onClick={e => e.stopPropagation()}><h4>{curNote?.inTrash ? t.trashConfirm : t.delConfirm}</h4><div style={{ display: 'flex', gap: 10, marginTop: 10 }}><button className="modal-close" style={{ background: 'var(--surface)', color: 'var(--text)', flex: 1, marginTop: 0 }} onClick={() => setShowDeleteConfirm(false)}>{t.cancel}</button><button className="modal-close" style={{ background: '#ff4d4f', flex: 1, marginTop: 0 }} onClick={confirmDelete}>{t.ok}</button></div></div></div>}
+            </div>
 
             {/* Settings View */}
             <div className={`view ${view === 'settings' ? '' : 'view-hidden'}`}>
@@ -452,7 +607,45 @@ const App: React.FC = () => {
                     <button className="modal-close" onClick={() => setShowMoveToModal(false)}>{t.cancel}</button>
                 </div></div>
             )}
-            {/* Deprecated modals removed */}
+            {showEditorSettings && (
+                <div className="modal-overlay" onClick={() => setShowEditorSettings(false)}><div className="modal-content" onClick={e => e.stopPropagation()}>
+                    <h4>{t.editorSettings}</h4>
+                    <div style={{ marginBottom: 20 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}><span>{t.fontSize}: {fontSize}px</span><button className="btn-small" onClick={() => setFontSize(18)}>{t.reset}</button></div>
+                        <input type="range" min="12" max="36" value={fontSize} onChange={e => setFontSize(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                    </div>
+                    <div>
+                        <div style={{ marginBottom: 10 }}>{t.bgColor}</div>
+                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                            {[
+                                { name: t.white, color: '#FFFFFF' },
+                                { name: t.yellow, color: '#F8F1E7' },
+                                { name: t.green, color: '#E1EAD2' },
+                                { name: t.blue, color: '#D1D7DA' },
+                                { name: t.black, color: '#000000' }
+                            ].map(c => (
+                                <div key={c.color} onClick={() => setEditorBg(c.color)} style={{ width: 44, height: 44, borderRadius: '50%', background: c.color, border: editorBg === c.color ? '3px solid var(--primary)' : '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyItems: 'center', transition: 'transform 0.2s' }} className={editorBg === c.color ? 'scale-up' : ''}>
+                                    {editorBg === c.color && <Icon d="M5 13l4 4L19 7" color={c.color === '#000000' ? 'white' : 'black'} style={{ margin: 'auto' }} size={24} />}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 15, marginTop: 20 }}>
+                        <button className={`theme-btn ${autoSave ? '' : 'btn-dim'}`} onClick={() => setAutoSave(!autoSave)} style={{ flex: 1, fontSize: '0.8rem' }}>{t.autoSave}: {autoSave ? 'ON' : 'OFF'}</button>
+                        <button className={`theme-btn ${showLineNums ? '' : 'btn-dim'}`} onClick={() => setShowLineNums(!showLineNums)} style={{ flex: 1, fontSize: '0.8rem' }}>{t.lineNum}: {showLineNums ? 'ON' : 'OFF'}</button>
+                    </div>
+                    <button className="modal-close" onClick={() => setShowEditorSettings(false)}>{t.close}</button>
+                </div></div>
+            )}
+            {showSaveConfirm && (
+                <div className="modal-overlay" onClick={() => setShowSaveConfirm(false)}><div className="modal-content" onClick={e => e.stopPropagation()}>
+                    <h4>{t.saveConfirm}</h4>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                        <button className="modal-close" style={{ background: 'var(--surface)', color: 'var(--text)', flex: 1, marginTop: 0 }} onClick={() => closeEditor(false)}>{t.discard}</button>
+                        <button className="modal-close" style={{ flex: 1, marginTop: 0 }} onClick={() => closeEditor(true)}>{t.save}</button>
+                    </div>
+                </div></div>
+            )}
 
             <style>{`
                 :root { --primary: #fff; --primary-rgb: 255,255,255; --bg: #000; --surface: #121212; --text: #fff; --text-dim: #888; --border: #222; }
@@ -479,6 +672,7 @@ const App: React.FC = () => {
                 .note-title { font-weight: 700; padding-right: 30px; }
                 .note-desc, .note-time { color: var(--text-dim); font-size: 0.85rem; }
                 .note-time { font-size: 0.7rem; text-align: right; margin-top: 8px; font-style: italic; }
+                #editor-area { flex: 1; width: 100%; background: transparent; border: none; color: var(--text); font-size: 1.15rem; line-height: 1.6; padding: 20px; resize: none; outline: none; }
                 .btn-icon { padding: 10px; background: transparent; border: none; color: var(--text); display: flex; cursor: pointer; }
                 #fab { position: fixed; bottom: calc(30px + env(safe-area-inset-bottom)); right: 25px; width: 64px; height: 64px; border-radius: 32px; background: #fff9c4; color: #5d4037; border: none; font-size: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; z-index: 100; }
                 .selection-toolbar { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 20px; right: 20px; background: var(--surface); border-radius: 16px; border: 1px solid var(--border); display: flex; box-shadow: 0 8px 30px rgba(0,0,0,0.5); z-index: 120; animation: slideUp .3s; }
@@ -494,6 +688,12 @@ const App: React.FC = () => {
                 .theme-btn.btn-dim { background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); }
                 .search-bar-container { padding: 10px 15px; border-bottom: 1px solid var(--border); }
                 .search-input { width: 100%; padding: 10px 15px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: .95rem; outline: none; }
+                .search-replace-panel { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 12px; animation: slideDown 0.3s ease-out; width: 100%; overflow: hidden; }
+                @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                .search-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+                .search-input-wrapper { flex: 1; display: flex; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; position: relative; min-width: 0; }
+                .search-input-wrapper input { flex: 1; background: transparent; border: none; color: var(--text); padding: 8px; font-size: .9rem; outline: none; padding-right: 65px; min-width: 0; }
+                .search-meta { position: absolute; right: 8px; font-size: .7rem; color: var(--text-dim); font-family: monospace; white-space: nowrap; }
                 .btn-small { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 5px 8px; font-size: .8rem; flex-shrink: 0; }
                 .toc-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; backdrop-filter: blur(2px); }
                 .toc-sidebar { width: 280px; height: 100%; background: var(--bg); display: flex; flex-direction: column; animation: slideIn 0.3s ease-out; }
