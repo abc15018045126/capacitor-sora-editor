@@ -9,7 +9,7 @@ This workflow automates the process of copying your web assets to the Android pr
 
 # // turbo
 ```bash
-npm run run
+npm run build && npx cap run android --target 95808058460047G
 ```
 
 Alternatively, if you want a more "raw" installation:

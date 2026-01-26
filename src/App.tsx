@@ -4,6 +4,7 @@ import { App as CapApp } from '@capacitor/app';
 import { registerPlugin } from '@capacitor/core';
 
 const OpenFolder = registerPlugin<any>('OpenFolder');
+const SoraEditor = registerPlugin<any>('SoraEditor');
 const DIR = 'Notes';
 
 interface Note { id: string; title: string; content: string; time: number; isNew?: boolean; inTrash?: boolean; }
@@ -249,9 +250,13 @@ const App: React.FC = () => {
     }, [curId, notes, reloadNotes, autoSave]);
 
     useEffect(() => {
-        const sub = CapApp.addListener('backButton', () => {
+        const sub = CapApp.addListener('backButton', async () => {
             if (view === 'editor') {
+                if (autoSave) {
+                    await syncNativeText();
+                }
                 if (!autoSave) {
+                    await syncNativeText();
                     const content = textareaRef.current?.value || '';
                     const original = notes.find(n => n.id === curId)?.content || '';
                     if (content !== original) { setShowSaveConfirm(true); return; }
@@ -263,6 +268,86 @@ const App: React.FC = () => {
         });
         return () => { sub.then(h => h.remove()); };
     }, [view, closeEditor, sidebarOpen, autoSave, notes, curId]);
+
+    // Hook to sync text back when needed (e.g. Save)
+    const syncNativeText = async () => {
+        try {
+            const { content } = await SoraEditor.getText();
+            if (content !== undefined && textareaRef.current) {
+                // Only update if looks valid (basic check), otherwise we might overwrite with empty if plugin error
+                textareaRef.current.value = content;
+                handleInput({ target: { value: content } } as any);
+            }
+        } catch (e) { }
+    };
+
+    // Manage Native Editor Visibility and State
+    useEffect(() => {
+        if (view === 'editor') {
+            // New Logic: NEVER hide native editor. Adjust margins instead.
+
+            // Wait for UI render to get accurate heights/widths if needed, or use fixed values
+            setTimeout(() => {
+                const header = document.querySelector('header');
+                let topOffset = header ? header.clientHeight : 60;
+                let leftOffset = 0;
+
+                // If search is open, push down
+                if (searchOpen) {
+                    const searchPanel = document.querySelector('.search-replace-panel');
+                    if (searchPanel) topOffset += searchPanel.clientHeight;
+                    else topOffset += 100; // heuristic backup
+                }
+
+                // If TOC is open (sidebar), push right
+                if (tocOpen) {
+                    const tocSidebar = document.querySelector('.toc-sidebar');
+                    if (tocSidebar) leftOffset += tocSidebar.clientWidth;
+                    else leftOffset += 280; // default CSS width
+                }
+
+                // Force content load from curId directly if not already loaded into textarea
+                const note = notes.find(n => n.id === curId);
+                const currentContent = textareaRef.current ? textareaRef.current.value : (note?.content || '');
+
+                // Get current cursor to restore
+                const cursor = textareaRef.current ? textareaRef.current.selectionStart : 0;
+
+                // Start or Update layout
+                SoraEditor.start({
+                    content: currentContent,
+                    top: topOffset,
+                    left: leftOffset,
+                    fontSize: fontSize
+                }).then(() => {
+                    // Restore cursor position if valid
+                    const { line, col } = getLineCol(currentContent, cursor);
+                    SoraEditor.setSelection({ line, column: col });
+                }).catch((e: any) => console.error("Sora start failed", e));
+
+                // Ensure web textarea is hidden but functional
+                if (textareaRef.current) {
+                    textareaRef.current.style.opacity = '0';
+                    textareaRef.current.style.pointerEvents = 'none';
+                }
+
+            }, 100);
+
+        } else {
+            // Leaving editor view entirely
+            SoraEditor.close().catch(() => { });
+        }
+    }, [view, moreOpen, searchOpen, tocOpen, curId, notes, fontSize]);
+
+    const getLineCol = (text: string, pos: number) => {
+        const sub = text.substring(0, pos);
+        const lines = sub.split('\n');
+        const line = lines.length - 1;
+        const col = lines[line].length;
+        return { line, col };
+    };
+
+
 
     // --- Search & Find & UI Logic ---
     const handleFind = useCallback((text: string, scroll = true, prefPos?: number) => {
@@ -304,6 +389,12 @@ const App: React.FC = () => {
         const ratio = pos / (ta.value.length || 1);
         ta.scrollTop = ratio * ta.scrollHeight;
         if (lineNumsRef.current) lineNumsRef.current.scrollTop = ta.scrollTop;
+
+        // Always sync to Sora in editor view
+        if (view === 'editor') {
+            const { line, col } = getLineCol(ta.value, pos);
+            SoraEditor.setSelection({ line, column: col });
+        }
     };
 
     const filteredNotes = useMemo(() => {
@@ -449,84 +540,85 @@ const App: React.FC = () => {
     if (isLoading) return null;
 
     return (
-        <div className="app app-ready">
-            {/* List View */}
-            <div className={`view ${view === 'list' ? '' : 'view-hidden'}`}>
-                <header>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        {isSelectMode ? (
-                            <button className="btn-icon" onClick={() => { setIsSelectMode(false); setSelectedIds([]); }}><Icon d="M6 18L18 6M6 6l12 12" /></button>
-                        ) : (
-                            <button className="btn-icon" onClick={() => setSidebarOpen(true)} style={{ marginRight: 10 }}><Icon d="M4 6h16M4 12h16M4 18h16" /></button>
-                        )}
-                        <h1>{isSelectMode ? t.selectItems.replace('{0}', selectedIds.length.toString()) : (curGroup ? curGroup : (curGroup === '' ? t.uncategorized : t.allNotes))}</h1>
-                    </div>
-                    {!isSelectMode && <button className="btn-icon" onClick={() => setView('settings')}><Icon d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></button>}
-                </header>
-                <div className="search-bar-container"><input className="search-input" placeholder={t.search} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} /></div>
-                <div className="list-container" ref={listRef} onScroll={() => syncScroll('list')}>
-                    {filteredNotes.length === 0 ? <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-dim)' }}>{t.noNotes}</div> :
-                        filteredNotes.map(n => {
-                            const isSel = selectedIds.includes(n.id);
-                            return (
-                                <div key={n.id} className={`note-card ${isSel ? 'selected' : ''}`}
-                                    onClick={() => {
-                                        if (isSelectMode) setSelectedIds(p => isSel ? p.filter(x => x !== n.id) : [...p, n.id]);
-                                        else { setCurId(n.id); setView('editor'); }
-                                    }}
-                                    onTouchStart={() => {
-                                        if (!isSelectMode) timeouts.current.lp = window.setTimeout(() => { setIsSelectMode(true); setSelectedIds([n.id]); }, 600);
-                                    }}
-                                    onTouchEnd={() => clearTimeout(timeouts.current.lp)}
-                                    onContextMenu={e => e.preventDefault()}
-                                >
-                                    {isSelectMode && <div className="checkbox"><Icon d={isSel ? "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" : "M12 12m-9 0a9 9 0 1 0 18 0 9 9 0 1 0-18 0"} /></div>}
-                                    <div className="note-title">{n.title}</div>
-                                    <div className="note-desc">{n.content.substring(0, 40) || '...'}</div>
-                                    <div className="note-time">{new Date(n.time).toLocaleString([], { hour: '2-digit', minute: '2-digit', year: 'numeric', month: '2-digit', day: '2-digit' })}</div>
-                                </div>
-                            );
-                        })}
-                </div>
-                <div className={`custom-scrollbar ${listScroll.active ? 'visible' : ''}`}><div className="scrollbar-thumb" style={{ top: listScroll.top, height: listScroll.height }} onMouseDown={e => handleDrag(e, 'list')} onTouchStart={e => handleDrag(e, 'list')} /></div>
-                {!isSelectMode ? <button id="fab" onClick={createNewNote}>+</button> : (
-                    <div className="selection-toolbar">
-                        <button onClick={() => setSelectedIds(selectedIds.length === filteredNotes.length ? [] : filteredNotes.map(n => n.id))}>{selectedIds.length === filteredNotes.length ? t.deselectAll : t.selectAll}</button>
-                        <button onClick={() => setShowMoveToModal(true)} disabled={!selectedIds.length}>{t.moveTo}</button>
-                        <button style={{ color: '#ff4d4f' }} onClick={() => bulkProcess(curGroup === '__TRASH__' ? 'delete' : 'trash')} disabled={!selectedIds.length}>{curGroup === '__TRASH__' ? t.batchDelete : t.batchTrash}</button>
-                    </div>
-                )}
-                {sidebarOpen && (
-                    <div className="toc-overlay" onClick={() => setSidebarOpen(false)}>
-                        <div className="toc-sidebar" onClick={e => e.stopPropagation()}>
-                            <div className="toc-header"><h3>{t.groups}</h3><button className="btn-icon" onClick={() => setSidebarOpen(false)}>✕</button></div>
-                            <div className="toc-list" ref={tocListRef} onScroll={() => syncScroll('toc')}>
-                                <div className={`toc-item ${curGroup === null ? 'active' : ''}`} onClick={() => { setCurGroup(null); setSidebarOpen(false); }}>{t.allNotes}</div>
-                                <div className={`toc-item ${curGroup === '' ? 'active' : ''}`} onClick={() => { setCurGroup(''); setSidebarOpen(false); }}>{t.uncategorized}</div>
-                                <div className={`toc-item ${curGroup === '__TRASH__' ? 'active' : ''}`} onClick={() => { setCurGroup('__TRASH__'); setSidebarOpen(false); }} style={{ color: curGroup === '__TRASH__' ? 'var(--primary)' : '#ff4d4f' }}><Icon d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" size={18} style={{ marginRight: 8, verticalAlign: 'text-bottom' }} /> {t.trash}</div>
-                                <div style={{ height: 1, background: 'var(--border)', margin: '5px 0' }}></div>
-                                {groups.map(g => (
-                                    <div key={g} className={`toc-item ${curGroup === g ? 'active' : ''}`} onClick={() => { setCurGroup(g); setSidebarOpen(false); }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span>{g}</span>
-                                        <button className="btn-icon" style={{ padding: 4 }} onClick={(e) => { e.stopPropagation(); setTargetGroup(g); setShowGroupMenu(true); }}>
-                                            <Icon d="M12 12m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0 M12 5m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0 M12 19m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0" size={16} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className={`custom-scrollbar ${tocScroll.active ? 'visible' : ''}`} style={{ top: 60, bottom: 80 }}><div className="scrollbar-thumb" style={{ top: tocScroll.top, height: tocScroll.height }} onMouseDown={e => handleDrag(e, 'toc')} onTouchStart={e => handleDrag(e, 'toc')} /></div>
-                            <div style={{ padding: 20 }}><button className="btn-action" style={{ width: '100%' }} onClick={() => { setShowNewGroup(true); setSidebarOpen(false); }}>+ {t.newGroup}</button></div>
+        <div className={`app ${view === 'editor' && !moreOpen && !searchOpen && !tocOpen ? 'view-editor-mode' : ''}`}>
+            {view === 'list' && (
+                <div className={`view ${view === 'list' ? '' : 'view-hidden'}`}>
+                    <header>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            {isSelectMode ? (
+                                <button className="btn-icon" onClick={() => { setIsSelectMode(false); setSelectedIds([]); }}><Icon d="M6 18L18 6M6 6l12 12" /></button>
+                            ) : (
+                                <button className="btn-icon" onClick={() => setSidebarOpen(true)} style={{ marginRight: 10 }}><Icon d="M4 6h16M4 12h16M4 18h16" /></button>
+                            )}
+                            <h1>{isSelectMode ? t.selectItems.replace('{0}', selectedIds.length.toString()) : (curGroup ? curGroup : (curGroup === '' ? t.uncategorized : t.allNotes))}</h1>
                         </div>
+                        {!isSelectMode && <button className="btn-icon" onClick={() => setView('settings')}><Icon d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></button>}
+                    </header>
+                    <div className="search-bar-container"><input className="search-input" placeholder={t.search} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} /></div>
+                    <div className="list-container" ref={listRef} onScroll={() => syncScroll('list')}>
+                        {filteredNotes.length === 0 ? <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-dim)' }}>{t.noNotes}</div> :
+                            filteredNotes.map(n => {
+                                const isSel = selectedIds.includes(n.id);
+                                return (
+                                    <div key={n.id} className={`note-card ${isSel ? 'selected' : ''}`}
+                                        onClick={() => {
+                                            if (isSelectMode) setSelectedIds(p => isSel ? p.filter(x => x !== n.id) : [...p, n.id]);
+                                            else { setCurId(n.id); setView('editor'); }
+                                        }}
+                                        onTouchStart={() => {
+                                            if (!isSelectMode) timeouts.current.lp = window.setTimeout(() => { setIsSelectMode(true); setSelectedIds([n.id]); }, 600);
+                                        }}
+                                        onTouchEnd={() => clearTimeout(timeouts.current.lp)}
+                                        onContextMenu={e => e.preventDefault()}
+                                    >
+                                        {isSelectMode && <div className="checkbox"><Icon d={isSel ? "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" : "M12 12m-9 0a9 9 0 1 0 18 0 9 9 0 1 0-18 0"} /></div>}
+                                        <div className="note-title">{n.title}</div>
+                                        <div className="note-desc">{n.content.substring(0, 40) || '...'}</div>
+                                        <div className="note-time">{new Date(n.time).toLocaleString([], { hour: '2-digit', minute: '2-digit', year: 'numeric', month: '2-digit', day: '2-digit' })}</div>
+                                    </div>
+                                );
+                            })}
                     </div>
-                )}
-            </div>
+                    <div className={`custom-scrollbar ${listScroll.active ? 'visible' : ''}`}><div className="scrollbar-thumb" style={{ top: listScroll.top, height: listScroll.height }} onMouseDown={e => handleDrag(e, 'list')} onTouchStart={e => handleDrag(e, 'list')} /></div>
+                    {!isSelectMode ? <button id="fab" onClick={createNewNote}>+</button> : (
+                        <div className="selection-toolbar">
+                            <button onClick={() => setSelectedIds(selectedIds.length === filteredNotes.length ? [] : filteredNotes.map(n => n.id))}>{selectedIds.length === filteredNotes.length ? t.deselectAll : t.selectAll}</button>
+                            <button onClick={() => setShowMoveToModal(true)} disabled={!selectedIds.length}>{t.moveTo}</button>
+                            <button style={{ color: '#ff4d4f' }} onClick={() => bulkProcess(curGroup === '__TRASH__' ? 'delete' : 'trash')} disabled={!selectedIds.length}>{curGroup === '__TRASH__' ? t.batchDelete : t.batchTrash}</button>
+                        </div>
+                    )}
+                    {sidebarOpen && (
+                        <div className="toc-overlay" onClick={() => setSidebarOpen(false)}>
+                            <div className="toc-sidebar" onClick={e => e.stopPropagation()}>
+                                <div className="toc-header"><h3>{t.groups}</h3><button className="btn-icon" onClick={() => setSidebarOpen(false)}>✕</button></div>
+                                <div className="toc-list" ref={tocListRef} onScroll={() => syncScroll('toc')}>
+                                    <div className={`toc-item ${curGroup === null ? 'active' : ''}`} onClick={() => { setCurGroup(null); setSidebarOpen(false); }}>{t.allNotes}</div>
+                                    <div className={`toc-item ${curGroup === '' ? 'active' : ''}`} onClick={() => { setCurGroup(''); setSidebarOpen(false); }}>{t.uncategorized}</div>
+                                    <div className={`toc-item ${curGroup === '__TRASH__' ? 'active' : ''}`} onClick={() => { setCurGroup('__TRASH__'); setSidebarOpen(false); }} style={{ color: curGroup === '__TRASH__' ? 'var(--primary)' : '#ff4d4f' }}><Icon d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" size={18} style={{ marginRight: 8, verticalAlign: 'text-bottom' }} /> {t.trash}</div>
+                                    <div style={{ height: 1, background: 'var(--border)', margin: '5px 0' }}></div>
+                                    {groups.map(g => (
+                                        <div key={g} className={`toc-item ${curGroup === g ? 'active' : ''}`} onClick={() => { setCurGroup(g); setSidebarOpen(false); }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span>{g}</span>
+                                            <button className="btn-icon" style={{ padding: 4 }} onClick={(e) => { e.stopPropagation(); setTargetGroup(g); setShowGroupMenu(true); }}>
+                                                <Icon d="M12 12m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0 M12 5m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0 M12 19m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0" size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className={`custom-scrollbar ${tocScroll.active ? 'visible' : ''}`} style={{ top: 60, bottom: 80 }}><div className="scrollbar-thumb" style={{ top: tocScroll.top, height: tocScroll.height }} onMouseDown={e => handleDrag(e, 'toc')} onTouchStart={e => handleDrag(e, 'toc')} /></div>
+                                <div style={{ padding: 20 }}><button className="btn-action" style={{ width: '100%' }} onClick={() => { setShowNewGroup(true); setSidebarOpen(false); }}>+ {t.newGroup}</button></div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Editor View */}
             <div className={`view ${view === 'editor' ? '' : 'view-hidden'}`}>
                 <header>
                     <button className="btn-icon" onClick={() => { const ta = textareaRef.current; if (!ta) return; setCurChapterIndex(Math.floor((ta.scrollTop / ta.scrollHeight) * (ta.value.length / 2000))); setTocOpen(true); }}><Icon d="M4 6h16M4 12h16M4 18h16" /></button>
                     <div style={{ display: 'flex' }}>
-                        <button className="btn-icon" onClick={() => { setSearchOpen(!searchOpen); if (!searchOpen && findText) setTimeout(() => { const p = textareaRef.current?.selectionStart || 0; setLastEditorPos(p); handleFind(findText, true, p); }, 0); }}><Icon d="M21 21l-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" /></button>
+                        <button className="btn-icon" onClick={() => { setSearchOpen(!searchOpen); if (!searchOpen && findText) setTimeout(() => { const p = textareaRef.current?.selectionStart || 0; setLastEditorPos(p); handleFind(findText, true, p); }, 0); }} style={{ marginLeft: 10 }}><Icon d="M21 21l-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0z" /></button>
                         <button className="btn-icon" onClick={() => setMoreOpen(!moreOpen)} style={{ marginLeft: 10 }}><Icon d="M12 12m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0 M12 5m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0 M12 19m-1 0a1 1 0 1 0 2 0 1 1 0 1 0-2 0" /></button>
                     </div>
                 </header>
@@ -544,8 +636,9 @@ const App: React.FC = () => {
                     </div>
                 )}
                 <div className="editor-container" style={{ position: 'relative', flex: 1, display: 'flex', overflow: 'hidden' }}>
+                    {/* The textarea is kept for data buffering and search logic, but strictly hidden from view. */}
                     <textarea key={curId || 'none'} ref={textareaRef} id="editor-area" placeholder={t.placeholder} defaultValue={curNote?.content || ''}
-                        style={{ fontSize: `${fontSize}px`, backgroundColor: editorBg === 'default' ? 'transparent' : editorBg, color: editorBg === '#000000' ? '#ffffff' : (editorBg === 'default' ? 'var(--text)' : '#000000'), paddingLeft: showLineNums ? 60 : 20 }}
+                        style={{ fontSize: `${fontSize}px`, backgroundColor: 'transparent', color: 'transparent', caretColor: 'transparent', paddingLeft: showLineNums ? 60 : 20, opacity: 0, pointerEvents: 'none', position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
                         onChange={e => { handleInput(e); updateScrollHeights(); }} onScroll={() => syncScroll('editor')} />
                     {showLineNums && (
                         <div id="line-nums" ref={lineNumsRef} style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 50, background: 'rgba(128,128,128,0.05)', color: 'var(--text-dim)', fontSize: fontSize * 0.7, padding: '20px 5px', textAlign: 'right', pointerEvents: 'none', lineHeight: 1.6, overflow: 'hidden', borderRight: '1px solid var(--border)', whiteSpace: 'pre' }}>
@@ -714,6 +807,18 @@ const App: React.FC = () => {
                 .prop-row span { font-weight: 600; color: var(--text); }
                 .modal-close { width: 100%; margin-top: 20px; background: var(--primary); color: var(--bg); border: none; padding: 12px; border-radius: 10px; font-weight: 700; }
                 .btn-action { background: var(--primary); color: var(--bg); border: none; border-radius: 6px; padding: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+                /* Make the app container pass through interactions by default in editor mode */
+                .view-editor-mode { pointer-events: none; background: transparent !important; }
+                /* But re-enable interactions for headers and menus so they work */
+                .view-editor-mode header, 
+                .view-editor-mode .btn-icon,
+                .view-editor-mode .search-replace-panel,
+                .view-editor-mode .more-menu-overlay,
+                .view-editor-mode .modal-overlay, 
+                .view-editor-mode .toc-overlay { pointer-events: auto; }
+                
+                /* Editor should be transparent to show native underneath */
+                #editor-area { opacity: 0; }
             `}</style>
         </div>
     );

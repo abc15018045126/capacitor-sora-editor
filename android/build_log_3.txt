@@ -1,0 +1,49 @@
+Type-safe project accessors is an incubating feature.
+Project accessors enabled, but root project name not explicitly set for 'android'. Checking out the project in different folders will impact the generated code and implicitly the buildscript classpath, breaking caching.
+
+> Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Task :sora-editor-src:build-logic:convention:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :sora-editor-src:build-logic:convention:generateExternalPluginSpecBuilders
+> Task :sora-editor-src:build-logic:convention:extractPrecompiledScriptPluginPlugins
+> Task :sora-editor-src:build-logic:convention:generateScriptPluginAdapters
+> Task :sora-editor-src:build-logic:convention:pluginDescriptors
+> Task :sora-editor-src:build-logic:convention:processResources
+> Task :sora-editor-src:build-logic:convention:compilePluginsBlocks
+> Task :sora-editor-src:build-logic:convention:generatePrecompiledScriptPluginAccessors
+> Task :sora-editor-src:build-logic:convention:compileKotlin
+> Task :sora-editor-src:build-logic:convention:compileJava NO-SOURCE
+> Task :sora-editor-src:build-logic:convention:classes
+> Task :sora-editor-src:build-logic:convention:jar
+
+[Incubating] Problems report is available at: file:///C:/Users/abc15/Documents/GitHub/notes/android/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file 'C:\Users\abc15\Documents\GitHub\notes\sora-editor-src\app\build.gradle.kts' line: 25
+
+* What went wrong:
+An exception occurred applying plugin request [id: 'com.android.application']
+> Failed to apply plugin 'com.android.internal.version-check'.
+   > Minimum supported Gradle version is 9.1.0. Current version is 8.14.3.
+     Try updating the 'distributionUrl' property in C:\Users\abc15\Documents\GitHub\notes\sora-editor-src\gradle\wrapper\gradle-wrapper.properties to 'gradle-9.1.0-bin.zip'.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 2m 28s
+9 actionable tasks: 9 executed
