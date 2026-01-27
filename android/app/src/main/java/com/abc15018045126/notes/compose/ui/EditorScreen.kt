@@ -182,7 +182,8 @@ fun SoraEditorView(
     control: EditorControl? = null,
     onSearchMatchesChange: (Int, Int) -> Unit = { _, _ -> },
     onScroll: () -> Unit = {},
-    onTap: () -> Unit = {}
+    onTap: () -> Unit = {},
+    autoFocus: Boolean = false
 ) {
     var editorInstance by remember { mutableStateOf<CodeEditor?>(null) }
     
@@ -280,6 +281,16 @@ fun SoraEditorView(
                 
                 editorInstance = this
                 control?.attach(this)
+                
+                // Auto-focus if requested (for new notes)
+                if (autoFocus) {
+                    postDelayed({
+                        requestFocus()
+                        // Show keyboard with SHOW_FORCED to ensure it appears
+                        val imm = context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+                        imm?.showSoftInput(this, android.view.inputmethod.InputMethodManager.SHOW_FORCED)
+                    }, 200) // Delay to ensure view is fully laid out
+                }
             }
         },
         update = { view ->
@@ -483,7 +494,8 @@ fun EditorScreen(
                         control = editorControl,
                         onSearchMatchesChange = { current, total -> viewModel.setMatchResults(current, total) },
                         onScroll = { if (uiState.isReadOnly && uiState.showToolbar) viewModel.setShowToolbar(false) },
-                        onTap = { if (uiState.isReadOnly) viewModel.toggleToolbar() }
+                        onTap = { if (uiState.isReadOnly) viewModel.toggleToolbar() },
+                        autoFocus = uiState.shouldAutoFocus
                     )
                 }
                 

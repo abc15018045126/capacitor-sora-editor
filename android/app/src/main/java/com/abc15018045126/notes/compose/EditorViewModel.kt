@@ -44,7 +44,8 @@ data class EditorUiState(
     val uiColor: String = "#F5F5F5",
     val tocColor: String = "#FFFFFF",
     val searchColor: String = "#F5F5F5",
-    val menuColor: String = "#FFFFFF"
+    val menuColor: String = "#FFFFFF",
+    val shouldAutoFocus: Boolean = false
 )
 
 class EditorViewModel : ViewModel() {
@@ -61,7 +62,7 @@ class EditorViewModel : ViewModel() {
         ) }
     }
 
-    fun loadFile(context: Context, filePath: String) {
+    fun loadFile(context: Context, filePath: String, autoFocus: Boolean = false) {
         viewModelScope.launch {
             try {
                 // Convert URI to actual path if needed
@@ -85,7 +86,8 @@ class EditorViewModel : ViewModel() {
                         filePath = actualPath,
                         fileName = file.name,
                         originalContent = content,
-                        isModified = false
+                        isModified = false,
+                        shouldAutoFocus = autoFocus
                     )
                 } else {
                     android.util.Log.e("EditorViewModel", "File does not exist: $actualPath")

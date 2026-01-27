@@ -161,6 +161,14 @@ const App: React.FC = () => {
         return () => { sub.then(h => h.remove()); };
     }, [view, sidebarOpen]);
 
+    // Reload notes when app resumes (e.g., returning from native editor)
+    useEffect(() => {
+        const sub = CapApp.addListener('resume', () => {
+            reloadNotes();
+        });
+        return () => { sub.then(h => h.remove()); };
+    }, [reloadNotes]);
+
     const createNewNote = async () => {
         const prefix = (curGroup && curGroup !== '') ? `${curGroup}/` : '';
         // Use a timestamp based name that matches the native "New File" detection regex
@@ -180,9 +188,7 @@ const App: React.FC = () => {
                 directory: Directory.Documents
             });
 
-            await ComposeEditor.openEditor({ filePath: uri });
-            // Reload notes when returning from editor
-            setTimeout(() => reloadNotes(), 500);
+            await ComposeEditor.openEditor({ filePath: uri, autoFocus: true });
         } catch (e) {
             console.error("Failed to create new note", e);
             alert("Failed to create note: " + e);
@@ -306,8 +312,6 @@ const App: React.FC = () => {
                                     directory: Directory.Documents
                                 });
                                 await ComposeEditor.openEditor({ filePath: uri });
-                                // Reload notes when returning from editor
-                                setTimeout(() => reloadNotes(), 500);
                             } catch (e) {
                                 console.error('Failed to open editor:', e);
                             }

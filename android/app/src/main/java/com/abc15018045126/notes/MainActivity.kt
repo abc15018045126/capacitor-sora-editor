@@ -8,7 +8,6 @@ class MainActivity : BridgeActivity() {
         // 在 super 之前注册插件，确保初始化时已被 Bridge 识别
         registerPlugin(OpenFolderPlugin::class.java)
         registerPlugin(SoraEditorPlugin::class.java)
-        registerPlugin(ComposeEditorPlugin::class.java)
         super.onCreate(savedInstanceState)
     }
 }

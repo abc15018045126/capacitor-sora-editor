@@ -204,6 +204,24 @@ class SoraEditorPlugin : Plugin() {
     }
 
     @PluginMethod
+    fun openEditor(call: PluginCall) {
+        val filePath = call.getString("filePath") ?: ""
+        val autoFocus = call.getBoolean("autoFocus") ?: false
+        android.util.Log.d("SoraEditorPlugin", "openEditor called with filePath: $filePath, autoFocus: $autoFocus")
+        if (filePath.isEmpty()) {
+            call.reject("File path is required")
+            return
+        }
+        activity.runOnUiThread {
+            val intent = android.content.Intent(context, com.abc15018045126.notes.compose.ComposeEditorActivity::class.java)
+            intent.putExtra("FILE_PATH", filePath)
+            intent.putExtra("AUTO_FOCUS", autoFocus)
+            activity.startActivity(intent)
+            call.resolve()
+        }
+    }
+
+    @PluginMethod
     fun undo(call: PluginCall) {
         activity.runOnUiThread {
             editor?.undo()

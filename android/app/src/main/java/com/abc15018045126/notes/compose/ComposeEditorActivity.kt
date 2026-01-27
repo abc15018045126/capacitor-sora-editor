@@ -20,10 +20,11 @@ class ComposeEditorActivity : ComponentActivity() {
         
         // Get file path from intent
         val filePath = intent.getStringExtra("FILE_PATH") ?: ""
-        android.util.Log.d("ComposeEditorActivity", "onCreate with filePath: $filePath")
+        val autoFocus = intent.getBooleanExtra("AUTO_FOCUS", false)
+        android.util.Log.d("ComposeEditorActivity", "onCreate with filePath: $filePath, autoFocus: $autoFocus")
         
         if (filePath.isNotEmpty()) {
-            viewModel.loadFile(this, filePath)
+            viewModel.loadFile(this, filePath, autoFocus)
         } else {
             android.util.Log.e("ComposeEditorActivity", "No file path provided")
         }
