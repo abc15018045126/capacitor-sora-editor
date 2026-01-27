@@ -7,6 +7,3 @@ project(':capacitor-app').projectDir = new File('../node_modules/@capacitor/app/
 
 include ':capacitor-filesystem'
 project(':capacitor-filesystem').projectDir = new File('../node_modules/@capacitor/filesystem/android')
-
-include ':capacitor-sora-editor'
-project(':capacitor-sora-editor').projectDir = new File('../node_modules/capacitor-sora-editor/android')
