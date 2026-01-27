@@ -2,6 +2,8 @@ package com.abc15018045126.notes.compose.ui
 
 import android.graphics.Typeface
 import android.view.View
+import android.view.GestureDetector
+import android.view.MotionEvent
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -184,6 +186,11 @@ fun SoraEditorView(
 ) {
     var editorInstance by remember { mutableStateOf<CodeEditor?>(null) }
     
+    // Ensure we always have the latest callbacks even if factory is not re-run
+    val currentOnTap by rememberUpdatedState(onTap)
+    val currentOnContentChange by rememberUpdatedState(onContentChange)
+    val currentOnSelectionChange by rememberUpdatedState(onSelectionChange)
+    
     LaunchedEffect(editorInstance, control) {
         editorInstance?.let { control?.attach(it) }
     }
@@ -198,7 +205,17 @@ fun SoraEditorView(
                 setEditable(editable)
                 setText(content)
                 
-                setOnClickListener { onTap() }
+                // Use GestureDetector for reliable tap detection
+                val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+                    override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                        currentOnTap()
+                        return true
+                    }
+                })
+                setOnTouchListener { _, event ->
+                    gestureDetector.onTouchEvent(event)
+                    false // Return false so the editor still receives touch events for selection/scrolling
+                }
                 
                 subscribeEvent(io.github.rosemoe.sora.event.SelectionChangeEvent::class.java) { _, _ ->
                      val cursor = this.cursor
@@ -217,7 +234,7 @@ fun SoraEditorView(
                          charPos = i + col
                      } catch (e: Exception) {}
                      
-                     onSelectionChange(charPos, line, col)
+                     currentOnSelectionChange(charPos, line, col)
                      
                      if (searcher.hasQuery()) {
                          onSearchMatchesChange(searcher.currentMatchedPositionIndex + 1, searcher.matchedPositionCount)
@@ -230,6 +247,16 @@ fun SoraEditorView(
 
                 subscribeEvent(io.github.rosemoe.sora.event.ScrollEvent::class.java) { _, _ ->
                     onScroll()
+                }
+
+                subscribeEvent(io.github.rosemoe.sora.event.ContentChangeEvent::class.java) { _, _ ->
+                    val newText = text.toString()
+                    // Don't update if nothing changed? 
+                    // But we need to tell parent. Parent will update state. 
+                    // Parent update will come back via 'content' prop.
+                    // If we just sync blindly, we loop.
+                    // But 'update' block handles the loop break.
+                    currentOnContentChange(newText)
                 }
 
                 try {
@@ -261,7 +288,11 @@ fun SoraEditorView(
             view.isWordwrap = wordWrap
             view.setEditable(editable)
             
+            // Only update text if it strictly differs.
             if (view.text.toString() != content) {
+                // Save cursor? setText resets it usually.
+                // If the difference is just line endings, we might be screwing up.
+                // But view.text should match content if we are the ones who emitted it.
                 view.setText(content)
             }
             
@@ -341,7 +372,7 @@ fun EditorScreen(
                     exit = slideOutVertically() + fadeOut()
                 ) {
                     TopAppBar(
-                    title = { Text(uiState.fileName, fontSize = 16.sp) },
+                    title = { },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = try { Color(android.graphics.Color.parseColor(uiState.uiColor)) } catch(e:Exception) { MaterialTheme.colorScheme.surface }
                     ),
@@ -387,6 +418,16 @@ fun EditorScreen(
                                 leadingIcon = { Icon(Icons.Default.Search, null) }
                             )
                             DropdownMenuItem(
+                                text = { Text("重命名") },
+                                onClick = { viewModel.setShowRenameDialog(true); showMoreMenu = false },
+                                leadingIcon = { Icon(Icons.Default.Edit, null) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("属性") },
+                                onClick = { viewModel.setShowFileProperties(true); showMoreMenu = false },
+                                leadingIcon = { Icon(Icons.Default.Info, null) }
+                            )
+                            DropdownMenuItem(
                                 text = { Text("重做 (还原为初始)") },
                                 onClick = { 
                                     viewModel.updateContent(localContext, uiState.originalContent)
@@ -398,16 +439,6 @@ fun EditorScreen(
                                     text = { Text("只读模式: ${if (uiState.isReadOnly) "ON" else "OFF"}") },
                                     onClick = { viewModel.toggleReadOnly(); showMoreMenu = false },
                                     leadingIcon = { Icon(if(uiState.isReadOnly) Icons.Default.Lock else Icons.Default.LockOpen, null) }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("重命名") },
-                                    onClick = { viewModel.setShowRenameDialog(true); showMoreMenu = false },
-                                    leadingIcon = { Icon(Icons.Default.Edit, null) }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("属性") },
-                                    onClick = { viewModel.setShowFileProperties(true); showMoreMenu = false },
-                                    leadingIcon = { Icon(Icons.Default.Info, null) }
                                 )
                                 DropdownMenuItem(
                                     text = { Text("编辑器设置") },
@@ -454,22 +485,23 @@ fun EditorScreen(
                         onScroll = { if (uiState.isReadOnly && uiState.showToolbar) viewModel.setShowToolbar(false) },
                         onTap = { if (uiState.isReadOnly) viewModel.toggleToolbar() }
                     )
-                    
-                    Column(modifier = Modifier.align(Alignment.BottomCenter)) {
-                        if (uiState.showSymbolBar && !uiState.isReadOnly) {
-                    SymbolBar(
-                        uiColor = uiState.uiColor,
-                        onSymbolClick = { editorControl.insertText(it) }
-                    )
                 }
-                if (uiState.showStatusBar) {
-                    StatusBar(
-                        uiColor = uiState.uiColor,
-                        cursorLine = uiState.cursorLine,
-                        cursorColumn = uiState.cursorColumn,
-                        currentCursorPos = uiState.currentCursorPos
-                    )
-                }
+                
+                Column {
+                    if (uiState.showSymbolBar && !uiState.isReadOnly) {
+                        SymbolBar(
+                            uiColor = uiState.uiColor,
+                            onSymbolClick = { editorControl.insertText(it) }
+                        )
+                    }
+                    if (uiState.showStatusBar) {
+                        StatusBar(
+                            uiColor = uiState.uiColor,
+                            fileName = uiState.fileName,
+                            cursorLine = uiState.cursorLine,
+                            cursorColumn = uiState.cursorColumn,
+                            currentCursorPos = uiState.currentCursorPos
+                        )
                     }
                 }
             }
@@ -489,6 +521,7 @@ fun EditorScreen(
             if (uiState.showRenameDialog) {
                 RenameDialog(
                     currentName = uiState.fileName,
+                    backgroundColor = uiState.menuColor,
                     onRename = { viewModel.renameFile(it); viewModel.setShowRenameDialog(false) },
                     onDismiss = { viewModel.setShowRenameDialog(false) }
                 )
@@ -497,6 +530,7 @@ fun EditorScreen(
             if (uiState.showFileProperties) {
                 FilePropertiesDialog(
                     properties = viewModel.getFileDetails(),
+                    backgroundColor = uiState.menuColor,
                     onDismiss = { viewModel.setShowFileProperties(false) }
                 )
             }
@@ -543,14 +577,22 @@ fun SymbolBar(uiColor: String, onSymbolClick: (String) -> Unit) {
 }
 
 @Composable
-fun StatusBar(uiColor: String, cursorLine: Int, cursorColumn: Int, currentCursorPos: Int) {
+fun StatusBar(uiColor: String, fileName: String, cursorLine: Int, cursorColumn: Int, currentCursorPos: Int) {
     Surface(
         modifier = Modifier.fillMaxWidth().height(24.dp),
         color = try { Color(android.graphics.Color.parseColor(uiColor)) } catch(e:Exception) { Color(0xFFEEEEEE) },
         tonalElevation = 2.dp,
         border = BorderStroke(0.5.dp, Color.LightGray)
     ) {
-        Row(modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
+        Row(modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+             Text(
+                text = fileName,
+                fontSize = 11.sp,
+                color = Color.DarkGray,
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
             Text(
                 text = "第 ${cursorLine} 行, 第 ${cursorColumn} 列, 第 ${currentCursorPos} 字",
                 fontSize = 11.sp,
@@ -945,14 +987,27 @@ fun ColorOption(color: String, label: String, isSelected: Boolean, onClick: () -
 }
 
 @Composable
-fun RenameDialog(currentName: String, onRename: (String) -> Unit, onDismiss: () -> Unit) {
+fun RenameDialog(currentName: String, backgroundColor: String, onRename: (String) -> Unit, onDismiss: () -> Unit) {
     var name by remember { mutableStateOf(currentName) }
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("重命名") }, text = { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("新名字") }) }, confirmButton = { TextButton(onClick = { onRename(name) }) { Text("OK") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
+    AlertDialog(
+        onDismissRequest = onDismiss, 
+        containerColor = try { Color(android.graphics.Color.parseColor(backgroundColor)) } catch(e:Exception) { MaterialTheme.colorScheme.surface },
+        title = { Text("重命名") }, 
+        text = { OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("新名字") }) }, 
+        confirmButton = { TextButton(onClick = { onRename(name) }) { Text("OK") } }, 
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
 }
 
 @Composable
-fun FilePropertiesDialog(properties: Map<String, String>, onDismiss: () -> Unit) {
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("属性") }, text = { Column { properties.forEach { (k, v) -> Text("$k: $v") } } }, confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } })
+fun FilePropertiesDialog(properties: Map<String, String>, backgroundColor: String, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss, 
+        containerColor = try { Color(android.graphics.Color.parseColor(backgroundColor)) } catch(e:Exception) { MaterialTheme.colorScheme.surface },
+        title = { Text("属性") }, 
+        text = { Column { properties.forEach { (k, v) -> Text("$k: $v") } } }, 
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }
+    )
 }
 
 @Composable

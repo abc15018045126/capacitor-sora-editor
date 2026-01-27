@@ -48,10 +48,7 @@ class ComposeEditorActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
-        // Auto-save if enabled and modified
-        val state = viewModel.uiState.value
-        if (state.autoSave && state.isModified) {
-            viewModel.saveFile(this)
-        }
+        // Auto-save logic is handled inside saveOnExit, including rename check on exit
+        viewModel.saveOnExit(this)
     }
 }

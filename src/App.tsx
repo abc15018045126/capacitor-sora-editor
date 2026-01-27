@@ -112,8 +112,19 @@ const App: React.FC = () => {
 
             const loadFile = async (name: string, folder = '', isTrash = false) => {
                 const path = folder ? `${DIR}/${folder}/${name}` : `${DIR}/${name}`;
-                const { data } = await Filesystem.readFile({ path, directory: Directory.Documents, encoding: Encoding.UTF8 });
-                return { id: folder ? `${folder}/${name}` : name, title: name, content: data as string, time: Date.now(), inTrash: isTrash };
+                try {
+                    const { data } = await Filesystem.readFile({ path, directory: Directory.Documents, encoding: Encoding.UTF8 });
+                    const { mtime } = await Filesystem.stat({ path, directory: Directory.Documents });
+
+                    let time = mtime || Date.now();
+                    // Capacitor on some platforms/versions might return seconds instead of ms
+                    if (time > 0 && time < 10000000000) time *= 1000;
+
+                    return { id: folder ? `${folder}/${name}` : name, title: name, content: data as string, time, inTrash: isTrash };
+                } catch (e) {
+                    console.warn("Failed to load note:", path, e);
+                    return { id: folder ? `${folder}/${name}` : name, title: name, content: '', time: Date.now(), inTrash: isTrash };
+                }
             };
 
             const rootNotes = await Promise.all(files.filter(f => f.name !== '.trash' && !f.name.startsWith('.') && f.type !== 'directory' && !dirs.includes(f.name)).map(f => loadFile(f.name)));
@@ -150,11 +161,32 @@ const App: React.FC = () => {
         return () => { sub.then(h => h.remove()); };
     }, [view, sidebarOpen]);
 
-    const createNewNote = () => {
+    const createNewNote = async () => {
         const prefix = (curGroup && curGroup !== '') ? `${curGroup}/` : '';
-        const id = `${prefix}temp_${Date.now()}.txt`;
-        const newNote: Note = { id, title: t.newNote, content: '', time: Date.now(), isNew: true };
-        setNotes(p => [newNote, ...p]); setCurId(id); setView('editor');
+        // Use a timestamp based name that matches the native "New File" detection regex
+        const filename = `${Date.now()}.txt`;
+        const id = `${prefix}${filename}`;
+
+        try {
+            await Filesystem.writeFile({
+                path: `${DIR}/${id}`,
+                data: '',
+                directory: Directory.Documents,
+                encoding: Encoding.UTF8
+            });
+
+            const { uri } = await Filesystem.getUri({
+                path: `${DIR}/${id}`,
+                directory: Directory.Documents
+            });
+
+            await ComposeEditor.openEditor({ filePath: uri });
+            // Reload notes when returning from editor
+            setTimeout(() => reloadNotes(), 500);
+        } catch (e) {
+            console.error("Failed to create new note", e);
+            alert("Failed to create note: " + e);
+        }
     };
 
     const createGroup = async () => {

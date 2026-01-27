@@ -128,17 +128,15 @@ class SoraEditorPlugin : Plugin() {
                  val l = call.getInt("selectionLine") ?: 0
                  val c = call.getInt("selectionColumn") ?: 0
                  editor!!.postDelayed({
-                     try {
-                         editor!!.setSelection(l, c)
-                         editor!!.ensureSelectionVisible()
-                         android.widget.Toast.makeText(context, "Jumping to $l", android.widget.Toast.LENGTH_SHORT).show()
-                     } catch(e: Exception){
-                         android.widget.Toast.makeText(context, "Jump Error: $e", android.widget.Toast.LENGTH_SHORT).show()
-                     }
-                 }, 150)
+                    try {
+                        editor!!.setSelection(l, c)
+                        editor!!.ensureSelectionVisible()
+                    } catch(e: Exception){
+                        // Silently fail or log to logcat
+                    }
+                }, 150)
             }
         }
-        android.widget.Toast.makeText(context, "Start Called", android.widget.Toast.LENGTH_SHORT).show()
         call.resolve()
     }
 
@@ -190,7 +188,6 @@ class SoraEditorPlugin : Plugin() {
                 try {
                     editor?.setSelection(line, column)
                     editor?.ensureSelectionVisible()
-                     android.widget.Toast.makeText(context, "SetSel to ${line+1}", android.widget.Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }

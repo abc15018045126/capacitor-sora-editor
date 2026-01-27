@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
 import org.json.JSONObject
@@ -53,11 +54,11 @@ class EditorViewModel : ViewModel() {
     // ... existing loadFile method ...
 
     fun setCursorPosition(pos: Int, line: Int, col: Int) {
-        _uiState.value = _uiState.value.copy(
+        _uiState.update { it.copy(
             currentCursorPos = pos,
             cursorLine = line + 1, // 1-indexed for display
             cursorColumn = col
-        )
+        ) }
     }
 
     fun loadFile(context: Context, filePath: String) {
@@ -96,25 +97,106 @@ class EditorViewModel : ViewModel() {
         }
     }
 
+    private var saveJob: kotlinx.coroutines.Job? = null
+
     fun updateContent(context: Context, newContent: String) {
-        _uiState.value = _uiState.value.copy(
+        val normalizedNew = newContent.replace("\r\n", "\n")
+        val normalizedCurrent = _uiState.value.content.replace("\r\n", "\n")
+        
+        // If content hasn't changed (ignoring line endings), don't update
+        if (normalizedNew == normalizedCurrent && _uiState.value.content.isNotEmpty()) return
+        
+        // Check for trivial change (trailing whitespace/newline only) when not modified yet
+        // This prevents updating the timestamp just because the editor added a newline
+        val isTrivialChange = !_uiState.value.isModified && 
+                              normalizedNew.trimEnd() == normalizedCurrent.trimEnd()
+
+        if (isTrivialChange) {
+            // Update content so state matches editor, but don't mark modified or save
+            _uiState.update { it.copy(content = newContent) }
+            return
+        }
+        
+        _uiState.update { it.copy(
             content = newContent,
             isModified = true
-        )
+        ) }
+        
         if (_uiState.value.autoSave) {
-            saveFile(context)
+            queueAutoSave(context)
+        }
+    }
+
+    private fun queueAutoSave(context: Context) {
+        saveJob?.cancel()
+        saveJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(1000) // Debounce 1s
+            if (_uiState.value.isModified) {
+                saveFile(context)
+            }
         }
     }
 
     fun saveFile(context: Context): Boolean {
         return try {
-            val file = File(_uiState.value.filePath)
-            file.writeText(_uiState.value.content)
-            _uiState.value = _uiState.value.copy(isModified = false)
+            val contentToSave = _uiState.value.content
+            val path = _uiState.value.filePath
+            
+            // Should ideally be IO, but for now we keep it simple or use runBlocking for exit safety? 
+            // Better to just write. File writeText is blocking but OK for background thread.
+            // But we are in ViewModel, often main thread call.
+            // Let's protect against main thread blocking for large files?
+            // But for saveOnExit (onPause) we need synchronous or strictly ordered.
+            // For auto-save we are effectively inside a coroutine (from queueAutoSave).
+            
+            android.util.Log.d("EditorViewModel", "Saving file to: $path, content length: ${contentToSave.length}")
+            
+            val file = File(path)
+            file.writeText(contentToSave)
+            
+            _uiState.update { state ->
+                // Only clear isModified if the content we just saved is still the current content
+                if (state.content == contentToSave) {
+                    state.copy(isModified = false)
+                } else {
+                    state
+                }
+            }
             true
         } catch (e: Exception) {
+            android.util.Log.e("EditorViewModel", "Failed to save file", e)
             e.printStackTrace()
             false
+        }
+    }
+
+    fun saveOnExit(context: Context) {
+        val state = _uiState.value
+        // Cancel pending auto-save and save immediately if needed
+        saveJob?.cancel()
+        
+        if (state.isModified || state.autoSave) {
+            saveFile(context)
+        }
+
+        // Logic to rename based on first line, ONLY on exit
+        val fileName = state.fileName
+        // Heuristic: If filename is just numbers (timestamp) or starts with "Untitled", consider it "New"
+        val isDefaultName = fileName.matches(Regex("^\\d+(\\.txt)?$")) || 
+                           fileName.startsWith("Untitled") || 
+                           fileName.startsWith("NewFile")
+
+        if (isDefaultName) {
+             val content = state.content
+             val firstLine = content.lineSequence().firstOrNull()?.trim() ?: ""
+             // Sanitize title: remove invalid chars, limit length
+             val validTitle = firstLine.replace(Regex("[\\\\/:*?\"<>|]"), "").take(20).trim()
+             
+             if (validTitle.isNotEmpty() && validTitle != fileName.removeSuffix(".txt")) {
+                 val newName = "$validTitle.txt"
+                 android.util.Log.d("EditorViewModel", "Auto-renaming on exit: $fileName -> $newName")
+                 renameFile(newName)
+             }
         }
     }
 
@@ -124,122 +206,123 @@ class EditorViewModel : ViewModel() {
     }
 
     fun toggleLineNumbers(context: Context) {
-        _uiState.value = _uiState.value.copy(showLineNumbers = !_uiState.value.showLineNumbers)
+        _uiState.update { it.copy(showLineNumbers = !it.showLineNumbers) }
         saveSettings(context)
     }
 
     fun toggleWordWrap(context: Context) {
-        _uiState.value = _uiState.value.copy(wordWrap = !_uiState.value.wordWrap)
+        _uiState.update { it.copy(wordWrap = !it.wordWrap) }
         saveSettings(context)
     }
 
     fun toggleReadOnly() {
-        val nextReadOnly = !_uiState.value.isReadOnly
-        _uiState.value = _uiState.value.copy(
-            isReadOnly = nextReadOnly,
-            // Hide toolbar when entering read-only mode, but force show when entering edit mode
-            showToolbar = if (nextReadOnly) false else true
-        )
+        _uiState.update { state ->
+            val nextReadOnly = !state.isReadOnly
+            state.copy(
+                isReadOnly = nextReadOnly,
+                showToolbar = if (nextReadOnly) false else true
+            )
+        }
     }
 
     fun toggleToolbar() {
-        _uiState.value = _uiState.value.copy(showToolbar = !_uiState.value.showToolbar)
+        _uiState.update { it.copy(showToolbar = !it.showToolbar) }
     }
 
     fun setShowToolbar(show: Boolean) {
-        _uiState.value = _uiState.value.copy(showToolbar = show)
+        _uiState.update { it.copy(showToolbar = show) }
     }
 
     fun setShowSearch(show: Boolean) {
-        _uiState.value = _uiState.value.copy(showSearch = show)
+        _uiState.update { it.copy(showSearch = show) }
     }
 
     fun setSearchQuery(query: String) {
-        _uiState.value = _uiState.value.copy(searchQuery = query)
+        _uiState.update { it.copy(searchQuery = query) }
     }
 
     fun setReplaceText(text: String) {
-        _uiState.value = _uiState.value.copy(replaceText = text)
+        _uiState.update { it.copy(replaceText = text) }
     }
 
     fun setShowToc(show: Boolean) {
-        _uiState.value = _uiState.value.copy(showToc = show)
+        _uiState.update { it.copy(showToc = show) }
     }
 
     fun setTocMode(mode: String) {
-        _uiState.value = _uiState.value.copy(tocMode = mode)
+        _uiState.update { it.copy(tocMode = mode) }
     }
 
     fun setShowSettings(show: Boolean) {
-        _uiState.value = _uiState.value.copy(showSettings = show)
+        _uiState.update { it.copy(showSettings = show) }
     }
 
     fun setBackgroundColor(context: Context, color: String) {
-        _uiState.value = _uiState.value.copy(backgroundColor = color)
+        _uiState.update { it.copy(backgroundColor = color) }
         saveSettings(context)
     }
 
     fun setDarkTheme(isDark: Boolean) {
-        _uiState.value = _uiState.value.copy(isDarkTheme = isDark)
+        _uiState.update { it.copy(isDarkTheme = isDark) }
     }
     fun setMatchResults(current: Int, total: Int) {
-        _uiState.value = _uiState.value.copy(currentMatch = current, totalMatches = total)
+        _uiState.update { it.copy(currentMatch = current, totalMatches = total) }
     }
 
     fun setAutoSave(context: Context, enabled: Boolean) {
-        _uiState.value = _uiState.value.copy(autoSave = enabled)
+        _uiState.update { it.copy(autoSave = enabled) }
         saveSettings(context)
     }
 
     fun toggleStatusBar(context: Context) {
-        _uiState.value = _uiState.value.copy(showStatusBar = !_uiState.value.showStatusBar)
+        _uiState.update { it.copy(showStatusBar = !it.showStatusBar) }
         saveSettings(context)
     }
 
     fun toggleSymbolBar(context: Context) {
-        _uiState.value = _uiState.value.copy(showSymbolBar = !_uiState.value.showSymbolBar)
+        _uiState.update { it.copy(showSymbolBar = !it.showSymbolBar) }
         saveSettings(context)
     }
 
     fun setShowStatusBar(context: Context, show: Boolean) {
-        _uiState.value = _uiState.value.copy(showStatusBar = show)
+        _uiState.update { it.copy(showStatusBar = show) }
         saveSettings(context)
     }
 
     fun setShowSymbolBar(context: Context, show: Boolean) {
-        _uiState.value = _uiState.value.copy(showSymbolBar = show)
+        _uiState.update { it.copy(showSymbolBar = show) }
         saveSettings(context)
     }
 
     fun setShowFileProperties(show: Boolean) {
-        _uiState.value = _uiState.value.copy(showFileProperties = show)
+        _uiState.update { it.copy(showFileProperties = show) }
     }
 
     fun setShowRenameDialog(show: Boolean) {
-        _uiState.value = _uiState.value.copy(showRenameDialog = show)
+        _uiState.update { it.copy(showRenameDialog = show) }
     }
 
     fun setShowExitConfirmation(show: Boolean) {
-        _uiState.value = _uiState.value.copy(showExitConfirmation = show)
+        _uiState.update { it.copy(showExitConfirmation = show) }
     }
 
     fun setUiColor(context: Context, color: String) {
-        _uiState.value = _uiState.value.copy(uiColor = color)
+        _uiState.update { it.copy(uiColor = color) }
         saveSettings(context)
     }
 
     fun setTocColor(context: Context, color: String) {
-        _uiState.value = _uiState.value.copy(tocColor = color)
+        _uiState.update { it.copy(tocColor = color) }
         saveSettings(context)
     }
 
     fun setSearchColor(context: Context, color: String) {
-        _uiState.value = _uiState.value.copy(searchColor = color)
+        _uiState.update { it.copy(searchColor = color) }
         saveSettings(context)
     }
 
     fun setMenuColor(context: Context, color: String) {
-        _uiState.value = _uiState.value.copy(menuColor = color)
+        _uiState.update { it.copy(menuColor = color) }
         saveSettings(context)
     }
 
@@ -289,7 +372,7 @@ class EditorViewModel : ViewModel() {
     }
 
     fun resetSettings(context: Context) {
-        _uiState.value = _uiState.value.copy(
+        _uiState.update { it.copy(
             fontSize = 18f,
             showLineNumbers = true,
             wordWrap = false,
@@ -301,7 +384,7 @@ class EditorViewModel : ViewModel() {
             tocColor = "#FFFFFF",
             searchColor = "#F5F5F5",
             menuColor = "#FFFFFF"
-        )
+        ) }
         saveSettings(context)
     }
 

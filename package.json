@@ -1,6 +1,6 @@
 {
   "name": "notes",
-  "version": "1.2.1",
+  "version": "1.2.4",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -20,6 +20,8 @@
     "@capacitor/cli": "^8.0.0",
     "@capacitor/core": "^8.0.0",
     "@capacitor/filesystem": "^8.0.0",
+    "@xuwenjiesmith/capacitor-sora-editor": "file:capacitor-sora-editor",
+    "capacitor-sora-editor": "file:capacitor-sora-editor",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   },
