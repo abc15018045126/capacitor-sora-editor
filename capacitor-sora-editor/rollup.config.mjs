@@ -1,5 +1,3 @@
-import rimraf from 'rimraf';
-
 export default {
     input: 'dist/esm/index.js',
     output: [

@@ -1,9 +1,6 @@
 import { registerPlugin } from '@capacitor/core';
+import { SoraEditorPlugin } from 'capacitor-sora-editor';
 
-export interface ComposeEditorPlugin {
-    openEditor(options: { filePath: string; autoFocus?: boolean }): Promise<void>;
-}
-
-const ComposeEditor = registerPlugin<ComposeEditorPlugin>('SoraEditor');
+const ComposeEditor = registerPlugin<SoraEditorPlugin>('SoraEditor');
 
 export default ComposeEditor;
