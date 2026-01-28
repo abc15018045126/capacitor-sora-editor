@@ -715,7 +715,9 @@ fun EditorScreen(
                 Column {
                     if (uiState.showSymbolBar && !uiState.isReadOnly) {
                         SymbolBar(
-                            uiColor = uiState.uiColor,
+                            uiColor = uiState.symbolBarColor,
+                            textColor = uiState.symbolTextColor,
+                            style = uiState.symbolBarStyle,
                             onSymbolClick = { editorControl.insertText(it) }
                         )
                     }
@@ -773,29 +775,46 @@ fun EditorScreen(
 }
 
 @Composable
-fun SymbolBar(uiColor: String, onSymbolClick: (String) -> Unit) {
+fun SymbolBar(uiColor: String, textColor: String, style: String, onSymbolClick: (String) -> Unit) {
     val symbols = listOf(",", ".", ";", "(", ")", "{", "}", "[", "]", "\"", "'", ":", "/", "<", ">", "=", "+", "-", "*", "&", "|", "!", "?", "#", "@", "$", "%", "^", "~", "`")
+    val bgColor = try { Color(android.graphics.Color.parseColor(uiColor)) } catch(e:Exception) { Color(0xFFF0F0F0) }
+    val tColor = try { Color(android.graphics.Color.parseColor(textColor)) } catch(e:Exception) { Color.Black }
+    
     androidx.compose.foundation.lazy.LazyRow(
         modifier = Modifier
             .fillMaxWidth()
             .height(44.dp)
-            .background(try { Color(android.graphics.Color.parseColor(uiColor)) } catch(e:Exception) { Color(0xFFF0F0F0) })
+            .background(bgColor)
             .border(androidx.compose.foundation.BorderStroke(0.5.dp, Color.LightGray.copy(alpha = 0.5f))),
         contentPadding = PaddingValues(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(if (style == "flat") 0.dp else 4.dp)
     ) {
         items(symbols.size) { index ->
-            Surface(
-                onClick = { onSymbolClick(symbols[index]) },
-                modifier = Modifier
-                    .size(width = 36.dp, height = 36.dp),
-                shape = RoundedCornerShape(4.dp),
-                color = Color.White,
-                border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.LightGray)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(symbols[index], fontSize = 18.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
+            val content = @Composable {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(symbols[index], fontSize = 18.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium, color = tColor)
+                }
+            }
+            
+            if (style == "flat") {
+                Box(
+                    modifier = Modifier
+                        .size(width = 36.dp, height = 36.dp)
+                        .clickable { onSymbolClick(symbols[index]) }
+                ) {
+                    content()
+                }
+            } else {
+                Surface(
+                    onClick = { onSymbolClick(symbols[index]) },
+                    modifier = Modifier
+                        .size(width = 36.dp, height = 36.dp),
+                    shape = if (style == "rounded") RoundedCornerShape(4.dp) else androidx.compose.ui.graphics.RectangleShape,
+                    color = Color.White.copy(alpha = 0.8f),
+                    border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.LightGray.copy(alpha = 0.5f))
+                ) {
+                    content()
                 }
             }
         }
@@ -1110,6 +1129,7 @@ fun EditorSettingsScreen(
                 SettingsSwitchItem("显示状态栏", "显示底部的行、列、字符数信息", uiState.showStatusBar) { viewModel.toggleStatusBar(localContext) }
                 SettingsSwitchItem("符号快捷键", "在底部显示常用符号栏", uiState.showSymbolBar) { viewModel.toggleSymbolBar(localContext) }
                 SettingsSwitchItem("显示滚动详情 (行号)", "拖动滚动条时显示当前行号", uiState.showScrollLineInfo) { viewModel.setShowScrollLineInfo(localContext, it) }
+                SettingsSwitchItem("键盘开启时调整窗口大小", "启用 adjustResize，避免输入法遮挡光标", uiState.keyboardAdjust) { viewModel.setKeyboardAdjust(localContext, it) }
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("搜索首选项", style = MaterialTheme.typography.titleMedium)
@@ -1268,6 +1288,40 @@ fun EditorSettingsScreen(
                                 Button(
                                     onClick = { viewModel.setHandleStyle(localContext, id) },
                                     colors = ButtonDefaults.buttonColors(containerColor = if (uiState.handleStyle == id) MaterialTheme.colorScheme.primary else Color.LightGray)
+                                ) {
+                                    Text(label, fontSize = 10.sp)
+                                }
+                            }
+                        }
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("符号快捷键颜色 (Symbol Bar)", fontSize = 12.sp, color = Color.Gray)
+                        val barColors = listOf("#F5F5F5" to "灰", "#FFFFFF" to "白", "#EEEEEE" to "深灰", "#000000" to "黑", "#EFEBE9" to "米", "#E8EAF6" to "蓝灰")
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            barColors.forEach { (c, l) -> 
+                                ColorOption(c, l, uiState.symbolBarColor == c) { viewModel.setSymbolBarColor(localContext, c) }
+                            }
+                        }
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("符号文本颜色 (Symbol Text)", fontSize = 12.sp, color = Color.Gray)
+                        val textColors = listOf("#FF000000" to "黑", "#FF888888" to "灰", "#FFFFFFFF" to "白", "#FF0000FF" to "蓝", "#FFFF0000" to "红")
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            textColors.forEach { (c, l) -> 
+                                ColorOption(c, l, uiState.symbolTextColor == c) { viewModel.setSymbolTextColor(localContext, c) }
+                            }
+                        }
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("符号快捷键样式", fontSize = 12.sp, color = Color.Gray)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            mapOf("rounded" to "圆角框", "flat" to "无框 (全屏)", "classic" to "直角框").forEach { (id, label) ->
+                                Button(
+                                    onClick = { viewModel.setSymbolBarStyle(localContext, id) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = if (uiState.symbolBarStyle == id) MaterialTheme.colorScheme.primary else Color.LightGray)
                                 ) {
                                     Text(label, fontSize = 10.sp)
                                 }

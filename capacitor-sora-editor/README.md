@@ -179,6 +179,10 @@ The Android source is located in `android/src/main/java/com/abc15018045126/capac
 | `handleStyle` | `'drop' \| 'side_drop' \| 'none'` | `'side_drop'` | Appearance of text selection handles |
 | `fontFamily` | `string` | `"Monospace"` | Supports "JetBrains Mono", "Ubuntu", "Roboto" |
 | `highlightCurrentLine`| `boolean` | `true` | Highlight the line where the cursor is |
+| `keyboardAdjust` | `boolean` | `true` | Enable adjustResize for keyboard handling |
+| `symbolBarColor` | `string` | `"#F5F5F5"` | Background color of shortcut symbol bar |
+| `symbolTextColor` | `string` | `"#000000"` | Text color of shortcut symbols |
+| `symbolBarStyle` | `'rounded' \| 'flat' \| 'classic'` | `'rounded'` | 'flat' has no boxes around symbols |
 | `cursorWidth` | `number` | `2.0` | Width of the cursor caret in px |
 | `horizontalPadding` | `number` | `12` | Left/right editor padding |
 

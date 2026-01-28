@@ -32,6 +32,14 @@ class ComposeEditorActivity : ComponentActivity() {
         setContent {
             val uiState by viewModel.uiState.collectAsState()
             
+            LaunchedEffect(uiState.keyboardAdjust) {
+                if (uiState.keyboardAdjust) {
+                    window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+                } else {
+                    window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
+                }
+            }
+
             NotesTheme(darkTheme = uiState.isDarkTheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),

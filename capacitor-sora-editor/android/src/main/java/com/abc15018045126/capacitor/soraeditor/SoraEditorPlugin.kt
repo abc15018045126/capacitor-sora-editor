@@ -213,6 +213,21 @@ class SoraEditorPlugin : Plugin() {
                 else -> HandleStyleSideDrop(context)
             })
 
+            if (call.hasOption("keyboardAdjust")) {
+                val adjust = call.getBoolean("keyboardAdjust") ?: true
+                activity.runOnUiThread {
+                    if (adjust) {
+                        activity.window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+                    } else {
+                        activity.window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
+                    }
+                }
+            }
+
+            val symbolBarColor = call.getString("symbolBarColor") ?: "#F5F5F5"
+            val symbolTextColor = call.getString("symbolTextColor") ?: "#FF000000"
+            val symbolBarStyle = call.getString("symbolBarStyle") ?: "rounded"
+
             editor!!.visibility = View.VISIBLE
             editor!!.bringToFront()
             

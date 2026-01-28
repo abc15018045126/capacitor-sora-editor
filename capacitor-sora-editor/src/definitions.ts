@@ -48,4 +48,8 @@ export interface SoraStartOptions {
     scrollbarColor?: string;
     showScrollLineInfo?: boolean;
     scrollbarStyle?: 'default' | 'rounded';
+    keyboardAdjust?: boolean;
+    symbolBarColor?: string;
+    symbolTextColor?: string;
+    symbolBarStyle?: 'rounded' | 'flat' | 'classic';
 }

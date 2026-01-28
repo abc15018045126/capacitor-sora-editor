@@ -64,7 +64,11 @@ data class EditorUiState(
     val fontFamily: String = "Monospace",
     val scrollbarColor: String = "#A0888888",
     val showScrollLineInfo: Boolean = true,
-    val scrollbarStyle: String = "default" // "default" or "rounded"
+    val scrollbarStyle: String = "default", // "default" or "rounded"
+    val keyboardAdjust: Boolean = true,
+    val symbolBarColor: String = "#F5F5F5",
+    val symbolTextColor: String = "#FF000000",
+    val symbolBarStyle: String = "rounded" // "rounded", "flat"
 )
 
 class EditorViewModel : ViewModel() {
@@ -438,6 +442,26 @@ class EditorViewModel : ViewModel() {
         saveSettings(context)
     }
 
+    fun setKeyboardAdjust(context: Context, enabled: Boolean) {
+        _uiState.update { it.copy(keyboardAdjust = enabled) }
+        saveSettings(context)
+    }
+
+    fun setSymbolBarColor(context: Context, color: String) {
+        _uiState.update { it.copy(symbolBarColor = color) }
+        saveSettings(context)
+    }
+
+    fun setSymbolTextColor(context: Context, color: String) {
+        _uiState.update { it.copy(symbolTextColor = color) }
+        saveSettings(context)
+    }
+
+    fun setSymbolBarStyle(context: Context, style: String) {
+        _uiState.update { it.copy(symbolBarStyle = style) }
+        saveSettings(context)
+    }
+
     fun renameFile(newName: String): Boolean {
         val currentFile = File(_uiState.value.filePath)
         val parent = currentFile.parentFile
@@ -514,7 +538,11 @@ class EditorViewModel : ViewModel() {
             fontFamily = "Monospace",
             scrollbarColor = "#A0888888",
             showScrollLineInfo = true,
-            scrollbarStyle = "default"
+            scrollbarStyle = "default",
+            keyboardAdjust = true,
+            symbolBarColor = "#F5F5F5",
+            symbolTextColor = "#FF000000",
+            symbolBarStyle = "rounded"
         ) }
         saveSettings(context)
     }
@@ -562,6 +590,10 @@ class EditorViewModel : ViewModel() {
             put("scrollbarColor", _uiState.value.scrollbarColor)
             put("showScrollLineInfo", _uiState.value.showScrollLineInfo)
             put("scrollbarStyle", _uiState.value.scrollbarStyle)
+            put("keyboardAdjust", _uiState.value.keyboardAdjust)
+            put("symbolBarColor", _uiState.value.symbolBarColor)
+            put("symbolTextColor", _uiState.value.symbolTextColor)
+            put("symbolBarStyle", _uiState.value.symbolBarStyle)
         }
         prefs.edit().putString("settings_json", json.toString()).apply()
     }
@@ -601,7 +633,11 @@ class EditorViewModel : ViewModel() {
             fontFamily = json.optString("fontFamily", "Monospace"),
             scrollbarColor = json.optString("scrollbarColor", "#A0888888"),
             showScrollLineInfo = json.optBoolean("showScrollLineInfo", true),
-            scrollbarStyle = json.optString("scrollbarStyle", "default")
+            scrollbarStyle = json.optString("scrollbarStyle", "default"),
+            keyboardAdjust = json.optBoolean("keyboardAdjust", true),
+            symbolBarColor = json.optString("symbolBarColor", "#F5F5F5"),
+            symbolTextColor = json.optString("symbolTextColor", "#FF000000"),
+            symbolBarStyle = json.optString("symbolBarStyle", "rounded")
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -641,7 +677,11 @@ class EditorViewModel : ViewModel() {
                 fontFamily = json.optString("fontFamily", _uiState.value.fontFamily),
                 scrollbarColor = json.optString("scrollbarColor", _uiState.value.scrollbarColor),
                 showScrollLineInfo = json.optBoolean("showScrollLineInfo", _uiState.value.showScrollLineInfo),
-                scrollbarStyle = json.optString("scrollbarStyle", _uiState.value.scrollbarStyle)
+                scrollbarStyle = json.optString("scrollbarStyle", _uiState.value.scrollbarStyle),
+                keyboardAdjust = json.optBoolean("keyboardAdjust", _uiState.value.keyboardAdjust),
+                symbolBarColor = json.optString("symbolBarColor", _uiState.value.symbolBarColor),
+                symbolTextColor = json.optString("symbolTextColor", _uiState.value.symbolTextColor),
+                symbolBarStyle = json.optString("symbolBarStyle", _uiState.value.symbolBarStyle)
             )
             saveSettings(context)
             true
@@ -683,6 +723,10 @@ class EditorViewModel : ViewModel() {
             put("scrollbarColor", _uiState.value.scrollbarColor)
             put("showScrollLineInfo", _uiState.value.showScrollLineInfo)
             put("scrollbarStyle", _uiState.value.scrollbarStyle)
+            put("keyboardAdjust", _uiState.value.keyboardAdjust)
+            put("symbolBarColor", _uiState.value.symbolBarColor)
+            put("symbolTextColor", _uiState.value.symbolTextColor)
+            put("symbolBarStyle", _uiState.value.symbolBarStyle)
         } .toString(4)
     }
 }
