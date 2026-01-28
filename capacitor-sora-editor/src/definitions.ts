@@ -29,4 +29,23 @@ export interface SoraStartOptions {
     backgroundColor?: string;
     selectionLine?: number;
     selectionColumn?: number;
+    searchMatchBackgroundColor?: string;
+    lineSpacingMultiplier?: number;
+    lineSpacingExtra?: number;
+    wrapLineSpacingMultiplier?: number;
+    wrapLineSpacingExtra?: number;
+    horizontalPadding?: number;
+    highlightCurrentLine?: boolean;
+    currentLineBackgroundColor?: string;
+    cursorColor?: string;
+    handleColor?: string;
+    cursorWidth?: number;
+    handleStyle?: 'drop' | 'side_drop' | 'none';
+    searchAsRegExp?: boolean;
+    searchWholeWord?: boolean;
+    searchMatchCase?: boolean;
+    fontFamily?: string;
+    scrollbarColor?: string;
+    showScrollLineInfo?: boolean;
+    scrollbarStyle?: 'default' | 'rounded';
 }

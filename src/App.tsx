@@ -5,9 +5,9 @@ import { registerPlugin } from '@capacitor/core';
 import { Note, DIR } from './Types';
 import { Icon } from './Icons';
 import ListView from './ListView';
-import EditorView from './EditorView';
 
-import ComposeEditor from './ComposeEditor';
+
+import { SoraEditor as ComposeEditor } from 'capacitor-sora-editor';
 
 const OpenFolder = registerPlugin<any>('OpenFolder');
 
@@ -328,15 +328,7 @@ const App: React.FC = () => {
             )}
 
             {view === 'editor' && curId && (
-                <EditorView
-                    curId={curId} notes={notes} lang={lang} t={t} theme={theme} fontSize={fontSize}
-                    showLineNums={showLineNums} autoSave={autoSave} editorBg={editorBg}
-                    wordWrap={wordWrap} setWordWrap={setWordWrap}
-                    setEditorBg={setEditorBg} setFontSize={setFontSize}
-                    setShowLineNums={setShowLineNums} setAutoSave={setAutoSave}
-                    onClose={() => { setView('list'); setCurId(null); reloadNotes(); }}
-                    reloadNotes={reloadNotes}
-                />
+                <div />
             )}
 
             {view === 'settings' && (

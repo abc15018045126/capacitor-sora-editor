@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -29,8 +30,11 @@ import androidx.compose.foundation.border
 import kotlinx.coroutines.launch
 import com.abc15018045126.capacitor.soraeditor.compose.EditorUiState
 import com.abc15018045126.capacitor.soraeditor.compose.EditorViewModel
-import io.github.rosemoe.sora.widget.CodeEditor
-import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
+import io.github.abc15018045126.sora.widget.CodeEditor
+import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
+import io.github.abc15018045126.sora.widget.style.builtin.HandleStyleDrop
+import io.github.abc15018045126.sora.widget.style.builtin.HandleStyleSideDrop
+import io.github.abc15018045126.sora.widget.style.builtin.HandleStyleNone
 
 class EditorControl {
     private var editor: CodeEditor? = null
@@ -104,9 +108,16 @@ class EditorControl {
         }
     }
 
-    fun search(text: String) {
+    fun search(text: String, isRegex: Boolean = false, matchCase: Boolean = false, wholeWord: Boolean = false) {
         try {
-            editor?.searcher?.search(text, io.github.rosemoe.sora.widget.EditorSearcher.SearchOptions(false, false))
+            val type = if (isRegex) {
+                io.github.abc15018045126.sora.widget.EditorSearcher.SearchOptions.TYPE_REGULAR_EXPRESSION
+            } else if (wholeWord) {
+                io.github.abc15018045126.sora.widget.EditorSearcher.SearchOptions.TYPE_WHOLE_WORD
+            } else {
+                io.github.abc15018045126.sora.widget.EditorSearcher.SearchOptions.TYPE_NORMAL
+            }
+            editor?.searcher?.search(text, io.github.abc15018045126.sora.widget.EditorSearcher.SearchOptions(type, !matchCase))
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -178,12 +189,28 @@ fun SoraEditorView(
     wordWrap: Boolean = false,
     editable: Boolean = true,
     backgroundColor: String = "#FFFFFF",
+    searchMatchBackgroundColor: String = "#FFFF00",
     modifier: Modifier = Modifier,
     control: EditorControl? = null,
     onSearchMatchesChange: (Int, Int) -> Unit = { _, _ -> },
     onScroll: () -> Unit = {},
     onTap: () -> Unit = {},
-    autoFocus: Boolean = false
+    autoFocus: Boolean = false,
+    lineSpacingMultiplier: Float = 1.0f,
+    lineSpacingExtra: Float = 0f,
+    wrapLineSpacingMultiplier: Float = 1.0f,
+    wrapLineSpacingExtra: Float = 0f,
+    horizontalPadding: Float = 12f,
+    highlightCurrentLine: Boolean = true,
+    currentLineBackgroundColor: String = "#10000000",
+    cursorColor: String = "#FF000000",
+    handleColor: String = "#FF000000",
+    cursorWidth: Float = 2.0f,
+    handleStyle: String = "side_drop",
+    fontFamily: String = "Monospace",
+    scrollbarColor: String = "#A0888888",
+    showScrollLineInfo: Boolean = true,
+    scrollbarStyle: String = "default"
 ) {
     var editorInstance by remember { mutableStateOf<CodeEditor?>(null) }
     
@@ -200,10 +227,21 @@ fun SoraEditorView(
         factory = { context ->
             CodeEditor(context).apply {
                 setTextSize(fontSize)
-                setTypefaceText(Typeface.MONOSPACE)
                 isLineNumberEnabled = showLineNumbers
                 isWordwrap = wordWrap
                 setEditable(editable)
+                setHighlightCurrentLine(highlightCurrentLine)
+                setCursorWidth(cursorWidth * dpUnit / 2f)
+                isDisplayLnPanel = showScrollLineInfo
+                
+                // Set font family
+                when (fontFamily) {
+                    "JetBrains Mono" -> typefaceText = Typeface.createFromAsset(context.assets, "JetBrainsMono-Regular.ttf")
+                    "Ubuntu" -> typefaceText = Typeface.createFromAsset(context.assets, "Ubuntu-Regular.ttf")
+                    "Roboto" -> typefaceText = Typeface.createFromAsset(context.assets, "Roboto-Regular.ttf")
+                    else -> setTypefaceText(Typeface.MONOSPACE)
+                }
+                
                 setText(content)
                 
                 // Use GestureDetector for reliable tap detection
@@ -218,7 +256,7 @@ fun SoraEditorView(
                     false // Return false so the editor still receives touch events for selection/scrolling
                 }
                 
-                subscribeEvent(io.github.rosemoe.sora.event.SelectionChangeEvent::class.java) { _, _ ->
+                subscribeEvent(io.github.abc15018045126.sora.event.SelectionChangeEvent::class.java) { _, _ ->
                      val cursor = this.cursor
                      val line = cursor.leftLine
                      val col = cursor.leftColumn
@@ -242,15 +280,15 @@ fun SoraEditorView(
                      }
                 }
 
-                subscribeEvent(io.github.rosemoe.sora.event.PublishSearchResultEvent::class.java) { _, _ ->
+                subscribeEvent(io.github.abc15018045126.sora.event.PublishSearchResultEvent::class.java) { _, _ ->
                     onSearchMatchesChange(searcher.currentMatchedPositionIndex + 1, searcher.matchedPositionCount)
                 }
 
-                subscribeEvent(io.github.rosemoe.sora.event.ScrollEvent::class.java) { _, _ ->
+                subscribeEvent(io.github.abc15018045126.sora.event.ScrollEvent::class.java) { _, _ ->
                     onScroll()
                 }
 
-                subscribeEvent(io.github.rosemoe.sora.event.ContentChangeEvent::class.java) { _, _ ->
+                subscribeEvent(io.github.abc15018045126.sora.event.ContentChangeEvent::class.java) { _, _ ->
                     val newText = text.toString()
                     // Don't update if nothing changed? 
                     // But we need to tell parent. Parent will update state. 
@@ -259,6 +297,14 @@ fun SoraEditorView(
                     // But 'update' block handles the loop break.
                     currentOnContentChange(newText)
                 }
+
+                // Apply initial spacing and padding
+                setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
+                setWrapLineSpacing(wrapLineSpacingExtra, wrapLineSpacingMultiplier)
+                val dp = dpUnit
+                setDividerMargin(0f, horizontalPadding * dp)
+                setExtraMarginRight(horizontalPadding * dp)
+                setLineNumberMarginLeft(horizontalPadding * dp)
 
                 try {
                     val color = android.graphics.Color.parseColor(backgroundColor)
@@ -276,6 +322,63 @@ fun SoraEditorView(
                     } else {
                         colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, android.graphics.Color.BLACK)
                         colorScheme.setColor(EditorColorScheme.LINE_NUMBER, android.graphics.Color.DKGRAY)
+                    }
+
+                    try {
+                        val searchMatchColor = android.graphics.Color.parseColor(searchMatchBackgroundColor)
+                        colorScheme.setColor(EditorColorScheme.MATCHED_TEXT_BACKGROUND, searchMatchColor)
+                    } catch (e: Exception) {
+                        colorScheme.setColor(EditorColorScheme.MATCHED_TEXT_BACKGROUND, 0xffffff00.toInt())
+                    }
+
+                    try {
+                        val currentLineColor = android.graphics.Color.parseColor(currentLineBackgroundColor)
+                        colorScheme.setColor(EditorColorScheme.CURRENT_LINE, currentLineColor)
+                    } catch (e: Exception) {
+                        colorScheme.setColor(EditorColorScheme.CURRENT_LINE, 0x10000000)
+                    }
+
+                    try {
+                        val cColor = android.graphics.Color.parseColor(cursorColor)
+                        colorScheme.setColor(EditorColorScheme.SELECTION_INSERT, cColor)
+                    } catch (e: Exception) {
+                        colorScheme.setColor(EditorColorScheme.SELECTION_INSERT, 0xFF000000.toInt())
+                    }
+
+                    try {
+                        val hColor = android.graphics.Color.parseColor(handleColor)
+                        colorScheme.setColor(EditorColorScheme.SELECTION_HANDLE, hColor)
+                    } catch (e: Exception) {
+                        colorScheme.setColor(EditorColorScheme.SELECTION_HANDLE, 0xFF000000.toInt())
+                    }
+
+                    setSelectionHandleStyle(when (handleStyle) {
+                        "drop" -> HandleStyleDrop(context)
+                        "none" -> HandleStyleNone()
+                        else -> HandleStyleSideDrop(context)
+                    })
+
+                    try {
+                        val sColor = android.graphics.Color.parseColor(scrollbarColor)
+                        colorScheme.setColor(EditorColorScheme.SCROLL_BAR_THUMB, sColor)
+                        colorScheme.setColor(EditorColorScheme.SCROLL_BAR_THUMB_PRESSED, sColor)
+                    } catch (e: Exception) {
+                        colorScheme.setColor(EditorColorScheme.SCROLL_BAR_THUMB, 0xFFA0888888.toInt())
+                        colorScheme.setColor(EditorColorScheme.SCROLL_BAR_THUMB_PRESSED, 0xFFA0888888.toInt())
+                    }
+
+                    if (scrollbarStyle == "rounded") {
+                        val sColor = try { android.graphics.Color.parseColor(scrollbarColor) } catch(e: Exception) { 0xFFA0888888.toInt() }
+                        val drawable = android.graphics.drawable.GradientDrawable().apply {
+                            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                            cornerRadius = 100f // Large radius for fully rounded ends
+                            setColor(sColor)
+                        }
+                        renderer.setVerticalScrollbarThumbDrawable(drawable)
+                        renderer.setHorizontalScrollbarThumbDrawable(drawable)
+                    } else {
+                        renderer.setVerticalScrollbarThumbDrawable(null)
+                        renderer.setHorizontalScrollbarThumbDrawable(null)
                     }
                 } catch (e: Exception) {}
                 
@@ -298,14 +401,35 @@ fun SoraEditorView(
             view.isLineNumberEnabled = showLineNumbers
             view.isWordwrap = wordWrap
             view.setEditable(editable)
+            view.setHighlightCurrentLine(highlightCurrentLine)
+            view.setCursorWidth(cursorWidth * view.dpUnit / 2f)
+            view.isDisplayLnPanel = showScrollLineInfo
             
+            // Update font family
+            when (fontFamily) {
+                "JetBrains Mono" -> view.typefaceText = Typeface.createFromAsset(view.context.assets, "JetBrainsMono-Regular.ttf")
+                "Ubuntu" -> view.typefaceText = Typeface.createFromAsset(view.context.assets, "Ubuntu-Regular.ttf")
+                "Roboto" -> view.typefaceText = Typeface.createFromAsset(view.context.assets, "Roboto-Regular.ttf")
+                else -> view.setTypefaceText(Typeface.MONOSPACE)
+            }
+
             // Only update text if it strictly differs.
             if (view.text.toString() != content) {
-                // Save cursor? setText resets it usually.
-                // If the difference is just line endings, we might be screwing up.
-                // But view.text should match content if we are the ones who emitted it.
                 view.setText(content)
             }
+            
+            view.setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
+            view.setWrapLineSpacing(wrapLineSpacingExtra, wrapLineSpacingMultiplier)
+            val dp = view.dpUnit
+            view.setDividerMargin(0f, horizontalPadding * dp)
+            view.setExtraMarginRight(horizontalPadding * dp)
+            view.setLineNumberMarginLeft(horizontalPadding * dp)
+
+            try {
+                val sColor = android.graphics.Color.parseColor(scrollbarColor)
+                view.colorScheme.setColor(EditorColorScheme.SCROLL_BAR_THUMB, sColor)
+                view.colorScheme.setColor(EditorColorScheme.SCROLL_BAR_THUMB_PRESSED, sColor)
+            } catch (e: Exception) {}
             
             try {
                 val color = android.graphics.Color.parseColor(backgroundColor)
@@ -323,6 +447,54 @@ fun SoraEditorView(
                 } else {
                     view.colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, android.graphics.Color.BLACK)
                     view.colorScheme.setColor(EditorColorScheme.LINE_NUMBER, android.graphics.Color.DKGRAY)
+                }
+
+                try {
+                    val searchMatchColor = android.graphics.Color.parseColor(searchMatchBackgroundColor)
+                    view.colorScheme.setColor(EditorColorScheme.MATCHED_TEXT_BACKGROUND, searchMatchColor)
+                } catch (e: Exception) {
+                    view.colorScheme.setColor(EditorColorScheme.MATCHED_TEXT_BACKGROUND, 0xffffff00.toInt())
+                }
+
+                try {
+                    val currentLineColor = android.graphics.Color.parseColor(currentLineBackgroundColor)
+                    view.colorScheme.setColor(EditorColorScheme.CURRENT_LINE, currentLineColor)
+                } catch (e: Exception) {
+                    view.colorScheme.setColor(EditorColorScheme.CURRENT_LINE, 0x10000000)
+                }
+
+                try {
+                    val cColor = android.graphics.Color.parseColor(cursorColor)
+                    view.colorScheme.setColor(EditorColorScheme.SELECTION_INSERT, cColor)
+                } catch (e: Exception) {
+                    view.colorScheme.setColor(EditorColorScheme.SELECTION_INSERT, 0xFF000000.toInt())
+                }
+
+                try {
+                    val hColor = android.graphics.Color.parseColor(handleColor)
+                    view.colorScheme.setColor(EditorColorScheme.SELECTION_HANDLE, hColor)
+                } catch (e: Exception) {
+                    view.colorScheme.setColor(EditorColorScheme.SELECTION_HANDLE, 0xFF000000.toInt())
+                }
+
+                view.setSelectionHandleStyle(when (handleStyle) {
+                    "drop" -> HandleStyleDrop(view.context)
+                    "none" -> HandleStyleNone()
+                    else -> HandleStyleSideDrop(view.context)
+                })
+
+                if (scrollbarStyle == "rounded") {
+                    val sColor = try { android.graphics.Color.parseColor(scrollbarColor) } catch(e: Exception) { 0xFFA0888888.toInt() }
+                    val drawable = android.graphics.drawable.GradientDrawable().apply {
+                        shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                        cornerRadius = 100f
+                        setColor(sColor)
+                    }
+                    view.renderer.setVerticalScrollbarThumbDrawable(drawable)
+                    view.renderer.setHorizontalScrollbarThumbDrawable(drawable)
+                } else {
+                    view.renderer.setVerticalScrollbarThumbDrawable(null)
+                    view.renderer.setHorizontalScrollbarThumbDrawable(null)
                 }
             } catch (e: Exception) {}
         },
@@ -467,12 +639,37 @@ fun EditorScreen(
                         replaceText = uiState.replaceText,
                         currentMatch = uiState.currentMatch,
                         totalMatches = uiState.totalMatches,
+                        searchAsRegExp = uiState.searchAsRegExp,
+                        searchWholeWord = uiState.searchWholeWord,
+                        searchMatchCase = uiState.searchMatchCase,
                         backgroundColor = uiState.searchColor,
                         onSearchQueryChange = { 
                             viewModel.setSearchQuery(it)
-                            if (it.isNotEmpty()) editorControl.search(it) else editorControl.stopSearch()
+                            if (it.isNotEmpty()) {
+                                editorControl.search(it, uiState.searchAsRegExp, uiState.searchMatchCase, uiState.searchWholeWord)
+                            } else {
+                                editorControl.stopSearch()
+                            }
                         },
                         onReplaceTextChange = { viewModel.setReplaceText(it) },
+                        onToggleRegExp = { 
+                            viewModel.setSearchAsRegExp(localContext, it)
+                            if (uiState.searchQuery.isNotEmpty()) {
+                                editorControl.search(uiState.searchQuery, it, uiState.searchMatchCase, uiState.searchWholeWord)
+                            }
+                        },
+                        onToggleWholeWord = { 
+                            viewModel.setSearchWholeWord(localContext, it)
+                            if (uiState.searchQuery.isNotEmpty()) {
+                                editorControl.search(uiState.searchQuery, uiState.searchAsRegExp, uiState.searchMatchCase, it)
+                            }
+                        },
+                        onToggleMatchCase = { 
+                            viewModel.setSearchMatchCase(localContext, it)
+                            if (uiState.searchQuery.isNotEmpty()) {
+                                editorControl.search(uiState.searchQuery, uiState.searchAsRegExp, it, uiState.searchWholeWord)
+                            }
+                        },
                         onFindNext = { editorControl.findNext() },
                         onFindPrevious = { editorControl.findPrevious() },
                         onReplace = { editorControl.replace(uiState.replaceText) },
@@ -491,11 +688,27 @@ fun EditorScreen(
                         wordWrap = uiState.wordWrap,
                         editable = !uiState.isReadOnly,
                         backgroundColor = uiState.backgroundColor,
+                        searchMatchBackgroundColor = uiState.searchMatchBackgroundColor,
                         control = editorControl,
                         onSearchMatchesChange = { current, total -> viewModel.setMatchResults(current, total) },
                         onScroll = { if (uiState.isReadOnly && uiState.showToolbar) viewModel.setShowToolbar(false) },
                         onTap = { if (uiState.isReadOnly) viewModel.toggleToolbar() },
-                        autoFocus = uiState.shouldAutoFocus
+                        autoFocus = uiState.shouldAutoFocus,
+                        lineSpacingMultiplier = uiState.lineSpacingMultiplier,
+                        lineSpacingExtra = uiState.lineSpacingExtra,
+                        wrapLineSpacingMultiplier = uiState.wrapLineSpacingMultiplier,
+                        wrapLineSpacingExtra = uiState.wrapLineSpacingExtra,
+                        horizontalPadding = uiState.horizontalPadding,
+                        highlightCurrentLine = uiState.highlightCurrentLine,
+                        currentLineBackgroundColor = uiState.currentLineBackgroundColor,
+                        cursorColor = uiState.cursorColor,
+                        handleColor = uiState.handleColor,
+                        cursorWidth = uiState.cursorWidth,
+                        handleStyle = uiState.handleStyle,
+                        fontFamily = uiState.fontFamily,
+                        scrollbarColor = uiState.scrollbarColor,
+                        showScrollLineInfo = uiState.showScrollLineInfo,
+                        scrollbarStyle = uiState.scrollbarStyle
                     )
                 }
                 
@@ -526,7 +739,8 @@ fun EditorScreen(
                     surfaceColor = uiState.tocColor,
                     onModeChange = { viewModel.setTocMode(it) },
                     onChapterClick = { editorControl.jumpTo(it); viewModel.setShowToc(false) },
-                    onDismiss = { viewModel.setShowToc(false) }
+                    onDismiss = { viewModel.setShowToc(false) },
+                    scrollbarColor = uiState.scrollbarColor
                 )
             }
             
@@ -620,9 +834,15 @@ fun SearchPanel(
     replaceText: String,
     currentMatch: Int,
     totalMatches: Int,
+    searchAsRegExp: Boolean,
+    searchWholeWord: Boolean,
+    searchMatchCase: Boolean,
     backgroundColor: String,
     onSearchQueryChange: (String) -> Unit,
     onReplaceTextChange: (String) -> Unit,
+    onToggleRegExp: (Boolean) -> Unit,
+    onToggleWholeWord: (Boolean) -> Unit,
+    onToggleMatchCase: (Boolean) -> Unit,
     onFindNext: () -> Unit,
     onFindPrevious: () -> Unit,
     onReplace: () -> Unit,
@@ -639,7 +859,14 @@ fun SearchPanel(
                     modifier = Modifier.weight(1f),
                     singleLine = true,
                     trailingIcon = {
-                        if (totalMatches > 0) Text("${currentMatch.coerceAtLeast(0)}/$totalMatches", fontSize = 12.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (totalMatches > 0) {
+                                Text("${currentMatch.coerceAtLeast(0)}/$totalMatches", fontSize = 12.sp, modifier = Modifier.padding(end = 4.dp))
+                            }
+                            IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
+                                Icon(Icons.Default.Close, null, modifier = Modifier.size(16.dp))
+                            }
+                        }
                     }
                 )
                 Button(onClick = onFindPrevious, contentPadding = PaddingValues(0.dp), modifier = Modifier.defaultMinSize(minWidth = 48.dp)) { Text("上个", fontSize = 12.sp) }
@@ -655,7 +882,41 @@ fun SearchPanel(
                     singleLine = true
                 )
                 TextButton(onClick = onReplace) { Text("替换", fontSize = 13.sp) }
-                TextButton(onClick = onReplaceAll) { Text("全部", fontSize = 13.sp) }
+                TextButton(onClick = onReplaceAll, contentPadding = PaddingValues(horizontal = 4.dp)) { 
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("全部", fontSize = 11.sp)
+                        Text("替换", fontSize = 11.sp)
+                    }
+                }
+                
+                var showOptions by remember { mutableStateOf(false) }
+                val backgroundColorParsed = try { Color(android.graphics.Color.parseColor(backgroundColor)) } catch(e:Exception) { MaterialTheme.colorScheme.surface }
+                Box {
+                    TextButton(onClick = { showOptions = true }, contentPadding = PaddingValues(horizontal = 4.dp)) {
+                        Text("选项", fontSize = 12.sp)
+                    }
+                    DropdownMenu(
+                        expanded = showOptions,
+                        onDismissRequest = { showOptions = false },
+                        modifier = Modifier.background(backgroundColorParsed)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("区分大小写 (Ab)") },
+                            onClick = { onToggleMatchCase(!searchMatchCase) },
+                            leadingIcon = { Icon(if(searchMatchCase) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked, null, tint = if(searchMatchCase) MaterialTheme.colorScheme.primary else Color.Gray) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("全词匹配 (W)") },
+                            onClick = { onToggleWholeWord(!searchWholeWord) },
+                            leadingIcon = { Icon(if(searchWholeWord) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked, null, tint = if(searchWholeWord) MaterialTheme.colorScheme.primary else Color.Gray) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("正则表达式 (.*)") },
+                            onClick = { onToggleRegExp(!searchAsRegExp) },
+                            leadingIcon = { Icon(if(searchAsRegExp) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked, null, tint = if(searchAsRegExp) MaterialTheme.colorScheme.primary else Color.Gray) }
+                        )
+                    }
+                }
             }
         }
     }
@@ -671,7 +932,8 @@ fun TocPanel(
     surfaceColor: String,
     onModeChange: (String) -> Unit,
     onChapterClick: (Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    scrollbarColor: String = "#A0888888"
 ) {
     val chapters = remember(content, tocMode) {
         if (tocMode == "chars") {
@@ -702,17 +964,6 @@ fun TocPanel(
     val activeIndex = chapters.indexOfLast { it.pos <= currentCursorPos }.coerceAtLeast(0)
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     
-    // Auto-hide logic for scrollbar
-    var showScrollbar by remember { mutableStateOf(false) }
-    LaunchedEffect(listState.isScrollInProgress) {
-        if (listState.isScrollInProgress) {
-            showScrollbar = true
-        } else {
-            kotlinx.coroutines.delay(3000)
-            showScrollbar = false
-        }
-    }
-
     LaunchedEffect(activeIndex) {
         if (activeIndex > 0) listState.scrollToItem((activeIndex - 5).coerceAtLeast(0))
     }
@@ -754,90 +1005,12 @@ fun TocPanel(
                         }
                     }
                     
-                    // Improved Draggable Scrollbar with Auto-hide and Enlarge size
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = showScrollbar,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
-                        modifier = Modifier.align(Alignment.CenterEnd)
-                    ) {
-                        if (chapters.size > 10) {
-                            val scope = rememberCoroutineScope()
-                            val totalItems = chapters.size
-                            
-                            BoxWithConstraints(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .width(50.dp) // Large touch area
-                                    .pointerInput(totalItems) {
-                                        detectDragGestures(
-                                            onDragStart = { showScrollbar = true },
-                                            onDrag = { change, dragAmount ->
-                                                showScrollbar = true
-                                                change.consume()
-                                                val trackHeight = size.height.toFloat()
-                                                val visibleItems = listState.layoutInfo.visibleItemsInfo
-                                                if (visibleItems.isNotEmpty()) {
-                                                    val visibleCount = visibleItems.size
-                                                    val thumbHeight = trackHeight * (visibleCount.toFloat() / totalItems).coerceIn(0.1f, 1f)
-                                                    val travelDistance = (trackHeight - thumbHeight).coerceAtLeast(1f)
-                                                    
-                                                    val deltaPercent = dragAmount.y / travelDistance
-                                                    val currentFirstVisible = listState.firstVisibleItemIndex
-                                                    val currentPercent = currentFirstVisible.toFloat() / (totalItems - visibleCount).coerceAtLeast(1)
-                                                    
-                                                    val newPercent = (currentPercent + deltaPercent).coerceIn(0f, 1f)
-                                                    val targetIndex = (newPercent * (totalItems - visibleCount)).toInt()
-                                                    scope.launch {
-                                                        listState.scrollToItem(targetIndex)
-                                                    }
-                                                }
-                                            },
-                                            onDragEnd = {
-                                                scope.launch {
-                                                    kotlinx.coroutines.delay(3000)
-                                                    showScrollbar = false
-                                                }
-                                            }
-                                        )
-                                    }
-                            ) {
-                                val trackHeightPx = constraints.maxHeight.toFloat()
-                                val layoutInfo = listState.layoutInfo
-                                val visibleItems = layoutInfo.visibleItemsInfo
-                                
-                                if (visibleItems.isNotEmpty()) {
-                                    val firstVisible = listState.firstVisibleItemIndex
-                                    val visibleCount = visibleItems.size
-                                    val thumbHeightPercent = (visibleCount.toFloat() / totalItems).coerceIn(0.1f, 1f)
-                                    val scrollPercent = firstVisible.toFloat() / (totalItems - visibleCount).coerceAtLeast(1)
-                                    
-                                    // Background track
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.CenterEnd)
-                                            .fillMaxHeight()
-                                            .width(12.dp) // Double size (6dp -> 12dp)
-                                            .padding(end = 4.dp, top = 4.dp, bottom = 4.dp)
-                                            .background(Color.LightGray.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
-                                    )
-                                    
-                                    // Thumb
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .padding(end = 4.dp)
-                                            .width(12.dp) // Double size (6dp -> 12dp)
-                                            .fillMaxHeight(thumbHeightPercent)
-                                            .graphicsLayer {
-                                                translationY = trackHeightPx * (1f - thumbHeightPercent) * scrollPercent
-                                            }
-                                            .background(Color.Gray.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    SoraStyleScrollbar(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        lazyListState = listState,
+                        totalItems = chapters.size,
+                        scrollbarColor = scrollbarColor
+                    )
                 }
             }
         }
@@ -856,6 +1029,10 @@ fun EditorSettingsScreen(
     onBackgroundColorChange: (String) -> Unit
 ) {
     val localContext = androidx.compose.ui.platform.LocalContext.current
+    val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
+    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -864,117 +1041,277 @@ fun EditorSettingsScreen(
             )
         }
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(24.dp)) {
-            Surface(
-                modifier = Modifier.fillMaxWidth().height(100.dp),
-                color = try { Color(android.graphics.Color.parseColor(uiState.backgroundColor)) } catch(e:Exception) { Color.Gray },
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, Color.LightGray)
+        Box(Modifier.fillMaxSize()) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(scrollState),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text("预览文本效果 Preview Text", fontSize = uiState.fontSize.sp, color = if (uiState.backgroundColor == "#000000") Color.White else Color.Black)
+                Spacer(Modifier.height(16.dp))
+                Surface(
+                    modifier = Modifier.fillMaxWidth().height(100.dp),
+                    color = try { Color(android.graphics.Color.parseColor(uiState.backgroundColor)) } catch(e:Exception) { Color.Gray },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, Color.LightGray)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("预览文本效果 Preview Text", fontSize = uiState.fontSize.sp, color = if (uiState.backgroundColor == "#000000") Color.White else Color.Black)
+                    }
                 }
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("字体大小: ${uiState.fontSize.toInt()}px")
+                    Slider(value = uiState.fontSize, onValueChange = onFontSizeChange, valueRange = 12f..36f)
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("行间距倍率: ${"%.1f".format(uiState.lineSpacingMultiplier)}")
+                    Slider(value = uiState.lineSpacingMultiplier, onValueChange = { viewModel.setLineSpacingMultiplier(localContext, it) }, valueRange = 0.5f..3.0f)
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("自动换行行内倍率 (逻辑行内): ${"%.1f".format(uiState.wrapLineSpacingMultiplier)}")
+                    Slider(value = uiState.wrapLineSpacingMultiplier, onValueChange = { viewModel.setWrapLineSpacing(localContext, uiState.wrapLineSpacingExtra, it) }, valueRange = 0.5f..3.0f)
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("左右页边距: ${uiState.horizontalPadding.toInt()}dp")
+                    Slider(value = uiState.horizontalPadding, onValueChange = { viewModel.setHorizontalPadding(localContext, it) }, valueRange = 0f..50f)
+                }
+
+                SettingsSwitchItem("显示行号", "在左侧显示行号", uiState.showLineNumbers) { viewModel.toggleLineNumbers(localContext) }
+                SettingsSwitchItem("自动换行", "自动折行显示", uiState.wordWrap) { viewModel.toggleWordWrap(localContext) }
+                SettingsSwitchItem("高亮当前行", "突出显示光标所在的行", uiState.highlightCurrentLine) { viewModel.setHighlightCurrentLine(localContext, it) }
+                SettingsSwitchItem("自动保存", "编辑时自动保存", uiState.autoSave) { viewModel.setAutoSave(localContext, it) }
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("字体样式", style = MaterialTheme.typography.titleMedium)
+                    FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("Monospace", "JetBrains Mono", "Ubuntu", "Roboto").forEach { font ->
+                            val isSelected = uiState.fontFamily == font
+                            Button(
+                                onClick = { viewModel.setFontFamily(localContext, font) },
+                                modifier = Modifier.weight(1f),
+                                contentPadding = PaddingValues(0.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.LightGray,
+                                    contentColor = if (isSelected) Color.White else Color.Black
+                                )
+                            ) {
+                                Text(font, fontSize = 10.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                            }
+                        }
+                    }
+                }
+
+                SettingsSwitchItem("显示状态栏", "显示底部的行、列、字符数信息", uiState.showStatusBar) { viewModel.toggleStatusBar(localContext) }
+                SettingsSwitchItem("符号快捷键", "在底部显示常用符号栏", uiState.showSymbolBar) { viewModel.toggleSymbolBar(localContext) }
+                SettingsSwitchItem("显示滚动详情 (行号)", "拖动滚动条时显示当前行号", uiState.showScrollLineInfo) { viewModel.setShowScrollLineInfo(localContext, it) }
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("搜索首选项", style = MaterialTheme.typography.titleMedium)
+                    SettingsSwitchItem("正则表达式", "默认启用正则匹配", uiState.searchAsRegExp) { viewModel.setSearchAsRegExp(localContext, it) }
+                    SettingsSwitchItem("全词匹配", "默认启用全词匹配", uiState.searchWholeWord) { viewModel.setSearchWholeWord(localContext, it) }
+                    SettingsSwitchItem("区分大小写", "默认区分大小写", uiState.searchMatchCase) { viewModel.setSearchMatchCase(localContext, it) }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text("主题颜色自定义 (也可在下面 JSON 自由配置)", style = MaterialTheme.typography.titleMedium)
+                    val colors = listOf("#FFFFFF" to "白", "#F5F5F5" to "灰", "#E0E0E0" to "深灰", "#FFF8DC" to "米", "#E8F5E9" to "绿", "#E3F2FD" to "蓝", "#000000" to "黑")
+                    
+                    Column {
+                        Text("编辑器背景 (Editor)", fontSize = 12.sp, color = Color.Gray)
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            colors.forEach { (c, l) -> 
+                                ColorOption(c, l, uiState.backgroundColor == c) { viewModel.setBackgroundColor(localContext, c) }
+                            }
+                        }
+                    }
+
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("应用 UI 颜色 (Toolbar/Bottom)", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.weight(1f))
+                            TextButton(onClick = { 
+                                viewModel.setTocColor(localContext, uiState.uiColor)
+                                viewModel.setSearchColor(localContext, uiState.uiColor)
+                                viewModel.setMenuColor(localContext, uiState.uiColor)
+                            }) {
+                                Text("同步到所有面板", fontSize = 10.sp)
+                            }
+                        }
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            colors.forEach { (c, l) -> 
+                                ColorOption(c, l, uiState.uiColor == c) { viewModel.setUiColor(localContext, c) }
+                            }
+                        }
+                    }
+
+                    Column {
+                        Text("更多菜单颜色 (More Menu)", fontSize = 12.sp, color = Color.Gray)
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            colors.forEach { (c, l) -> 
+                                ColorOption(c, l, uiState.menuColor == c) { viewModel.setMenuColor(localContext, c) }
+                            }
+                        }
+                    }
+
+                    Column {
+                        Text("目录面板颜色 (TOC)", fontSize = 12.sp, color = Color.Gray)
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            colors.forEach { (c, l) -> 
+                                ColorOption(c, l, uiState.tocColor == c) { viewModel.setTocColor(localContext, c) }
+                            }
+                        }
+                    }
+
+                    Column {
+                        Text("搜索面板颜色 (Search)", fontSize = 12.sp, color = Color.Gray)
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            colors.forEach { (c, l) -> 
+                                ColorOption(c, l, uiState.searchColor == c) { viewModel.setSearchColor(localContext, c) }
+                            }
+                        }
+                    }
+
+                    Column {
+                        Text("搜索匹配高亮颜色 (Search Match highlight)", fontSize = 12.sp, color = Color.Gray)
+                        val matchColors = listOf(
+                            "#FFF59D" to "淡黄", 
+                            "#C8E6C9" to "淡绿", 
+                            "#FFCDD2" to "淡红", 
+                            "#B2EBF2" to "淡蓝", 
+                            "#E1BEE7" to "淡紫", 
+                            "#FFE0B2" to "淡橙", 
+                            "#BBDEFB" to "灰蓝"
+                        )
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            matchColors.forEach { (c, l) -> 
+                                ColorOption(c, l, uiState.searchMatchBackgroundColor == c) { viewModel.setSearchMatchBackgroundColor(localContext, c) }
+                            }
+                        }
+                    }
+
+                    Column {
+                        Text("当前行高亮颜色 (Current Line)", fontSize = 12.sp, color = Color.Gray)
+                        val highlightColors = listOf(
+                            "#00000000" to "无",
+                            "#10000000" to "淡黑",
+                            "#10888888" to "淡灰",
+                            "#100000FF" to "淡蓝",
+                            "#10FF0000" to "淡红",
+                            "#1000FF00" to "淡绿",
+                            "#20FFEB3B" to "浅黄"
+                        )
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            highlightColors.forEach { (c, l) -> 
+                                ColorOption(c, l, uiState.currentLineBackgroundColor == c) { viewModel.setCurrentLineBackgroundColor(localContext, c) }
+                            }
+                        }
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("光标颜色 (Cursor Color)", fontSize = 12.sp, color = Color.Gray)
+                        val cursorColors = listOf("#FF000000" to "黑", "#FF888888" to "灰", "#FF0000FF" to "蓝", "#FFFF0000" to "红", "#FF00FF00" to "绿", "#FFFB8C00" to "橙", "#FF1976D2" to "深蓝")
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            cursorColors.forEach { (c, l) -> 
+                                ColorOption(c, l, uiState.cursorColor == c) { viewModel.setCursorColor(localContext, c) }
+                            }
+                        }
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("光标提手颜色 (Handle Color)", fontSize = 12.sp, color = Color.Gray)
+                        val handleColors = listOf("#FF000000" to "黑", "#FF888888" to "灰", "#FF0000FF" to "蓝", "#FFFF0000" to "红", "#FF00FF00" to "绿", "#FFFB8C00" to "橙", "#FF1976D2" to "深蓝")
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            handleColors.forEach { (c, l) -> 
+                                ColorOption(c, l, uiState.handleColor == c) { viewModel.setHandleColor(localContext, c) }
+                            }
+                        }
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("滚动条颜色 (Scrollbar Color)", fontSize = 12.sp, color = Color.Gray)
+                        val scrollbarColors = listOf("#A0888888" to "默认灰", "#A0000000" to "黑", "#A0FF0000" to "红", "#A000FF00" to "绿", "#A00000FF" to "蓝", "#A0FB8C00" to "橙", "#A01976D2" to "深蓝")
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            scrollbarColors.forEach { (c, l) -> 
+                                ColorOption(c, l, uiState.scrollbarColor == c) { viewModel.setScrollbarColor(localContext, c) }
+                            }
+                        }
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("滚动条样式", fontSize = 12.sp, color = Color.Gray)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            mapOf("default" to "Sora (直角)", "rounded" to "Chrome (圆角)").forEach { (id, label) ->
+                                Button(
+                                    onClick = { viewModel.setScrollbarStyle(localContext, id) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = if (uiState.scrollbarStyle == id) MaterialTheme.colorScheme.primary else Color.LightGray)
+                                ) {
+                                    Text(label, fontSize = 10.sp)
+                                }
+                            }
+                        }
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("光标宽度: ${"%.1f".format(uiState.cursorWidth)}px")
+                        Slider(value = uiState.cursorWidth, onValueChange = { viewModel.setCursorWidth(localContext, it) }, valueRange = 1f..10f)
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("光标提手样式", fontSize = 12.sp, color = Color.Gray)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            mapOf("side_drop" to "侧水滴", "drop" to "正水滴", "none" to "无提手").forEach { (id, label) ->
+                                Button(
+                                    onClick = { viewModel.setHandleStyle(localContext, id) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = if (uiState.handleStyle == id) MaterialTheme.colorScheme.primary else Color.LightGray)
+                                ) {
+                                    Text(label, fontSize = 10.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("配置 JSON", style = MaterialTheme.typography.titleMedium)
+                    var jsonText by remember { mutableStateOf(viewModel.getSettingsJson()) }
+                    
+                    LaunchedEffect(uiState) {
+                        jsonText = viewModel.getSettingsJson()
+                    }
+
+                    OutlinedTextField(
+                        value = jsonText,
+                        onValueChange = { jsonText = it },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp),
+                        textStyle = androidx.compose.ui.text.TextStyle(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 12.sp)
+                    )
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(onClick = { viewModel.resetSettings(localContext) }) {
+                            Text("重置所有设置", color = Color.Red)
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Button(
+                            onClick = { 
+                                viewModel.applySettingsFromJson(localContext, jsonText)
+                            }
+                        ) {
+                            Text("保存 JSON 设置")
+                        }
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("字体大小: ${uiState.fontSize.toInt()}px")
-                Slider(value = uiState.fontSize, onValueChange = onFontSizeChange, valueRange = 12f..36f)
-            }
-
-            SettingsSwitchItem("显示行号", "在左侧显示行号", uiState.showLineNumbers) { viewModel.toggleLineNumbers(localContext) }
-            SettingsSwitchItem("自动换行", "自动折行显示", uiState.wordWrap) { viewModel.toggleWordWrap(localContext) }
-            SettingsSwitchItem("自动保存", "编辑时自动保存", uiState.autoSave) { viewModel.setAutoSave(localContext, it) }
-            SettingsSwitchItem("显示状态栏", "显示底部的行、列、字符数信息", uiState.showStatusBar) { viewModel.toggleStatusBar(localContext) }
-            SettingsSwitchItem("符号快捷键", "在底部显示常用符号栏", uiState.showSymbolBar) { viewModel.toggleSymbolBar(localContext) }
-
-
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("主题颜色自定义 (也可在下面 JSON 自由配置)", style = MaterialTheme.typography.titleMedium)
-                val colors = listOf("#FFFFFF" to "白", "#F5F5F5" to "灰", "#E0E0E0" to "深灰", "#FFF8DC" to "米", "#E8F5E9" to "绿", "#E3F2FD" to "蓝", "#000000" to "黑")
-                
-                Column {
-                    Text("编辑器背景 (Editor)", fontSize = 12.sp, color = Color.Gray)
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        colors.forEach { (c, l) -> 
-                            ColorOption(c, l, uiState.backgroundColor == c) { viewModel.setBackgroundColor(localContext, c) }
-                        }
-                    }
-                }
-
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("应用 UI 颜色 (Toolbar/Bottom)", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.weight(1f))
-                        TextButton(onClick = { 
-                            viewModel.setTocColor(localContext, uiState.uiColor)
-                            viewModel.setSearchColor(localContext, uiState.uiColor)
-                            viewModel.setMenuColor(localContext, uiState.uiColor)
-                        }) {
-                            Text("同步到所有面板", fontSize = 10.sp)
-                        }
-                    }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        colors.forEach { (c, l) -> 
-                            ColorOption(c, l, uiState.uiColor == c) { viewModel.setUiColor(localContext, c) }
-                        }
-                    }
-                }
-
-                Column {
-                    Text("更多菜单颜色 (More Menu)", fontSize = 12.sp, color = Color.Gray)
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        colors.forEach { (c, l) -> 
-                            ColorOption(c, l, uiState.menuColor == c) { viewModel.setMenuColor(localContext, c) }
-                        }
-                    }
-                }
-
-                Column {
-                    Text("目录面板颜色 (TOC)", fontSize = 12.sp, color = Color.Gray)
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        colors.forEach { (c, l) -> 
-                            ColorOption(c, l, uiState.tocColor == c) { viewModel.setTocColor(localContext, c) }
-                        }
-                    }
-                }
-
-                Column {
-                    Text("搜索面板颜色 (Search)", fontSize = 12.sp, color = Color.Gray)
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        colors.forEach { (c, l) -> 
-                            ColorOption(c, l, uiState.searchColor == c) { viewModel.setSearchColor(localContext, c) }
-                        }
-                    }
-                }
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("配置 JSON", style = MaterialTheme.typography.titleMedium)
-                var jsonText by remember { mutableStateOf(viewModel.getSettingsJson()) }
-                
-                LaunchedEffect(uiState) {
-                    jsonText = viewModel.getSettingsJson()
-                }
-
-                OutlinedTextField(
-                    value = jsonText,
-                    onValueChange = { jsonText = it },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp),
-                    textStyle = androidx.compose.ui.text.TextStyle(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 12.sp)
-                )
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                     TextButton(onClick = { viewModel.resetSettings(localContext) }) {
-                         Text("重置所有设置", color = Color.Red)
-                     }
-                     Spacer(Modifier.width(8.dp))
-                     Button(
-                        onClick = { 
-                            viewModel.applySettingsFromJson(localContext, jsonText)
-                        }
-                    ) {
-                        Text("保存 JSON 设置")
-                    }
-                }
-            }
+            SoraStyleScrollbar(
+                modifier = Modifier.align(Alignment.CenterEnd).padding(padding),
+                scrollState = scrollState,
+                scrollbarColor = uiState.scrollbarColor
+            )
         }
     }
 }
@@ -1025,4 +1362,101 @@ fun FilePropertiesDialog(properties: Map<String, String>, backgroundColor: Strin
 @Composable
 fun ExitConfirmationDialog(onSave: () -> Unit, onDiscard: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(onDismissRequest = onDismiss, title = { Text("保存？") }, text = { Text("内容已修改") }, confirmButton = { TextButton(onClick = onSave) { Text("保存") } }, dismissButton = { Row { TextButton(onClick = onDiscard) { Text("不保存") }; TextButton(onClick = onDismiss) { Text("取消") } } })
+}
+@Composable
+fun SoraStyleScrollbar(
+    modifier: Modifier = Modifier,
+    scrollState: ScrollState? = null,
+    lazyListState: androidx.compose.foundation.lazy.LazyListState? = null,
+    totalItems: Int = 0,
+    scrollbarColor: String = "#A0888888",
+    scrollbarStyle: String = "default"
+) {
+    val color = try { Color(android.graphics.Color.parseColor(scrollbarColor)) } catch(e:Exception) { Color.Gray.copy(alpha = 0.5f) }
+    
+    val isScrollingProp = remember(scrollState?.isScrollInProgress, lazyListState?.isScrollInProgress) {
+        (scrollState?.isScrollInProgress ?: false) || (lazyListState?.isScrollInProgress ?: false)
+    }
+
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(isScrollingProp) {
+        if (isScrollingProp) {
+            visible = true
+        } else {
+            kotlinx.coroutines.delay(2000)
+            visible = false
+        }
+    }
+
+    androidx.compose.animation.AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        modifier = modifier
+    ) {
+        BoxWithConstraints(modifier = Modifier.fillMaxHeight().width(30.dp)) {
+            val trackHeightPx = constraints.maxHeight.toFloat()
+            
+            val (thumbHeightPercent, scrollPercent) = when {
+                scrollState != null -> {
+                    val viewportHeight = trackHeightPx
+                    val totalHeight = (scrollState.maxValue.toFloat() + viewportHeight).coerceAtLeast(1f)
+                    (viewportHeight / totalHeight).coerceIn(0.1f, 1f) to 
+                        if (scrollState.maxValue > 0) scrollState.value.toFloat() / scrollState.maxValue.toFloat() else 0f
+                }
+                lazyListState != null && totalItems > 0 -> {
+                    val visibleItems = lazyListState.layoutInfo.visibleItemsInfo
+                    val visibleCount = visibleItems.size
+                    (visibleCount.toFloat() / totalItems.toFloat()).coerceIn(0.1f, 1f) to
+                        if (totalItems > visibleCount) lazyListState.firstVisibleItemIndex.toFloat() / (totalItems - visibleCount).coerceAtLeast(1).toFloat() else 0f
+                }
+                else -> 0.1f to 0f
+            }
+
+            val scope = rememberCoroutineScope()
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(totalItems, scrollState?.maxValue) {
+                        detectDragGestures(
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                val thumbHeight = trackHeightPx * thumbHeightPercent
+                                val travelDistance = (trackHeightPx - thumbHeight).coerceAtLeast(1f)
+                                val deltaPercent = dragAmount.y / travelDistance
+                                
+                                when {
+                                    scrollState != null -> {
+                                        val newScroll = (scrollState.value + deltaPercent * scrollState.maxValue).coerceIn(0f, scrollState.maxValue.toFloat())
+                                        scope.launch { scrollState.scrollTo(newScroll.toInt()) }
+                                    }
+                                    lazyListState != null && totalItems > 0 -> {
+                                        val visibleCount = lazyListState.layoutInfo.visibleItemsInfo.size
+                                        val maxIndex = (totalItems - visibleCount).coerceAtLeast(0)
+                                        val currentPercent = lazyListState.firstVisibleItemIndex.toFloat() / maxIndex.coerceAtLeast(1).toFloat()
+                                        val newPercent = (currentPercent + deltaPercent).coerceIn(0f, 1f)
+                                        scope.launch { lazyListState.scrollToItem((newPercent * maxIndex).toInt()) }
+                                    }
+                                }
+                            }
+                        )
+                    }
+            )
+
+            // Sora Style Thumb (Matches EditorRenderer.drawScrollBarVertical)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .width(10.dp)
+                    .fillMaxHeight(thumbHeightPercent)
+                    .graphicsLayer {
+                        translationY = trackHeightPx * (1f - thumbHeightPercent) * scrollPercent
+                    }
+                    .background(
+                        color = color,
+                        shape = if (scrollbarStyle == "rounded") RoundedCornerShape(5.dp) else androidx.compose.ui.graphics.RectangleShape
+                    )
+            )
+        }
+    }
 }

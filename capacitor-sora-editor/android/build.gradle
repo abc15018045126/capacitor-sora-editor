@@ -62,8 +62,11 @@ dependencies {
     implementation "androidx.core:core-ktx:1.15.0"
     
     // Correct Maven coordinates for Sora Editor
-    implementation 'io.github.rosemoe:editor:0.24.4'
-    implementation 'io.github.rosemoe:language-textmate:0.24.4'
+    // Correct Maven coordinates for Sora Editor
+    // Use local Sora Editor project
+    implementation project(':sora-editor')
+    // Remove individual module dependencies if they are included in :sora-editor or if they also need to be local
+    // implementation 'io.github.abc15018045126:language-textmate:0.24.4' 
 
     // Compose
     def composeBom = platform('androidx.compose:compose-bom:2024.12.01')

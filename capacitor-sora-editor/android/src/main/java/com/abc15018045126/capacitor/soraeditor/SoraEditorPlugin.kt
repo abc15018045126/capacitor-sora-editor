@@ -9,8 +9,11 @@ import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
-import io.github.rosemoe.sora.widget.CodeEditor
-import io.github.rosemoe.sora.widget.schemes.EditorColorScheme
+import io.github.abc15018045126.sora.widget.CodeEditor
+import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
+import io.github.abc15018045126.sora.widget.style.builtin.HandleStyleDrop
+import io.github.abc15018045126.sora.widget.style.builtin.HandleStyleSideDrop
+import io.github.abc15018045126.sora.widget.style.builtin.HandleStyleNone
 
 @CapacitorPlugin(name = "SoraEditor")
 class SoraEditorPlugin : Plugin() {
@@ -41,6 +44,17 @@ class SoraEditorPlugin : Plugin() {
                     isWordwrap = wordWrap
                     setEditable(editable)
                     
+                    // Initial setup for new features
+                    setLineSpacing(call.getFloat("lineSpacingExtra") ?: 0f, call.getFloat("lineSpacingMultiplier") ?: 1.0f)
+                    setWrapLineSpacing(call.getFloat("wrapLineSpacingExtra") ?: 0f, call.getFloat("wrapLineSpacingMultiplier") ?: 1.0f)
+                    setHighlightCurrentLine(call.getBoolean("highlightCurrentLine") ?: true)
+                    isDisplayLnPanel = call.getBoolean("showScrollLineInfo") ?: true
+                    
+                    val hPadding = call.getFloat("horizontalPadding") ?: 12f
+                    setDividerMargin(0f, hPadding * dpUnit)
+                    setExtraMarginRight(hPadding * dpUnit)
+                    setLineNumberMarginLeft(hPadding * dpUnit)
+
                     var startX = 0f
                     var startY = 0f
                     var startTime = 0L
@@ -62,7 +76,7 @@ class SoraEditorPlugin : Plugin() {
                         }
                         false // Allow editor to handle the event too
                     }
-                    subscribeEvent(io.github.rosemoe.sora.event.ContentChangeEvent::class.java) { event, _ ->
+                    subscribeEvent(io.github.abc15018045126.sora.event.ContentChangeEvent::class.java) { event, _ ->
                         notifyListeners("onContentChange", JSObject())
                     }
                 }
@@ -99,6 +113,14 @@ class SoraEditorPlugin : Plugin() {
                 } catch (e: Exception) {}
             }
 
+            val searchMatchBgStr = call.getString("searchMatchBackgroundColor")
+            if (searchMatchBgStr != null) {
+                try {
+                    val color = Color.parseColor(searchMatchBgStr)
+                    editor!!.colorScheme.setColor(EditorColorScheme.MATCHED_TEXT_BACKGROUND, color)
+                } catch (e: Exception) {}
+            }
+
             val density = context.resources.displayMetrics.density
             val params = editor!!.layoutParams as FrameLayout.LayoutParams
             params.topMargin = (topMargin * density).toInt()
@@ -118,6 +140,79 @@ class SoraEditorPlugin : Plugin() {
             }
             
             editor!!.setTextSize(fontSize)
+            editor!!.isLineNumberEnabled = showLineNumbers
+            editor!!.isWordwrap = wordWrap
+            editor!!.setEditable(editable)
+            
+            // Re-apply spacing/padding in update
+            editor!!.setLineSpacing(call.getFloat("lineSpacingExtra") ?: 0f, call.getFloat("lineSpacingMultiplier") ?: 1.0f)
+            editor!!.setWrapLineSpacing(call.getFloat("wrapLineSpacingExtra") ?: 0f, call.getFloat("wrapLineSpacingMultiplier") ?: 1.0f)
+            editor!!.setHighlightCurrentLine(call.getBoolean("highlightCurrentLine") ?: true)
+            editor!!.isDisplayLnPanel = call.getBoolean("showScrollLineInfo") ?: true
+            
+            val hPadding = call.getFloat("horizontalPadding") ?: 12f
+            editor!!.setDividerMargin(0f, hPadding * editor!!.dpUnit)
+            editor!!.setExtraMarginRight(hPadding * editor!!.dpUnit)
+            editor!!.setLineNumberMarginLeft(hPadding * editor!!.dpUnit)
+
+            // Handle Font Family
+            val fontFamily = call.getString("fontFamily") ?: "Monospace"
+            when (fontFamily) {
+                "JetBrains Mono" -> editor!!.typefaceText = Typeface.createFromAsset(context.assets, "JetBrainsMono-Regular.ttf")
+                "Ubuntu" -> editor!!.typefaceText = Typeface.createFromAsset(context.assets, "Ubuntu-Regular.ttf")
+                "Roboto" -> editor!!.typefaceText = Typeface.createFromAsset(context.assets, "Roboto-Regular.ttf")
+                else -> editor!!.setTypefaceText(Typeface.MONOSPACE)
+            }
+
+            // Handle Colors
+            val currentLineBg = call.getString("currentLineBackgroundColor")
+            if (currentLineBg != null) {
+                try { editor!!.colorScheme.setColor(EditorColorScheme.CURRENT_LINE, Color.parseColor(currentLineBg)) } catch(e: Exception) {}
+            }
+            
+            val cursorColor = call.getString("cursorColor")
+            if (cursorColor != null) {
+                try { editor!!.colorScheme.setColor(EditorColorScheme.SELECTION_INSERT, Color.parseColor(cursorColor)) } catch(e: Exception) {}
+            }
+            
+            val handleColor = call.getString("handleColor")
+            if (handleColor != null) {
+                try { editor!!.colorScheme.setColor(EditorColorScheme.SELECTION_HANDLE, Color.parseColor(handleColor)) } catch(e: Exception) {}
+            }
+            
+            val scrollbarColor = call.getString("scrollbarColor")
+            if (scrollbarColor != null) {
+                try { 
+                    val sColor = Color.parseColor(scrollbarColor)
+                    editor!!.colorScheme.setColor(EditorColorScheme.SCROLL_BAR_THUMB, sColor)
+                    editor!!.colorScheme.setColor(EditorColorScheme.SCROLL_BAR_THUMB_PRESSED, sColor)
+                } catch(e: Exception) {}
+            }
+
+            val scrollbarStyle = call.getString("scrollbarStyle") ?: "default"
+            if (scrollbarStyle == "rounded") {
+                val sColor = try { Color.parseColor(scrollbarColor ?: "#A0888888") } catch(e: Exception) { 0xFFA0888888.toInt() }
+                val drawable = android.graphics.drawable.GradientDrawable().apply {
+                    shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                    cornerRadius = 100f
+                    setColor(sColor)
+                }
+                editor!!.renderer.setVerticalScrollbarThumbDrawable(drawable)
+                editor!!.renderer.setHorizontalScrollbarThumbDrawable(drawable)
+            } else {
+                editor!!.renderer.setVerticalScrollbarThumbDrawable(null)
+                editor!!.renderer.setHorizontalScrollbarThumbDrawable(null)
+            }
+
+            editor!!.setCursorWidth((call.getFloat("cursorWidth") ?: 2f) * editor!!.dpUnit / 2f)
+
+            val handleStyle = call.getString("handleStyle") ?: "side_drop"
+            editor!!.setSelectionHandleStyle(when (handleStyle) {
+                "drop" -> HandleStyleDrop(context)
+                "none" -> HandleStyleNone()
+                else -> HandleStyleSideDrop(context)
+            })
+
             editor!!.visibility = View.VISIBLE
             editor!!.bringToFront()
             

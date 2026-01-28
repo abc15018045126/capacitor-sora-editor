@@ -45,7 +45,26 @@ data class EditorUiState(
     val tocColor: String = "#FFFFFF",
     val searchColor: String = "#F5F5F5",
     val menuColor: String = "#FFFFFF",
-    val shouldAutoFocus: Boolean = false
+    val searchMatchBackgroundColor: String = "#FFF59D",
+    val shouldAutoFocus: Boolean = false,
+    val lineSpacingMultiplier: Float = 1.0f,
+    val lineSpacingExtra: Float = 0f,
+    val wrapLineSpacingMultiplier: Float = 1.0f,
+    val wrapLineSpacingExtra: Float = 0f,
+    val horizontalPadding: Float = 12f,
+    val highlightCurrentLine: Boolean = true,
+    val currentLineBackgroundColor: String = "#10000000",
+    val cursorColor: String = "#FF000000",
+    val handleColor: String = "#FF000000",
+    val cursorWidth: Float = 2.0f,
+    val handleStyle: String = "side_drop", // "drop", "side_drop", "none"
+    val searchAsRegExp: Boolean = false,
+    val searchWholeWord: Boolean = false,
+    val searchMatchCase: Boolean = false,
+    val fontFamily: String = "Monospace",
+    val scrollbarColor: String = "#A0888888",
+    val showScrollLineInfo: Boolean = true,
+    val scrollbarStyle: String = "default" // "default" or "rounded"
 )
 
 class EditorViewModel : ViewModel() {
@@ -63,6 +82,7 @@ class EditorViewModel : ViewModel() {
     }
 
     fun loadFile(context: Context, filePath: String, autoFocus: Boolean = false) {
+        loadSettings(context)
         viewModelScope.launch {
             try {
                 // Convert URI to actual path if needed
@@ -328,6 +348,96 @@ class EditorViewModel : ViewModel() {
         saveSettings(context)
     }
 
+    fun setSearchMatchBackgroundColor(context: Context, color: String) {
+        _uiState.update { it.copy(searchMatchBackgroundColor = color) }
+        saveSettings(context)
+    }
+
+    fun setLineSpacingMultiplier(context: Context, multiplier: Float) {
+        _uiState.update { it.copy(lineSpacingMultiplier = multiplier) }
+        saveSettings(context)
+    }
+
+    fun setLineSpacingExtra(context: Context, extra: Float) {
+        _uiState.update { it.copy(lineSpacingExtra = extra) }
+        saveSettings(context)
+    }
+
+    fun setHorizontalPadding(context: Context, padding: Float) {
+        _uiState.update { it.copy(horizontalPadding = padding) }
+        saveSettings(context)
+    }
+
+    fun setWrapLineSpacing(context: Context, extra: Float, multiplier: Float) {
+        _uiState.update { it.copy(wrapLineSpacingExtra = extra, wrapLineSpacingMultiplier = multiplier) }
+        saveSettings(context)
+    }
+
+    fun setHighlightCurrentLine(context: Context, enabled: Boolean) {
+        _uiState.update { it.copy(highlightCurrentLine = enabled) }
+        saveSettings(context)
+    }
+
+    fun setCurrentLineBackgroundColor(context: Context, color: String) {
+        _uiState.update { it.copy(currentLineBackgroundColor = color) }
+        saveSettings(context)
+    }
+
+    fun setCursorColor(context: Context, color: String) {
+        _uiState.update { it.copy(cursorColor = color) }
+        saveSettings(context)
+    }
+
+    fun setHandleColor(context: Context, color: String) {
+        _uiState.update { it.copy(handleColor = color) }
+        saveSettings(context)
+    }
+
+    fun setCursorWidth(context: Context, width: Float) {
+        _uiState.update { it.copy(cursorWidth = width) }
+        saveSettings(context)
+    }
+
+    fun setHandleStyle(context: Context, style: String) {
+        _uiState.update { it.copy(handleStyle = style) }
+        saveSettings(context)
+    }
+
+    fun setSearchAsRegExp(context: Context, enabled: Boolean) {
+        _uiState.update { it.copy(searchAsRegExp = enabled) }
+        saveSettings(context)
+    }
+
+    fun setSearchWholeWord(context: Context, enabled: Boolean) {
+        _uiState.update { it.copy(searchWholeWord = enabled) }
+        saveSettings(context)
+    }
+
+    fun setSearchMatchCase(context: Context, enabled: Boolean) {
+        _uiState.update { it.copy(searchMatchCase = enabled) }
+        saveSettings(context)
+    }
+
+    fun setFontFamily(context: Context, fontFamily: String) {
+        _uiState.update { it.copy(fontFamily = fontFamily) }
+        saveSettings(context)
+    }
+
+    fun setScrollbarColor(context: Context, color: String) {
+        _uiState.update { it.copy(scrollbarColor = color) }
+        saveSettings(context)
+    }
+
+    fun setShowScrollLineInfo(context: Context, show: Boolean) {
+        _uiState.update { it.copy(showScrollLineInfo = show) }
+        saveSettings(context)
+    }
+
+    fun setScrollbarStyle(context: Context, style: String) {
+        _uiState.update { it.copy(scrollbarStyle = style) }
+        saveSettings(context)
+    }
+
     fun renameFile(newName: String): Boolean {
         val currentFile = File(_uiState.value.filePath)
         val parent = currentFile.parentFile
@@ -385,7 +495,26 @@ class EditorViewModel : ViewModel() {
             uiColor = "#F5F5F5",
             tocColor = "#FFFFFF",
             searchColor = "#F5F5F5",
-            menuColor = "#FFFFFF"
+            menuColor = "#FFFFFF",
+            searchMatchBackgroundColor = "#FFF59D",
+            lineSpacingMultiplier = 1.0f,
+            lineSpacingExtra = 0f,
+            wrapLineSpacingMultiplier = 1.0f,
+            wrapLineSpacingExtra = 0f,
+            horizontalPadding = 12f,
+            highlightCurrentLine = true,
+            currentLineBackgroundColor = "#10000000",
+            cursorColor = "#FF000000",
+            handleColor = "#FF000000",
+            cursorWidth = 2.0f,
+            handleStyle = "side_drop",
+            searchAsRegExp = false,
+            searchWholeWord = false,
+            searchMatchCase = false,
+            fontFamily = "Monospace",
+            scrollbarColor = "#A0888888",
+            showScrollLineInfo = true,
+            scrollbarStyle = "default"
         ) }
         saveSettings(context)
     }
@@ -414,6 +543,25 @@ class EditorViewModel : ViewModel() {
             put("tocColor", _uiState.value.tocColor)
             put("searchColor", _uiState.value.searchColor)
             put("menuColor", _uiState.value.menuColor)
+            put("searchMatchBackgroundColor", _uiState.value.searchMatchBackgroundColor)
+            put("lineSpacingMultiplier", _uiState.value.lineSpacingMultiplier.toDouble())
+            put("lineSpacingExtra", _uiState.value.lineSpacingExtra.toDouble())
+            put("wrapLineSpacingMultiplier", _uiState.value.wrapLineSpacingMultiplier.toDouble())
+            put("wrapLineSpacingExtra", _uiState.value.wrapLineSpacingExtra.toDouble())
+            put("horizontalPadding", _uiState.value.horizontalPadding.toDouble())
+            put("highlightCurrentLine", _uiState.value.highlightCurrentLine)
+            put("currentLineBackgroundColor", _uiState.value.currentLineBackgroundColor)
+            put("cursorColor", _uiState.value.cursorColor)
+            put("handleColor", _uiState.value.handleColor)
+            put("cursorWidth", _uiState.value.cursorWidth.toDouble())
+            put("handleStyle", _uiState.value.handleStyle)
+            put("searchAsRegExp", _uiState.value.searchAsRegExp)
+            put("searchWholeWord", _uiState.value.searchWholeWord)
+            put("searchMatchCase", _uiState.value.searchMatchCase)
+            put("fontFamily", _uiState.value.fontFamily)
+            put("scrollbarColor", _uiState.value.scrollbarColor)
+            put("showScrollLineInfo", _uiState.value.showScrollLineInfo)
+            put("scrollbarStyle", _uiState.value.scrollbarStyle)
         }
         prefs.edit().putString("settings_json", json.toString()).apply()
     }
@@ -434,7 +582,26 @@ class EditorViewModel : ViewModel() {
                 uiColor = json.optString("uiColor", "#F5F5F5"),
                 tocColor = json.optString("tocColor", "#FFFFFF"),
                 searchColor = json.optString("searchColor", "#F5F5F5"),
-                menuColor = json.optString("menuColor", "#FFFFFF")
+                menuColor = json.optString("menuColor", "#FFFFFF"),
+                searchMatchBackgroundColor = json.optString("searchMatchBackgroundColor", "#FFF59D"),
+                lineSpacingMultiplier = json.optDouble("lineSpacingMultiplier", 1.0).toFloat(),
+                lineSpacingExtra = json.optDouble("lineSpacingExtra", 0.0).toFloat(),
+                wrapLineSpacingMultiplier = json.optDouble("wrapLineSpacingMultiplier", 1.0).toFloat(),
+                wrapLineSpacingExtra = json.optDouble("wrapLineSpacingExtra", 0.0).toFloat(),
+            horizontalPadding = json.optDouble("horizontalPadding", 12.0).toFloat(),
+            highlightCurrentLine = json.optBoolean("highlightCurrentLine", true),
+            currentLineBackgroundColor = json.optString("currentLineBackgroundColor", "#10000000"),
+            cursorColor = json.optString("cursorColor", "#FF000000"),
+            handleColor = json.optString("handleColor", "#FF000000"),
+            cursorWidth = json.optDouble("cursorWidth", 2.0).toFloat(),
+            handleStyle = json.optString("handleStyle", "side_drop"),
+            searchAsRegExp = json.optBoolean("searchAsRegExp", false),
+            searchWholeWord = json.optBoolean("searchWholeWord", false),
+            searchMatchCase = json.optBoolean("searchMatchCase", false),
+            fontFamily = json.optString("fontFamily", "Monospace"),
+            scrollbarColor = json.optString("scrollbarColor", "#A0888888"),
+            showScrollLineInfo = json.optBoolean("showScrollLineInfo", true),
+            scrollbarStyle = json.optString("scrollbarStyle", "default")
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -455,7 +622,26 @@ class EditorViewModel : ViewModel() {
                 uiColor = json.optString("uiColor", _uiState.value.uiColor),
                 tocColor = json.optString("tocColor", _uiState.value.tocColor),
                 searchColor = json.optString("searchColor", _uiState.value.searchColor),
-                menuColor = json.optString("menuColor", _uiState.value.menuColor)
+                menuColor = json.optString("menuColor", _uiState.value.menuColor),
+                searchMatchBackgroundColor = json.optString("searchMatchBackgroundColor", _uiState.value.searchMatchBackgroundColor),
+                lineSpacingMultiplier = json.optDouble("lineSpacingMultiplier", _uiState.value.lineSpacingMultiplier.toDouble()).toFloat(),
+                lineSpacingExtra = json.optDouble("lineSpacingExtra", _uiState.value.lineSpacingExtra.toDouble()).toFloat(),
+                wrapLineSpacingMultiplier = json.optDouble("wrapLineSpacingMultiplier", _uiState.value.wrapLineSpacingMultiplier.toDouble()).toFloat(),
+                wrapLineSpacingExtra = json.optDouble("wrapLineSpacingExtra", _uiState.value.wrapLineSpacingExtra.toDouble()).toFloat(),
+                horizontalPadding = json.optDouble("horizontalPadding", _uiState.value.horizontalPadding.toDouble()).toFloat(),
+                highlightCurrentLine = json.optBoolean("highlightCurrentLine", _uiState.value.highlightCurrentLine),
+                currentLineBackgroundColor = json.optString("currentLineBackgroundColor", _uiState.value.currentLineBackgroundColor),
+                cursorColor = json.optString("cursorColor", _uiState.value.cursorColor),
+                handleColor = json.optString("handleColor", _uiState.value.handleColor),
+                cursorWidth = json.optDouble("cursorWidth", _uiState.value.cursorWidth.toDouble()).toFloat(),
+                handleStyle = json.optString("handleStyle", _uiState.value.handleStyle),
+                searchAsRegExp = json.optBoolean("searchAsRegExp", _uiState.value.searchAsRegExp),
+                searchWholeWord = json.optBoolean("searchWholeWord", _uiState.value.searchWholeWord),
+                searchMatchCase = json.optBoolean("searchMatchCase", _uiState.value.searchMatchCase),
+                fontFamily = json.optString("fontFamily", _uiState.value.fontFamily),
+                scrollbarColor = json.optString("scrollbarColor", _uiState.value.scrollbarColor),
+                showScrollLineInfo = json.optBoolean("showScrollLineInfo", _uiState.value.showScrollLineInfo),
+                scrollbarStyle = json.optString("scrollbarStyle", _uiState.value.scrollbarStyle)
             )
             saveSettings(context)
             true
@@ -477,6 +663,26 @@ class EditorViewModel : ViewModel() {
             put("uiColor", _uiState.value.uiColor)
             put("tocColor", _uiState.value.tocColor)
             put("searchColor", _uiState.value.searchColor)
+            put("menuColor", _uiState.value.menuColor)
+            put("searchMatchBackgroundColor", _uiState.value.searchMatchBackgroundColor)
+            put("lineSpacingMultiplier", _uiState.value.lineSpacingMultiplier.toDouble())
+            put("lineSpacingExtra", _uiState.value.lineSpacingExtra.toDouble())
+            put("wrapLineSpacingMultiplier", _uiState.value.wrapLineSpacingMultiplier.toDouble())
+            put("wrapLineSpacingExtra", _uiState.value.wrapLineSpacingExtra.toDouble())
+            put("horizontalPadding", _uiState.value.horizontalPadding.toDouble())
+            put("highlightCurrentLine", _uiState.value.highlightCurrentLine)
+            put("currentLineBackgroundColor", _uiState.value.currentLineBackgroundColor)
+            put("cursorColor", _uiState.value.cursorColor)
+            put("handleColor", _uiState.value.handleColor)
+            put("cursorWidth", _uiState.value.cursorWidth.toDouble())
+            put("handleStyle", _uiState.value.handleStyle)
+            put("searchAsRegExp", _uiState.value.searchAsRegExp)
+            put("searchWholeWord", _uiState.value.searchWholeWord)
+            put("searchMatchCase", _uiState.value.searchMatchCase)
+            put("fontFamily", _uiState.value.fontFamily)
+            put("scrollbarColor", _uiState.value.scrollbarColor)
+            put("showScrollLineInfo", _uiState.value.showScrollLineInfo)
+            put("scrollbarStyle", _uiState.value.scrollbarStyle)
         } .toString(4)
     }
 }
