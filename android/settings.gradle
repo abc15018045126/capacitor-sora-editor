@@ -4,5 +4,4 @@ project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor
 
 apply from: 'capacitor.settings.gradle'
 
-include ':sora-editor'
-project(':sora-editor').projectDir = new File('../sora-editor-src/editor')
+

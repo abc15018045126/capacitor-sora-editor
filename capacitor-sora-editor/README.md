@@ -2,6 +2,19 @@
 
 A powerful, high-performance code editor plugin for Capacitor 8+, based on the customized **Sora Editor**. It provides both a full-screen Material 3 editor activity and an overlay editor view.
 
+[![npm version](https://img.shields.io/npm/v/capacitor-sora-editor.svg)](https://www.npmjs.com/package/capacitor-sora-editor)
+[![GitHub](https://img.shields.io/github/license/abc15018045126/capacitor-sora-editor)](https://github.com/abc15018045126/capacitor-sora-editor)
+
+## 📦 Installation
+
+```bash
+npm install capacitor-sora-editor
+npx cap sync android
+```
+
+## 🔗 Repository
+[https://github.com/abc15018045126/capacitor-sora-editor](https://github.com/abc15018045126/capacitor-sora-editor)
+
 ## 1. Features
 - **Modern UI**: Full Material 3 design with Jetpack Compose.
 - **Rich Configuration**: Supports font size, line spacing, word wrap, and exhaustive color customization.

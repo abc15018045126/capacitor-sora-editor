@@ -21,12 +21,18 @@ apply plugin: 'kotlin-android'
 apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
 android {
-    namespace "com.abc15018045126.capacitor.soraeditor"
+    namespace "io.github.abc15018045126.sora"
     compileSdk project.ext.compileSdkVersion
 
     defaultConfig {
         minSdk project.ext.minSdkVersion
         targetSdk project.ext.targetSdkVersion
+        
+        externalNativeBuild {
+            cmake {
+                cppFlags ""
+            }
+        }
     }
 
     compileOptions {
@@ -47,7 +53,41 @@ android {
 
     buildFeatures {
         compose true
+        buildConfig true
     }
+
+    sourceSets {
+        main {
+            java.srcDirs = [
+                'src/main/java',
+                'sora-editor/editor/src/main/java',
+                'sora-editor/language-textmate/src/main/java',
+                'sora-editor/oniguruma-native/src/main/java'
+            ]
+            res.srcDirs = [
+                'src/main/res',
+                'sora-editor/editor/src/main/res',
+                'sora-editor/language-textmate/src/main/res',
+                'sora-editor/oniguruma-native/src/main/res'
+            ]
+            assets.srcDirs = [
+                'src/main/assets',
+                'sora-editor/editor/src/main/assets',
+                'sora-editor/language-textmate/src/main/assets',
+                'sora-editor/oniguruma-native/src/main/assets'
+            ]
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("sora-editor/oniguruma-native/src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+    
+    // Required NDK version for Oniguruma-native
+    ndkVersion = "29.0.14206865"
 }
 
 repositories {
@@ -58,15 +98,21 @@ repositories {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation project(':capacitor-android')
+    
+    // Core Android dependencies
     implementation "androidx.appcompat:appcompat:1.7.0"
     implementation "androidx.core:core-ktx:1.15.0"
+    implementation "androidx.annotation:annotation:1.9.1"
+    implementation "androidx.collection:collection:1.4.5"
     
-    // Correct Maven coordinates for Sora Editor
-    // Correct Maven coordinates for Sora Editor
-    // Use local Sora Editor project
-    implementation project(':sora-editor')
-    // Remove individual module dependencies if they are included in :sora-editor or if they also need to be local
-    // implementation 'io.github.abc15018045126:language-textmate:0.24.4' 
+    // Editor dependencies (extracted from sora-editor modules)
+    implementation "com.google.code.gson:gson:2.13.2"
+    implementation "org.snakeyaml:snakeyaml-engine:3.0.1"
+    implementation "org.eclipse.jdt:org.eclipse.jdt.annotation:2.4.100"
+    
+    // Textmate engine components
+    implementation "org.jruby.jcodings:jcodings:1.0.63"
+    implementation "org.jruby.joni:joni:2.2.6"
 
     // Compose
     def composeBom = platform('androidx.compose:compose-bom:2024.12.01')
