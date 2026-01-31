@@ -1,0 +1,14 @@
+node_modules
+dist
+*.tgz
+.DS_Store
+.npmrc
+android/build
+android/.gradle
+android/capacitor-sora-editor/build
+*.iml
+.idea
+local.properties
+.gradle
+build
+android/.cxx
