@@ -346,7 +346,7 @@ class SnippetController(private val editor: CodeEditor) {
                         sb.append(it)
                         first = false
                     } else {
-                        sb.append(editor.lineSeparator.content)
+                        sb.append(editor.lineSeparator.getContent())
                             .append(indentText)
                             .append(it)
                     }
