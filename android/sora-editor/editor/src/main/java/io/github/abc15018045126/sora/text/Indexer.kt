@@ -1,14 +1,11 @@
-
-package io.github.abc15018045126.sora.text;
-
-import androidx.annotation.NonNull;
+package io.github.abc15018045126.sora.text
 
 /**
  * A helper class for ITextContent to transform (line,column) and index
  *
  * @author Rose
  */
-public interface Indexer {
+interface Indexer {
 
     /**
      * Get the index of (line,column)
@@ -17,7 +14,7 @@ public interface Indexer {
      * @param column The column position of index
      * @return Calculated index
      */
-    int getCharIndex(int line, int column);
+    fun getCharIndex(line: Int, column: Int): Int
 
     /**
      * Get the line position of index
@@ -25,7 +22,7 @@ public interface Indexer {
      * @param index The index you want to know its line
      * @return Line position of index
      */
-    int getCharLine(int index);
+    fun getCharLine(index: Int): Int
 
     /**
      * Get the column position of index
@@ -33,7 +30,7 @@ public interface Indexer {
      * @param index The index you want to know its column
      * @return Column position of index
      */
-    int getCharColumn(int index);
+    fun getCharColumn(index: Int): Int
 
     /**
      * Get the CharPosition for the given index
@@ -41,8 +38,7 @@ public interface Indexer {
      * @param index The index you want to get
      * @return The CharPosition object.
      */
-    @NonNull
-    CharPosition getCharPosition(int index);
+    fun getCharPosition(index: Int): CharPosition
 
     /**
      * Get the CharPosition for the given (line,column)
@@ -51,20 +47,17 @@ public interface Indexer {
      * @param column The column position you want to get
      * @return The CharPosition object.
      */
-    @NonNull
-    CharPosition getCharPosition(int line, int column);
+    fun getCharPosition(line: Int, column: Int): CharPosition
 
     /**
      * @param dest Destination of result
      * @see #getCharPosition(int)
      */
-    void getCharPosition(int index, @NonNull CharPosition dest);
+    fun getCharPosition(index: Int, dest: CharPosition)
 
     /**
      * @param dest Destination of result
      * @see #getCharPosition(int, int)
      */
-    void getCharPosition(int line, int column, @NonNull CharPosition dest);
-
+    fun getCharPosition(line: Int, column: Int, dest: CharPosition)
 }
-
