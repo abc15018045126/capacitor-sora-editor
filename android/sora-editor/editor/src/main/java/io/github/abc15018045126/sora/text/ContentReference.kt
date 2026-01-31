@@ -32,12 +32,12 @@ class ContentReference(private val content: Content) : TextReference(content) {
 
     fun getCharPosition(line: Int, column: Int): CharPosition {
         validateAccess()
-        return content.indexer.getCharPosition(line, column)
+        return content.getIndexer().getCharPosition(line, column)
     }
 
     fun getCharPosition(index: Int): CharPosition {
         validateAccess()
-        return content.indexer.getCharPosition(index)
+        return content.getIndexer().getCharPosition(index)
     }
 
     /**
@@ -62,7 +62,7 @@ class ContentReference(private val content: Content) : TextReference(content) {
      */
     fun getLineSeparator(line: Int): String {
         validateAccess()
-        return content.getLineSeparatorUnsafe(line).getContent()
+        return content.getLineSeparatorUnsafe(line).content
     }
 
     /**
@@ -92,10 +92,10 @@ class ContentReference(private val content: Content) : TextReference(content) {
     /**
      * @see Content.getDocumentVersion
      */
-    val documentVersion: Long
+    val documentVersionValue: Long
         get() {
             validateAccess()
-            return content.documentVersion
+            return content.documentVersion.get()
         }
 
     /**
@@ -127,7 +127,8 @@ class ContentReference(private val content: Content) : TextReference(content) {
             var read = 0
             while (read < length && line < lineCount) {
                 val targetLine = content.getLine(line)
-                val separatorLength = targetLine.lineSeparator.getLength()
+                val lineSep = targetLine.lineSeparatorSafe
+                val separatorLength = lineSep.length
                 val columnCount = targetLine.length
                 var toRead = min(columnCount - column, length - read)
                 toRead = max(0, toRead)
@@ -137,7 +138,7 @@ class ContentReference(private val content: Content) : TextReference(content) {
                 column += toRead
                 read += toRead
                 while (read < length && columnCount <= column && column < columnCount + separatorLength) {
-                    chars[offset + read] = targetLine.lineSeparator.getContent()[column - columnCount]
+                    chars[offset + read] = lineSep.content[column - columnCount]
                     read++
                     column++
                 }

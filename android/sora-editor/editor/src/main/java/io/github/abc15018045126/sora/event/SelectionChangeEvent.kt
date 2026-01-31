@@ -18,8 +18,8 @@ class SelectionChangeEvent(
     val cause: Int
 ) : Event(editor) {
 
-    val left: CharPosition = editor.text.cursor.left()
-    val right: CharPosition = editor.text.cursor.right()
+    val left: CharPosition = editor.text.getCursor().left()
+    val right: CharPosition = editor.text.getCursor().right()
 
     /**
      * Checks whether text is selected

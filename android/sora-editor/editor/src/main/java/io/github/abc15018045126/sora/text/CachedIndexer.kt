@@ -133,7 +133,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         var workIndex = start.index
         //Move the column to the line end
         run {
-            val addition = max(content.getLineSeparatorUnsafe(workLine).getLength() - 1, 0)
+            val addition = max(content.getLineSeparatorUnsafe(workLine).length - 1, 0)
             val column = content.getColumnCountUnsafe(workLine) + addition
             workIndex += column - workColumn
             workColumn = column
@@ -141,7 +141,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         while (workIndex < index) {
             workLine++
             val line = content.getLineUnsafe(workLine)
-            val addition = max(line.lineSeparator.getLength() - 1, 0)
+            val addition = max(line.lineSeparatorSafe.length - 1, 0)
             workColumn = line.length + addition
             workIndex += workColumn + 1
         }
@@ -172,7 +172,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
             workLine--
             if (workLine != -1) {
                 val line = content.getLineUnsafe(workLine)
-                val addition = max(line.lineSeparator.getLength() - 1, 0)
+                val addition = max(line.lineSeparatorSafe.length - 1, 0)
                 workColumn = line.length + addition
             } else {
                 // Reached the start of text,we have to use findIndexForward() as this method can not handle it
@@ -210,7 +210,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         }
         while (workLine < line) {
             val lineObj = content.getLineUnsafe(workLine)
-            workIndex += lineObj.length + lineObj.lineSeparator.getLength()
+            workIndex += lineObj.length + lineObj.lineSeparatorSafe.length
             workLine++
         }
         dest.column = 0
@@ -239,7 +239,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         }
         while (workLine > line) {
             val lineObj = content.getLineUnsafe(workLine - 1)
-            workIndex -= lineObj.length + lineObj.lineSeparator.getLength()
+            workIndex -= lineObj.length + lineObj.lineSeparatorSafe.length
             workLine--
         }
         dest.column = 0
