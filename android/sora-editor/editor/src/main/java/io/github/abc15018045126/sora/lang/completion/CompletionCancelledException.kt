@@ -1,5 +1,4 @@
-
-package io.github.abc15018045126.sora.lang.completion;
+package io.github.abc15018045126.sora.lang.completion
 
 /**
  * Thrown when the thread is abandoned by the editor framework because the editor do not need its
@@ -10,13 +9,6 @@ package io.github.abc15018045126.sora.lang.completion;
  *
  * @author abc15018045126
  */
-public class CompletionCancelledException extends RuntimeException {
-
-    public CompletionCancelledException() {
-    }
-
-    public CompletionCancelledException(String message) {
-        super(message);
-    }
-}
-
+class CompletionCancelledException @JvmOverloads constructor(
+    message: String? = null
+) : RuntimeException(message)
