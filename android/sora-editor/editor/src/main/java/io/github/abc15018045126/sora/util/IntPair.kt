@@ -1,5 +1,4 @@
-
-package io.github.abc15018045126.sora.util;
+package io.github.abc15018045126.sora.util
 
 /**
  * Pack two int numbers into a long number, and unpack it.
@@ -8,13 +7,13 @@ package io.github.abc15018045126.sora.util;
  *
  * @author abc15018045126
  */
-public class IntPair {
+object IntPair {
 
     /**
      * Convert an integer to a long whose binary bits are equal to the given integer
      */
-    private static long toUnsignedLong(int x) {
-        return ((long) x) & 0xffffffffL;
+    private fun toUnsignedLong(x: Int): Long {
+        return x.toLong() and 0xffffffffL
     }
 
     /**
@@ -24,8 +23,9 @@ public class IntPair {
      * @param second Second of pair
      * @return Packed value
      */
-    public static long pack(int first, int second) {
-        return (toUnsignedLong(first) << 32L) | toUnsignedLong(second);
+    @JvmStatic
+    fun pack(first: Int, second: Int): Long {
+        return (toUnsignedLong(first) shl 32) or toUnsignedLong(second)
     }
 
     /**
@@ -34,8 +34,9 @@ public class IntPair {
      * @param packedValue Packed value
      * @return Second of pair
      */
-    public static int getSecond(long packedValue) {
-        return (int) (packedValue & 0xFFFFFFFFL);
+    @JvmStatic
+    fun getSecond(packedValue: Long): Int {
+        return (packedValue and 0xFFFFFFFFL).toInt()
     }
 
     /**
@@ -44,8 +45,9 @@ public class IntPair {
      * @param packedValue Packed value
      * @return First of pair
      */
-    public static int getFirst(long packedValue) {
-        return (int) (packedValue >> 32L);
+    @JvmStatic
+    fun getFirst(packedValue: Long): Int {
+        return (packedValue ushr 32).toInt()
     }
 
     /**
@@ -55,8 +57,9 @@ public class IntPair {
      * @param second Second of pair (float)
      * @return Packed value
      */
-    public static long packIntFloat(int first, float second) {
-        return pack(first, Float.floatToRawIntBits(second));
+    @JvmStatic
+    fun packIntFloat(first: Int, second: Float): Long {
+        return pack(first, java.lang.Float.floatToRawIntBits(second))
     }
 
     /**
@@ -66,9 +69,8 @@ public class IntPair {
      * @return Second of pair
      * @see #packIntFloat(int, float)
      */
-    public static float getSecondAsFloat(long packedValue) {
-        return Float.intBitsToFloat(getSecond(packedValue));
+    @JvmStatic
+    fun getSecondAsFloat(packedValue: Long): Float {
+        return java.lang.Float.intBitsToFloat(getSecond(packedValue))
     }
-
 }
-

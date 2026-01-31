@@ -1,14 +1,9 @@
+package io.github.abc15018045126.sora.lang.completion
 
-package io.github.abc15018045126.sora.lang.completion;
-
-import android.graphics.drawable.Drawable;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import io.github.abc15018045126.sora.text.CharPosition;
-import io.github.abc15018045126.sora.text.Content;
-import io.github.abc15018045126.sora.widget.CodeEditor;
+import android.graphics.drawable.Drawable
+import io.github.abc15018045126.sora.text.CharPosition
+import io.github.abc15018045126.sora.text.Content
+import io.github.abc15018045126.sora.widget.CodeEditor
 
 /**
  * The class used to save auto complete result items.
@@ -22,88 +17,86 @@ import io.github.abc15018045126.sora.widget.CodeEditor;
  * @author abc15018045126
  * @see SimpleCompletionItem
  */
-@SuppressWarnings("CanBeFinal")
-public abstract class CompletionItem {
+abstract class CompletionItem {
 
     /**
      * Icon for displaying in adapter
      */
-    @Nullable
-    public Drawable icon;
+    @JvmField
+    var icon: Drawable? = null
 
     /**
      * Text to display as title in adapter
      */
-    public CharSequence label;
+    @JvmField
+    var label: CharSequence? = null
 
     /**
      * Text to display as description in adapter
      */
-    public CharSequence desc;
+    @JvmField
+    var desc: CharSequence? = null
 
     /**
      * The kind of this completion item. Based on the kind
      * an icon is chosen by the editor.
      */
-    @Nullable
-    public CompletionItemKind kind;
+    @JvmField
+    var kind: CompletionItemKind? = null
 
     /**
      * Use for default sort
      */
-    public int prefixLength = 0;
+    @JvmField
+    var prefixLength: Int = 0
 
     /**
      * A string that should be used when comparing this item
      * with other items. When null the {@link #label label}
      * is used.
      */
-    @Nullable
-    public String sortText;
+    @JvmField
+    var sortText: String? = null
 
     /**
      * A string that should be used when comparing this item
      * with other items. When null the {@link #sortText sortText}
      * is used.
      */
-    @Nullable
-    public String filterText;
+    @JvmField
+    var filterText: String? = null
 
-    @Nullable
-    protected Object extra;
+    @JvmField
+    var extra: Any? = null
 
-    public CompletionItem(CharSequence label) {
-        this(label, null);
+    constructor(label: CharSequence) : this(label, null)
+
+    constructor(label: CharSequence, desc: CharSequence?) : this(label, desc, null)
+
+    constructor(label: CharSequence, desc: CharSequence?, icon: Drawable?) {
+        this.label = label
+        this.desc = desc
+        this.icon = icon
     }
 
-    public CompletionItem(CharSequence label, CharSequence desc) {
-        this(label, desc, null);
+    open fun label(label: CharSequence): CompletionItem {
+        this.label = label
+        return this
     }
 
-    public CompletionItem(CharSequence label, CharSequence desc, Drawable icon) {
-        this.label = label;
-        this.desc = desc;
-        this.icon = icon;
+    open fun desc(desc: CharSequence): CompletionItem {
+        this.desc = desc
+        return this
     }
 
-    public CompletionItem label(CharSequence label) {
-        this.label = label;
-        return this;
+    open fun kind(kind: CompletionItemKind): CompletionItem {
+        this.kind = kind
+        return this
     }
 
-    public CompletionItem desc(CharSequence desc) {
-        this.desc = desc;
-        return this;
-    }
-
-    public CompletionItem kind(CompletionItemKind kind) {
-        this.kind = kind;
-        return this;
-    }
-
-    public CompletionItem icon(Drawable icon) {
-        this.icon = icon;
-        return this;
+    open fun icon(icon: Drawable): CompletionItem {
+        this.icon = icon
+        return this
     }
 
     /**
@@ -117,8 +110,8 @@ public abstract class CompletionItem {
      * @param text     The text in editor. You can make modifications to it.
      * @param position The requested completion position (the one passed to completion thread)
      */
-    public void performCompletion(@NonNull CodeEditor editor, @NonNull Content text, @NonNull CharPosition position) {
-        performCompletion(editor, text, position.line, position.column);
+    open fun performCompletion(editor: CodeEditor, text: Content, position: CharPosition) {
+        performCompletion(editor, text, position.line, position.column)
     }
 
     /**
@@ -134,8 +127,5 @@ public abstract class CompletionItem {
      * @param column The auto-completion column
      * @see #performCompletion(CodeEditor, Content, CharPosition) Editor calls this method to do completion
      */
-    public abstract void performCompletion(@NonNull CodeEditor editor, @NonNull Content text, int line, int column);
-
+    abstract fun performCompletion(editor: CodeEditor, text: Content, line: Int, column: Int)
 }
-
-
