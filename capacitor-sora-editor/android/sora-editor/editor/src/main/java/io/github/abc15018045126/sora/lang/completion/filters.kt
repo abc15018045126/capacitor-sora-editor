@@ -191,7 +191,7 @@ fun isSeparatorAtPos(value: String, index: Int): Boolean {
     if (index < 0 || index >= value.length) {
         return false
     }
-    return when (val code = value.codePointAt(index)) {
+    return when (val code = java.lang.Character.codePointAt(value, index)) {
         CharCode.Underline,
         CharCode.Dash,
         CharCode.Period,
@@ -221,7 +221,7 @@ fun isWhitespaceAtPos(value: String, index: Int): Boolean {
         return false
     }
 
-    return when (value[index].code) {
+    return when (val code = value[index].code) {
         CharCode.Space,
         CharCode.Tab -> true
 
