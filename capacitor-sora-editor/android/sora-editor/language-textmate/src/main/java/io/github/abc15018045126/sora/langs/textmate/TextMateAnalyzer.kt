@@ -44,7 +44,7 @@ class TextMateAnalyzer(
     private val themeRegistry: ThemeRegistry
 ) : AsyncIncrementalAnalyzeManager<MyState?, Span?>(), FoldingHelper, ThemeRegistry.ThemeChangeListener {
 
-    private var theme: Theme = themeRegistry.getCurrentThemeModel().theme
+    private var theme: Theme = themeRegistry.currentThemeModel.theme!!
     private val configuration: LanguageConfiguration? = languageConfiguration
     private var cachedRegExp: OnigRegExp? = null
     private var foldingOffside = false
@@ -263,6 +263,6 @@ class TextMateAnalyzer(
     }
 
     override fun onChangeTheme(newTheme: ThemeModel) {
-        this.theme = newTheme.theme
+        this.theme = newTheme.theme!!
     }
 }

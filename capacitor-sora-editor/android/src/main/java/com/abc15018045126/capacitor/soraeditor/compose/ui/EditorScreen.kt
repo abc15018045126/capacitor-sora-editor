@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,6 +36,10 @@ import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
 import io.github.abc15018045126.sora.widget.style.builtin.HandleStyleDrop
 import io.github.abc15018045126.sora.widget.style.builtin.HandleStyleSideDrop
 import io.github.abc15018045126.sora.widget.style.builtin.HandleStyleNone
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalLifecycleOwner as ComposeLifecycleOwner
 
 class EditorControl {
     private var editor: CodeEditor? = null
@@ -46,7 +51,7 @@ class EditorControl {
     fun jumpTo(pos: Int) {
         if (editor == null) return 
         editor?.let {
-            if (androidx.core.view.ViewCompat.isLaidOut(it)) {
+            if (it.isLaidOut) {
                 performJump(it, pos)
             } else {
                 it.addOnLayoutChangeListener(object : View.OnLayoutChangeListener {
@@ -141,7 +146,7 @@ class EditorControl {
 
     fun replace(text: String) {
         try {
-            editor?.searcher?.replaceThis(text)
+            editor?.searcher?.replaceCurrentMatch(text)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -216,11 +221,40 @@ fun SoraEditorView(
     
     // Flag to prevent update loop when setting text programmatically
     val isSettingTextProgrammatically = remember { mutableStateOf(false) }
-    
+    var lastAppliedFontFamily by remember { mutableStateOf("") }
+    var lastAppliedHandleStyle by remember { mutableStateOf("") }
+    var lastAppliedTextSize by remember { mutableStateOf(-1f) }
+    var lastAppliedCursorWidth by remember { mutableStateOf(-1f) }
+    var lastAppliedLineNumbers by remember { mutableStateOf<Boolean?>(null) }
+    var lastAppliedWordWrap by remember { mutableStateOf<Boolean?>(null) }
+    var lastAppliedEditable by remember { mutableStateOf<Boolean?>(null) }
+    var lastAppliedHighlightCurrentLine by remember { mutableStateOf<Boolean?>(null) }
+    var lastAppliedShowScrollLineInfo by remember { mutableStateOf<Boolean?>(null) }
+
     // Ensure we always have the latest callbacks even if factory is not re-run
     val currentOnTap by rememberUpdatedState(onTap)
     val currentOnContentChange by rememberUpdatedState(onContentChange)
     val currentOnSelectionChange by rememberUpdatedState(onSelectionChange)
+
+    // Use LifecycleEffect to sync text back to ViewModel when app is paused
+    // This fixed auto-save on exit while keeping ContentChangeEvent disabled (avoiding flicker)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var editorInstanceForSync by remember { mutableStateOf<CodeEditor?>(null) }
+    
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE) {
+                editorInstanceForSync?.let { view ->
+                    val currentText = view.text.toString()
+                    currentOnContentChange(currentText)
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
     
     LaunchedEffect(editorInstance, control) {
         editorInstance?.let { control?.attach(it) }
@@ -392,42 +426,68 @@ fun SoraEditorView(
                 } catch (e: Exception) {}
                 
                 editorInstance = this
+                editorInstanceForSync = this
                 control?.attach(this)
                 
                 // Auto-focus if requested (for new notes)
                 if (autoFocus) {
                     postDelayed({
                         requestFocus()
-                        // Show keyboard with SHOW_FORCED to ensure it appears
+                        // Show keyboard using input method manager
                         val imm = context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
-                        imm?.showSoftInput(this, android.view.inputmethod.InputMethodManager.SHOW_FORCED)
+                        imm?.showSoftInput(this, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
                     }, 200) // Delay to ensure view is fully laid out
                 }
             }
         },
         update = { view ->
-            view.setTextSize(fontSize)
-            view.isLineNumberEnabled = showLineNumbers
-            // Only update wordwrap if it actually changed to avoid layout recalculation flicker
-            if (view.isWordwrap != wordWrap) {
-                view.isWordwrap = wordWrap
+            if (lastAppliedTextSize != fontSize) {
+                view.setTextSize(fontSize)
+                lastAppliedTextSize = fontSize
             }
-            view.setEditable(editable)
-            view.setHighlightCurrentLine(highlightCurrentLine)
-            view.setCursorWidth(cursorWidth * view.dpUnit / 2f)
-            view.isDisplayLnPanel = showScrollLineInfo
+            if (lastAppliedLineNumbers != showLineNumbers) {
+                view.isLineNumberEnabled = showLineNumbers
+                lastAppliedLineNumbers = showLineNumbers
+            }
+            if (lastAppliedWordWrap != wordWrap) {
+                view.isWordwrap = wordWrap
+                lastAppliedWordWrap = wordWrap
+            }
+            if (lastAppliedEditable != editable) {
+                view.setEditable(editable)
+                lastAppliedEditable = editable
+            }
+            if (lastAppliedHighlightCurrentLine != highlightCurrentLine) {
+                view.setHighlightCurrentLine(highlightCurrentLine)
+                lastAppliedHighlightCurrentLine = highlightCurrentLine
+            }
+            val targetCursorWidth = cursorWidth * view.dpUnit / 2f
+            if (lastAppliedCursorWidth != targetCursorWidth) {
+                view.setCursorWidth(targetCursorWidth)
+                lastAppliedCursorWidth = targetCursorWidth
+            }
+            if (lastAppliedShowScrollLineInfo != showScrollLineInfo) {
+                view.isDisplayLnPanel = showScrollLineInfo
+                lastAppliedShowScrollLineInfo = showScrollLineInfo
+            }
             
             // Update font family
-            when (fontFamily) {
-                "JetBrains Mono" -> view.typefaceText = Typeface.createFromAsset(view.context.assets, "JetBrainsMono-Regular.ttf")
-                "Ubuntu" -> view.typefaceText = Typeface.createFromAsset(view.context.assets, "Ubuntu-Regular.ttf")
-                "Roboto" -> view.typefaceText = Typeface.createFromAsset(view.context.assets, "Roboto-Regular.ttf")
-                else -> view.setTypefaceText(Typeface.MONOSPACE)
+            if (lastAppliedFontFamily != fontFamily) {
+                val assets = view.context.assets
+                when (fontFamily) {
+                    "JetBrains Mono" -> view.typefaceText = Typeface.createFromAsset(assets, "JetBrainsMono-Regular.ttf")
+                    "Ubuntu" -> view.typefaceText = Typeface.createFromAsset(assets, "Ubuntu-Regular.ttf")
+                    "Roboto" -> view.typefaceText = Typeface.createFromAsset(assets, "Roboto-Regular.ttf")
+                    else -> view.setTypefaceText(Typeface.MONOSPACE)
+                }
+                lastAppliedFontFamily = fontFamily
             }
 
             // Only update text if it strictly differs.
             if (view.text.toString() != content) {
+                isSettingTextProgrammatically.value = true
                 view.setText(content)
+                isSettingTextProgrammatically.value = false
             }
             
             // REMOVED: These methods trigger expensive layout recalculation on every update
@@ -440,61 +500,60 @@ fun SoraEditorView(
 
             try {
                 val sColor = android.graphics.Color.parseColor(scrollbarColor)
-                view.colorScheme.setColor(EditorColorScheme.SCROLL_BAR_THUMB, sColor)
-                view.colorScheme.setColor(EditorColorScheme.SCROLL_BAR_THUMB_PRESSED, sColor)
+                if (view.colorScheme.getColor(EditorColorScheme.SCROLL_BAR_THUMB) != sColor) {
+                    view.colorScheme.setColor(EditorColorScheme.SCROLL_BAR_THUMB, sColor)
+                    view.colorScheme.setColor(EditorColorScheme.SCROLL_BAR_THUMB_PRESSED, sColor)
+                }
             } catch (e: Exception) {}
             
             try {
                 val color = android.graphics.Color.parseColor(backgroundColor)
-                val r = android.graphics.Color.red(color)
-                val g = android.graphics.Color.green(color)
-                val b = android.graphics.Color.blue(color)
-                val luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
-                
-                view.colorScheme.setColor(EditorColorScheme.WHOLE_BACKGROUND, color)
-                view.colorScheme.setColor(EditorColorScheme.LINE_NUMBER_BACKGROUND, color)
-                
-                if (luminance < 0.5) {
-                    view.colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, android.graphics.Color.WHITE)
-                    view.colorScheme.setColor(EditorColorScheme.LINE_NUMBER, android.graphics.Color.GRAY)
-                } else {
-                    view.colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, android.graphics.Color.BLACK)
-                    view.colorScheme.setColor(EditorColorScheme.LINE_NUMBER, android.graphics.Color.DKGRAY)
+                if (view.colorScheme.getColor(EditorColorScheme.WHOLE_BACKGROUND) != color) {
+                    val r = android.graphics.Color.red(color)
+                    val g = android.graphics.Color.green(color)
+                    val b = android.graphics.Color.blue(color)
+                    val luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
+                    
+                    view.colorScheme.setColor(EditorColorScheme.WHOLE_BACKGROUND, color)
+                    view.colorScheme.setColor(EditorColorScheme.LINE_NUMBER_BACKGROUND, color)
+                    
+                    if (luminance < 0.5) {
+                        view.colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, android.graphics.Color.WHITE)
+                        view.colorScheme.setColor(EditorColorScheme.LINE_NUMBER, android.graphics.Color.GRAY)
+                    } else {
+                        view.colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, android.graphics.Color.BLACK)
+                        view.colorScheme.setColor(EditorColorScheme.LINE_NUMBER, android.graphics.Color.DKGRAY)
+                    }
                 }
 
-                try {
-                    val searchMatchColor = android.graphics.Color.parseColor(searchMatchBackgroundColor)
+                val searchMatchColor = try { android.graphics.Color.parseColor(searchMatchBackgroundColor) } catch (e: Exception) { 0xffffff00.toInt() }
+                if (view.colorScheme.getColor(EditorColorScheme.MATCHED_TEXT_BACKGROUND) != searchMatchColor) {
                     view.colorScheme.setColor(EditorColorScheme.MATCHED_TEXT_BACKGROUND, searchMatchColor)
-                } catch (e: Exception) {
-                    view.colorScheme.setColor(EditorColorScheme.MATCHED_TEXT_BACKGROUND, 0xffffff00.toInt())
                 }
 
-                try {
-                    val currentLineColor = android.graphics.Color.parseColor(currentLineBackgroundColor)
+                val currentLineColor = try { android.graphics.Color.parseColor(currentLineBackgroundColor) } catch (e: Exception) { 0x10000000 }
+                if (view.colorScheme.getColor(EditorColorScheme.CURRENT_LINE) != currentLineColor) {
                     view.colorScheme.setColor(EditorColorScheme.CURRENT_LINE, currentLineColor)
-                } catch (e: Exception) {
-                    view.colorScheme.setColor(EditorColorScheme.CURRENT_LINE, 0x10000000)
                 }
 
-                try {
-                    val cColor = android.graphics.Color.parseColor(cursorColor)
+                val cColor = try { android.graphics.Color.parseColor(cursorColor) } catch (e: Exception) { 0xFF000000.toInt() }
+                if (view.colorScheme.getColor(EditorColorScheme.SELECTION_INSERT) != cColor) {
                     view.colorScheme.setColor(EditorColorScheme.SELECTION_INSERT, cColor)
-                } catch (e: Exception) {
-                    view.colorScheme.setColor(EditorColorScheme.SELECTION_INSERT, 0xFF000000.toInt())
                 }
 
-                try {
-                    val hColor = android.graphics.Color.parseColor(handleColor)
+                val hColor = try { android.graphics.Color.parseColor(handleColor) } catch (e: Exception) { 0xFF000000.toInt() }
+                if (view.colorScheme.getColor(EditorColorScheme.SELECTION_HANDLE) != hColor) {
                     view.colorScheme.setColor(EditorColorScheme.SELECTION_HANDLE, hColor)
-                } catch (e: Exception) {
-                    view.colorScheme.setColor(EditorColorScheme.SELECTION_HANDLE, 0xFF000000.toInt())
                 }
 
-                view.setSelectionHandleStyle(when (handleStyle) {
-                    "drop" -> HandleStyleDrop(view.context)
-                    "none" -> HandleStyleNone()
-                    else -> HandleStyleSideDrop(view.context)
-                })
+                if (lastAppliedHandleStyle != handleStyle) {
+                    view.setSelectionHandleStyle(when (handleStyle) {
+                        "drop" -> HandleStyleDrop(view.context)
+                        "none" -> HandleStyleNone()
+                        else -> HandleStyleSideDrop(view.context)
+                    })
+                    lastAppliedHandleStyle = handleStyle
+                }
 
                 if (scrollbarStyle == "rounded") {
                     val sColor = try { android.graphics.Color.parseColor(scrollbarColor) } catch(e: Exception) { 0xFFA0888888.toInt() }
@@ -586,10 +645,10 @@ fun EditorScreen(
                             Icon(Icons.Default.Save, "保存")
                         }
                         IconButton(onClick = { editorControl.undo() }, enabled = editorControl.canUndo()) {
-                            Icon(Icons.Default.Undo, "撤销")
+                            Icon(Icons.AutoMirrored.Filled.Undo, "撤销")
                         }
                         IconButton(onClick = { editorControl.redo() }, enabled = editorControl.canRedo()) {
-                            Icon(Icons.Default.Redo, "反撤销")
+                            Icon(Icons.AutoMirrored.Filled.Redo, "反撤销")
                         }
                         IconButton(onClick = { showMoreMenu = true }) {
                             Icon(Icons.Default.MoreVert, "More")
@@ -603,7 +662,7 @@ fun EditorScreen(
                             DropdownMenuItem(
                                 text = { Text("返回") },
                                 onClick = { showMoreMenu = false; handleBack() },
-                                leadingIcon = { Icon(Icons.Default.ArrowBack, null) }
+                                leadingIcon = { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
                             )
                             DropdownMenuItem(
                                 text = { Text("搜索") },
@@ -1069,7 +1128,7 @@ fun EditorSettingsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("编辑器设置") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } }
             )
         }
     ) { padding ->

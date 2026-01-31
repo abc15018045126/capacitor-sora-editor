@@ -51,7 +51,7 @@ class TextMateLanguage protected constructor(
     @Deprecated("Use ThemeRegistry.setTheme")
     @Throws(Exception::class)
     fun updateTheme(theme: IThemeSource?) {
-        themeRegistry.loadTheme(theme)
+        theme?.let { themeRegistry.loadTheme(it) }
     }
 
     private fun createAnalyzerAndNewlineHandler(grammar: IGrammar, languageConfiguration: LanguageConfiguration?) {
@@ -137,11 +137,14 @@ class TextMateLanguage protected constructor(
             val registry = GrammarRegistry.getInstance()
             val grammar = registry.loadGrammar(definition)
             if (languageConfiguration != null) {
-                registry.languageConfigurationToGrammar(LanguageConfiguration.load(languageConfiguration), grammar)
+                val config = LanguageConfiguration.load(languageConfiguration)
+                if (config != null) {
+                    registry.languageConfigurationToGrammar(config, grammar)
+                }
             }
             val tRegistry = ThemeRegistry.getInstance()
             try {
-                tRegistry.loadTheme(themeSource)
+                themeSource?.let { tRegistry.loadTheme(it) }
             } catch (e: Exception) {
                 e.printStackTrace()
             }

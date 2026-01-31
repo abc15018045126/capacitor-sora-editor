@@ -31,10 +31,10 @@ class TextMateColorScheme(
     fun setTheme(themeModel: ThemeModel) {
         currentTheme = themeModel
         super.colors.clear()
-        this.rawTheme = themeModel.getRawTheme()
-        this.theme = themeModel.getTheme()
+        this.rawTheme = themeModel.rawTheme
+        this.theme = themeModel.theme
         @Suppress("DEPRECATION")
-        this.themeSource = themeModel.getThemeSource()
+        this.themeSource = themeModel.themeSource
         applyDefault()
     }
 
@@ -287,7 +287,7 @@ class TextMateColorScheme(
 
         @JvmStatic
         fun create(themeRegistry: ThemeRegistry): TextMateColorScheme {
-            return create(themeRegistry, themeRegistry.getCurrentThemeModel())
+            return create(themeRegistry, themeRegistry.currentThemeModel)
         }
 
         @JvmStatic
