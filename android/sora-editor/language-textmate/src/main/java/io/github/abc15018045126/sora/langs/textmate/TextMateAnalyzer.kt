@@ -155,7 +155,7 @@ class TextMateAnalyzer(
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        managedStyles.setIndentCountMode(true)
+        managedStyles.isIndentCountMode = true
     }
 
     @SuppressLint("NewApi")
@@ -205,7 +205,7 @@ class TextMateAnalyzer(
                 ).toLong()
             )
 
-            span.setExtra(tokenType)
+            span.extra = tokenType
 
             if ((fontStyle and FontStyle.Underline) != 0) {
                 val color = theme.getColor(foreground)
