@@ -237,7 +237,8 @@ class EventManager @JvmOverloads constructor(private val parent: EventManager? =
         return res!!
     }
 
-    private synchronized fun recycleBuffer(array: Array<out EventReceiver<*>>?) {
+    @Synchronized
+    private fun recycleBuffer(array: Array<out EventReceiver<*>>?) {
         if (array == null) {
             return
         }
