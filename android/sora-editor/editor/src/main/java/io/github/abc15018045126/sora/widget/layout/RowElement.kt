@@ -1,48 +1,52 @@
+package io.github.abc15018045126.sora.widget.layout
 
-package io.github.abc15018045126.sora.widget.layout;
-
-import io.github.abc15018045126.sora.lang.styling.inlayHint.InlayHint;
+import io.github.abc15018045126.sora.lang.styling.inlayHint.InlayHint
 
 /**
  * Element on a row
  *
  * @author abc15018045126
  */
-public class RowElement {
-
+class RowElement {
     /**
      * Type of element.
      *
      * @see RowElementTypes
      */
-    public int type;
+    @JvmField
+    var type: Int = 0
 
     /* Fields for type TEXT */
 
     /**
      * Start column of text
      */
-    public int startColumn;
+    @JvmField
+    var startColumn: Int = 0
+
     /**
      * End column of text
      */
-    public int endColumn;
+    @JvmField
+    var endColumn: Int = 0
+
     /**
      * Direction of the text run
      */
-    public boolean isRtlText;
+    @JvmField
+    var isRtlText: Boolean = false
 
     /* Fields for type INLAY_HINT */
 
     /**
      * The inlay hint
      */
-    public InlayHint inlayHint;
+    @JvmField
+    var inlayHint: InlayHint? = null
 
     /**
      * The expected column position to display after
      */
-    public int displayColumnPosition;
-
+    @JvmField
+    var displayColumnPosition: Int = 0
 }
-

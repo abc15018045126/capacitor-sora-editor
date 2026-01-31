@@ -1,9 +1,6 @@
+package io.github.abc15018045126.sora.widget.layout
 
-package io.github.abc15018045126.sora.widget.layout;
-
-import androidx.annotation.NonNull;
-
-import java.util.NoSuchElementException;
+import java.util.NoSuchElementException
 
 /**
  * Row iterator.
@@ -12,34 +9,30 @@ import java.util.NoSuchElementException;
  *
  * @author Rose
  */
-public interface RowIterator {
-
+interface RowIterator {
     /**
      * Return next Row object
-     * <p>
+     *
      * The result should not be stored, because implementing classes will always return the same
      * object due to performance
      *
      * @return Row object contains the information about a row
      * @throws NoSuchElementException If no more row available
      */
-    @NonNull
-    Row next();
+    fun next(): Row
 
     /**
      * Whether there is more Row object
      *
      * @return Whether more row available
      */
-    boolean hasNext();
+    fun hasNext(): Boolean
 
     /**
      * Reset the position to its original position.
-     * <p>
+     *
      * This can be useful when the elements should be iterated for
      * several times.
      */
-    void reset();
-
+    fun reset()
 }
-

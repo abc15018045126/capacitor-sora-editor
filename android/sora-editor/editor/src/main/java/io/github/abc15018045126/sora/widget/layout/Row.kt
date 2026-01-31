@@ -1,9 +1,6 @@
+package io.github.abc15018045126.sora.widget.layout
 
-package io.github.abc15018045126.sora.widget.layout;
-
-import java.util.List;
-
-import io.github.abc15018045126.sora.lang.styling.inlayHint.InlayHint;
+import io.github.abc15018045126.sora.lang.styling.inlayHint.InlayHint
 
 /**
  * This class represents a 'row' in editor.
@@ -11,45 +8,50 @@ import io.github.abc15018045126.sora.lang.styling.inlayHint.InlayHint;
  *
  * @author abc15018045126
  */
-public class Row {
-
+class Row {
     /**
      * The index in lines
      * But not row index
      */
-    public int lineIndex;
+    @JvmField
+    var lineIndex: Int = 0
 
     /**
      * Whether this row is the first one of a line.
      * Editor will draw line number to left of this row to indicate this
      */
-    public boolean isLeadingRow;
+    @JvmField
+    var isLeadingRow: Boolean = false
 
     /**
      * Whether this row is the last one of a line.
      * Editor will draw soft-wrap or line-break indicator according to this
      */
-    public boolean isTrailingRow;
+    @JvmField
+    var isTrailingRow: Boolean = false
 
     /**
      * Start index in target line
      */
-    public int startColumn;
+    @JvmField
+    var startColumn: Int = 0
 
     /**
      * End index in target line
      */
-    public int endColumn;
+    @JvmField
+    var endColumn: Int = 0
 
     /**
      * Inlay hints on the row
      */
-    public List<InlayHint> inlayHints;
+    @JvmField
+    @JvmSuppressWildcards
+    var inlayHints: List<InlayHint> = emptyList()
 
     /**
      * Extra translation when rendering
      */
-    public float renderTranslateX;
-
+    @JvmField
+    var renderTranslateX: Float = 0f
 }
-
