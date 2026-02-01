@@ -86,14 +86,14 @@ open class EditorDiagnosticTooltipWindow(editor: CodeEditor) : EditorPopupWindow
             }
         }
 
-    override fun isEnabled() = eventManager.isEnabled
-
-    override fun setEnabled(enabled: Boolean) {
-        eventManager.isEnabled = enabled
-        if (!enabled) {
-            dismiss()
+    override var isEnabled: Boolean
+        get() = eventManager.isEnabled
+        set(value) {
+            eventManager.isEnabled = value
+            if (!value) {
+                dismiss()
+            }
         }
-    }
 
     init {
         layout = layoutImpl
@@ -174,10 +174,9 @@ open class EditorDiagnosticTooltipWindow(editor: CodeEditor) : EditorPopupWindow
                                 ) {
                                     updateLastHover()
                                     val pos = editor.getPointPositionOnScreen(e.x, e.y)
-                                    hoverPosition = editor.text.indexer.getCharPosition(
-                                        IntPair.getFirst(pos),
-                                        IntPair.getSecond(pos)
-                                    )
+                                    val first = IntPair.getFirst(pos)
+                                    val second = IntPair.getSecond(pos)
+                                    hoverPosition = editor.text.indexer.getCharPosition(first, second)
                                     postUpdate()
                                 }
                             } else {
@@ -239,7 +238,8 @@ open class EditorDiagnosticTooltipWindow(editor: CodeEditor) : EditorPopupWindow
                     }
                 }
                 updateDiagnostic(diagnosticList[minIndex].detail, diagnosticList[minIndex], pos)
-                if (!editor.getComponent<EditorAutoCompletion>().isCompletionInProgress)
+                val completion = editor.getComponent<EditorAutoCompletion>()
+                if (completion != null && !completion.isCompletionInProgress)
                     show()
             } else {
                 updateDiagnostic(null, null, null)
@@ -266,7 +266,8 @@ open class EditorDiagnosticTooltipWindow(editor: CodeEditor) : EditorPopupWindow
         }
 
         // dismiss if completion windows is showing
-        if (editor.getComponent<EditorAutoCompletion>().isShowing) {
+        val completion = editor.getComponent<EditorAutoCompletion>()
+        if (completion != null && completion.isShowing) {
             dismiss()
             return
         }
@@ -314,7 +315,8 @@ open class EditorDiagnosticTooltipWindow(editor: CodeEditor) : EditorPopupWindow
         editor.getLocationInWindow(locationBuffer)
         val restAbove = charY + locationBuffer[1]
         val restBottom = editor.height - charY - editor.rowHeight
-        val completionShowing = editor.getComponent<EditorAutoCompletion>().isShowing
+        val completion = editor.getComponent<EditorAutoCompletion>()
+        val completionShowing = completion != null && completion.isShowing
         val windowY = if (restAbove > restBottom || completionShowing) {
             charY - height
         } else {
@@ -325,8 +327,7 @@ open class EditorDiagnosticTooltipWindow(editor: CodeEditor) : EditorPopupWindow
             return
         }
         val windowX = (charX - width / 2).coerceAtLeast(0f)
-        setLocationAbsolutely(windowX.toInt(), windowY.toInt())
+        setLocationAbsolutely(windowX, windowY)
     }
 
 }
-

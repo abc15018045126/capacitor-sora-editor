@@ -394,7 +394,6 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
      * @see io.github.abc15018045126.sora.widget.component
      */
     @SuppressWarnings("unchecked")
-    @NonNull
     public <T extends EditorBuiltinComponent> T getComponent(@NonNull Class<T> clazz) {
         if (clazz == EditorAutoCompletion.class) {
             return (T) completionWindow;
@@ -577,6 +576,8 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         dividerWidth = dpUnit;
         insertSelectionWidth = dpUnit * 1.5f;
         textBorderWidth = dpUnit;
+        text = new Content("");
+        extraArguments = new Bundle();
         dividerMarginLeft = dividerMarginRight = dpUnit * 2;
 
         matrix = new Matrix();
@@ -611,6 +612,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         setFocusableInTouchMode(true);
         highlightBracketPair = true;
         inputConnection = new EditorInputConnection(this);
+        snippetController = new SnippetController(this);
         completionWindow = new EditorAutoCompletion(this);
         edgeEffectVertical = new EdgeEffect(getContext());
         edgeEffectHorizontal = new EdgeEffect(getContext());
@@ -645,7 +647,6 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
 
         // Config scale detector
         scaleDetector.setQuickScaleEnabled(false);
-        snippetController = new SnippetController(this);
     }
 
     /**

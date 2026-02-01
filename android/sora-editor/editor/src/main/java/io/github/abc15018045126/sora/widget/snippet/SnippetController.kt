@@ -165,7 +165,7 @@ class SnippetController(private val editor: CodeEditor) {
                         if (exitOnEnd) {
                             stopSnippet()
                         } else if (hasChangedText) {
-                            editor.getComponent<EditorAutoCompletion>().requireCompletion()
+                            editor.getComponent<EditorAutoCompletion>()?.requireCompletion()
                         }
                     } else {
                         stopSnippet()
