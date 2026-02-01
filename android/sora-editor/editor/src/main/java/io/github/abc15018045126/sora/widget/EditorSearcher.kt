@@ -148,7 +148,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
                 val res = lastResults ?: return -1
                 val packed = IntPair.pack(left, right)
                 val index = res.lowerBound(packed)
-                if (index < res.size() && res.get(index) == packed) {
+                if (index < res.size && res.get(index) == packed) {
                     return index
                 }
             }
@@ -166,7 +166,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
                 return 0
             }
             val result = lastResults
-            return result?.size() ?: 0
+            return result?.size ?: 0
         }
 
     /**
@@ -181,10 +181,10 @@ open class EditorSearcher(private val editor: CodeEditor) {
             val res = lastResults ?: return false
             val right = editor.cursor.right
             var index = res.lowerBoundByFirst(right)
-            if (index == res.size() && isCyclicJumping) {
+            if (index == res.size && isCyclicJumping) {
                 index = 0
             }
-            if (index < res.size()) {
+            if (index < res.size) {
                 val data = res.get(index)
                 val start = IntPair.getFirst(data)
                 val pos1 = editor.text.indexer.getCharPosition(start)
@@ -212,18 +212,18 @@ open class EditorSearcher(private val editor: CodeEditor) {
         checkState()
         if (isResultValid()) {
             val res = lastResults
-            if (res == null || res.size() == 0) {
+            if (res == null || res.size == 0) {
                 return false
             }
             val left = editor.cursor.left
             var index = res.lowerBoundByFirst(left)
-            if (index == res.size() || IntPair.getFirst(res.get(index)) >= left) {
+            if (index == res.size || IntPair.getFirst(res.get(index)) >= left) {
                 index--
             }
             if (index < 0 && isCyclicJumping) {
-                index = res.size() - 1
+                index = res.size - 1
             }
-            if (index in 0 until res.size()) {
+            if (index in 0 until res.size) {
                 val data = res.get(index)
                 val end = IntPair.getSecond(data)
                 val pos1 = editor.text.indexer.getCharPosition(IntPair.getFirst(data))
@@ -336,7 +336,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
                     var tokens: List<RegexBackrefToken>? = null
                     var delta = 0
                     val text = sb.toString()
-                    for (i in 0 until res.size()) {
+                    for (i in 0 until res.size) {
                         val region = res.get(i)
                         val start = IntPair.getFirst(region)
                         val end = IntPair.getSecond(region)
@@ -364,7 +364,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
                 } else {
                     val newLength = replacement.length
                     var delta = 0
-                    for (i in 0 until res.size()) {
+                    for (i in 0 until res.size) {
                         val region = res.get(i)
                         val start = IntPair.getFirst(region)
                         val end = IntPair.getSecond(region)
