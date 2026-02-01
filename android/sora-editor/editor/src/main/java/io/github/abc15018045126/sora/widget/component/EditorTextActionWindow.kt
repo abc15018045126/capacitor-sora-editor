@@ -33,7 +33,7 @@ class EditorTextActionWindow(editor: CodeEditor) :
     private val handler = editor.eventHandler
     private val eventManager = editor.createSubEventManager()
     private var lastScroll: Long = 0
-    private var lastPosition: Int = 0
+    private var lastPosition: Int = -1
     private var lastCause: Int = 0
     override var isEnabled = true
         set(value) {
@@ -172,7 +172,7 @@ class EditorTextActionWindow(editor: CodeEditor) :
         }
         lastCause = event.cause
         if (event.isSelected || event.cause == SelectionChangeEvent.CAUSE_IME
-            || event.cause == SelectionChangeEvent.CAUSE_SELECTION_HANDLE || event.cause == SelectionChangeEvent.CAUSE_TAP
+            || event.cause == SelectionChangeEvent.CAUSE_SELECTION_HANDLE
             || event.cause == SelectionChangeEvent.CAUSE_SEARCH || event.cause == SelectionChangeEvent.CAUSE_UNKNOWN
         ) {
             // Always post show. See #193
