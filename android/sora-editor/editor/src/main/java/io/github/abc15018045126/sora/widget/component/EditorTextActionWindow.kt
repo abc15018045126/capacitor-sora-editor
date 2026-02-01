@@ -30,7 +30,7 @@ class EditorTextActionWindow(editor: CodeEditor) :
     private val cutBtn: ImageButton
     private val longSelectBtn: ImageButton
     private val rootView: View
-    private val handler = editor.eventHandler
+    private val handler = editor.touchHandler
     private val eventManager = editor.createSubEventManager()
     private var lastScroll: Long = 0
     private var lastPosition: Int = -1
@@ -150,7 +150,7 @@ class EditorTextActionWindow(editor: CodeEditor) :
             // Also, post to hide the window on handle disappearance
             editor.postDelayedInLifecycle(object : Runnable {
                 override fun run() {
-                    if (!editor.eventHandler.shouldDrawInsertHandle()
+                    if (!editor.touchHandler.shouldDrawInsertHandle()
                         && !editor.getCursor().isSelected()
                     ) {
                         dismiss()
@@ -166,7 +166,7 @@ class EditorTextActionWindow(editor: CodeEditor) :
         if (handler.hasAnyHeldHandle() || event.cause == SelectionChangeEvent.CAUSE_DEAD_KEYS) {
             return
         }
-        if (handler.isDragSelecting) {
+        if (handler.isDragSelecting()) {
             dismiss()
             return
         }

@@ -398,7 +398,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         if (clazz == EditorAutoCompletion.class) {
             return (T) completionWindow;
         } else if (clazz == Magnifier.class) {
-            return (T) touchHandler.magnifier;
+            return (T) touchHandler.editorMagnifier;
         } else if (clazz == EditorTextActionWindow.class) {
             return (T) textActionWindow;
         } else if (clazz == EditorDiagnosticTooltipWindow.class) {
@@ -425,7 +425,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         if (clazz == EditorAutoCompletion.class) {
             completionWindow = (EditorAutoCompletion) replacement;
         } else if (clazz == Magnifier.class) {
-            touchHandler.magnifier = (Magnifier) replacement;
+            touchHandler.editorMagnifier = (Magnifier) replacement;
         } else if (clazz == EditorTextActionWindow.class) {
             textActionWindow = (EditorTextActionWindow) replacement;
         } else if (clazz == EditorDiagnosticTooltipWindow.class) {
@@ -480,6 +480,14 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
     @NonNull
     public KeyMetaStates getKeyMetaStates() {
         return keyEventHandler.getKeyMetaStates();
+    }
+
+    /**
+     * Get the touch event handler of the editor
+     */
+    @NonNull
+    public EditorTouchEventHandler getTouchHandler() {
+        return touchHandler;
     }
 
     /**
@@ -4643,7 +4651,7 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         completionWindow.cancelCompletion();
         completionWindow.hide();
         textActionWindow.dismiss();
-        touchHandler.magnifier.dismiss();
+        touchHandler.editorMagnifier.dismiss();
         diagnosticTooltip.dismiss();
     }
 
@@ -4723,9 +4731,9 @@ public class CodeEditor extends View implements ContentListener, Formatter.Forma
         renderer.draw(canvas);
 
         // Update magnifier
-        if ((lastCursorState != cursorBlink.visibility || !touchHandler.getScroller().isFinished()) && touchHandler.magnifier.isShowing()) {
+        if ((lastCursorState != cursorBlink.visibility || !touchHandler.getScroller().isFinished()) && touchHandler.editorMagnifier.isShowing()) {
             lastCursorState = cursorBlink.visibility;
-            postInLifecycle(touchHandler.magnifier::updateDisplay);
+            postInLifecycle(touchHandler.editorMagnifier::updateDisplay);
         }
     }
 

@@ -56,7 +56,7 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
                         return@postInLifecycle
                     }
                     currentEditor.setLayoutBusy(false)
-                    currentEditor.eventHandler.scrollBy(0f, 0f)
+                    currentEditor.touchHandler.scrollBy(0f, 0f)
                 }
             }
         })

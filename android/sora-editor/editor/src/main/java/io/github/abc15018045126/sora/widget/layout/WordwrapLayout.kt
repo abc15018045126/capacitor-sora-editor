@@ -75,7 +75,7 @@ class WordwrapLayout(
                         }
                         updateYOffsets(0)
                         currentEditor.setLayoutBusy(false)
-                        currentEditor.eventHandler.scrollBy(0f, 0f)
+                        currentEditor.touchHandler.scrollBy(0f, 0f)
                     }
                 }
             }
