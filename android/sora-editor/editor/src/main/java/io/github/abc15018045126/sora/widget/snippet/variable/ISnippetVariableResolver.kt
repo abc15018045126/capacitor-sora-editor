@@ -1,12 +1,9 @@
-
-package io.github.abc15018045126.sora.widget.snippet.variable;
-
-import androidx.annotation.NonNull;
+package io.github.abc15018045126.sora.widget.snippet.variable
 
 /**
  * Interface for resolving code snippet variables
  */
-public interface ISnippetVariableResolver {
+interface ISnippetVariableResolver {
 
     /**
      * Resolve the given variable name. Caller should ensure that the given variable name is
@@ -14,14 +11,11 @@ public interface ISnippetVariableResolver {
      *
      * @return A non-empty string
      */
-    @NonNull
-    String resolve(@NonNull String name);
+    fun resolve(name: String): String
 
     /**
      * Get variable names supported by this resolver
      */
-    @NonNull
-    String[] getResolvableNames();
+    fun getResolvableNames(): Array<String>
 
 }
-
