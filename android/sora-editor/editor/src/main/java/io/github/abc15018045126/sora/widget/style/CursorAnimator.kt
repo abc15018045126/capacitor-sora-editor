@@ -1,56 +1,54 @@
-
-package io.github.abc15018045126.sora.widget.style;
+package io.github.abc15018045126.sora.widget.style
 
 /**
  * Interface for provide various cursor animations
  *
  * @author abc15018045126, Dmitry Rubtsov
  */
-public interface CursorAnimator {
+interface CursorAnimator {
 
     /**
      * Mark the current cursor position as animation start position
      */
-    void markStartPos();
+    fun markStartPos()
 
     /**
      * Mark the current cursor position as animation end position
      */
-    void markEndPos();
+    fun markEndPos()
 
     /**
      * Start animation
      */
-    void start();
+    fun start()
 
     /**
      * Cancel animation
      */
-    void cancel();
+    fun cancel()
 
     /**
      * Check whether animation is in process
      */
-    boolean isRunning();
+    fun isRunning(): Boolean
 
     /**
      * The current x position of cursor in view offset
      */
-    float animatedX();
+    fun animatedX(): Float
 
     /**
      * The current y position of cursor in view offset
      */
-    float animatedY();
+    fun animatedY(): Float
 
     /**
      * Height of current line background
      */
-    float animatedLineHeight();
+    fun animatedLineHeight(): Float
 
     /**
      * Bottom Y position in view offset of current line background
      */
-    float animatedLineBottom();
+    fun animatedLineBottom(): Float
 }
-
