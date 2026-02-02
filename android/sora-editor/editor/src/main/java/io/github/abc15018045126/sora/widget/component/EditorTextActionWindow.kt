@@ -12,8 +12,10 @@ import android.widget.ImageButton
 import io.github.abc15018045126.sora.R
 import io.github.abc15018045126.sora.event.*
 import io.github.abc15018045126.sora.widget.CodeEditor
+import io.github.abc15018045126.sora.widget.EditorTouchEventHandler
 import io.github.abc15018045126.sora.widget.base.EditorPopupWindow
 import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
+import io.github.abc15018045126.sora.widget.snippet.SnippetController
 
 /**
  * This window will show when selecting text to present text actions.
@@ -30,7 +32,8 @@ class EditorTextActionWindow(editor: CodeEditor) :
     private val cutBtn: ImageButton
     private val longSelectBtn: ImageButton
     private val rootView: View
-    private val handler = editor.touchHandler
+    private val handler: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = editor.touchHandler!!
+
     private val eventManager = editor.createSubEventManager()
     private var lastScroll: Long = 0
     private var lastPosition: Int = -1
@@ -120,9 +123,9 @@ class EditorTextActionWindow(editor: CodeEditor) :
     }
 
     private fun onEditorLongPress(event: LongPressEvent) {
-        if (editor.getCursor().isSelected() && lastCause == SelectionChangeEvent.CAUSE_SEARCH) {
+        if (editor.cursor.isSelected() && lastCause == SelectionChangeEvent.CAUSE_SEARCH) {
             val idx = event.index
-            if (idx >= editor.getCursor().left && idx <= editor.getCursor().right) {
+            if (idx >= editor.cursor.left && idx <= editor.cursor.right) {
                 lastCause = 0
                 displayWindow()
             }
@@ -142,23 +145,27 @@ class EditorTextActionWindow(editor: CodeEditor) :
         if (event.isHeld) {
             postDisplay()
         }
-        if (!event.editor.getCursor().isSelected()
+        if (!event.editor.cursor.isSelected()
             && event.handleType == HandleStateChangeEvent.HANDLE_TYPE_INSERT
             && !event.isHeld
         ) {
             displayWindow()
             // Also, post to hide the window on handle disappearance
-            editor.postDelayedInLifecycle(object : Runnable {
+            // Also, post to hide the window on handle disappearance
+            io.github.abc15018045126.sora.util.EditorHandler.postDelayed(object : Runnable {
                 override fun run() {
-                    if (!editor.touchHandler.shouldDrawInsertHandle()
-                        && !editor.getCursor().isSelected()
+                    if (editor.isReleased) return
+                    val handler: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = editor.touchHandler!!
+                    if (!handler.shouldDrawInsertHandle()
+                        && !editor.cursor.isSelected()
                     ) {
                         dismiss()
-                    } else if (!editor.getCursor().isSelected()) {
-                        editor.postDelayedInLifecycle(this, CHECK_FOR_DISMISS_INTERVAL)
+                    } else if (!editor.cursor.isSelected()) {
+                        io.github.abc15018045126.sora.util.EditorHandler.postDelayed(this, CHECK_FOR_DISMISS_INTERVAL)
                     }
                 }
             }, CHECK_FOR_DISMISS_INTERVAL)
+
         }
     }
 
@@ -177,16 +184,24 @@ class EditorTextActionWindow(editor: CodeEditor) :
         ) {
             // Always post show. See #193
             if (event.cause != SelectionChangeEvent.CAUSE_SEARCH) {
-                editor.postInLifecycle(this::displayWindow)
+                io.github.abc15018045126.sora.util.EditorHandler.post {
+                   if (editor.isReleased) return@post
+                   displayWindow()
+                }
             } else {
+
                 dismiss()
             }
             lastPosition = -1
         } else {
             var show = false
-            if (event.cause == SelectionChangeEvent.CAUSE_TAP && event.left.index == lastPosition && !isShowing && !editor.getText().isInBatchEdit && editor.isEditable) {
-                editor.postInLifecycle(this::displayWindow)
+            if (event.cause == SelectionChangeEvent.CAUSE_TAP && event.left.index == lastPosition && !isShowing && !editor.text.isInBatchEdit && editor.isEditable) {
+                io.github.abc15018045126.sora.util.EditorHandler.post {
+                   if (editor.isReleased) return@post
+                   displayWindow()
+                }
                 show = true
+
             } else {
                 dismiss()
             }
@@ -210,20 +225,24 @@ class EditorTextActionWindow(editor: CodeEditor) :
             return
         }
         dismiss()
-        if (!editor.getCursor().isSelected()) {
+        if (!editor.cursor.isSelected()) {
             return
         }
-        editor.postDelayedInLifecycle(object : Runnable {
+        io.github.abc15018045126.sora.util.EditorHandler.postDelayed(object : Runnable {
             override fun run() {
-                if (!handler.hasAnyHeldHandle() && editor.snippetController?.isInSnippet() != true && System.currentTimeMillis() - lastScroll > DELAY
+                if (editor.isReleased) return
+                val snippetController: io.github.abc15018045126.sora.widget.snippet.SnippetController? = editor.snippetController
+                if (!handler.hasAnyHeldHandle() && snippetController?.isInSnippet() != true && System.currentTimeMillis() - lastScroll > DELAY
                     && editor.scroller.isFinished
                 ) {
                     displayWindow()
                 } else {
-                    editor.postDelayedInLifecycle(this, DELAY)
+                    io.github.abc15018045126.sora.util.EditorHandler.postDelayed(this, DELAY)
                 }
             }
         }, DELAY)
+
+
     }
 
     private fun selectTop(rect: RectF): Int {
@@ -238,20 +257,22 @@ class EditorTextActionWindow(editor: CodeEditor) :
     fun displayWindow() {
         updateBtnState()
         var top: Int
-        val cursor = editor.getCursor()
+        val cursor = editor.cursor
         if (cursor.isSelected()) {
-            val leftRect = editor.leftHandleDescriptor.position
-            val rightRect = editor.rightHandleDescriptor.position
+            val leftRect = editor.leftHandleDescriptor!!.position
+            val rightRect = editor.rightHandleDescriptor!!.position
             val top1 = selectTop(leftRect)
+
             val top2 = selectTop(rightRect)
             top = Math.min(top1, top2)
         } else {
-            top = selectTop(editor.insertHandleDescriptor.position)
+            top = selectTop(editor.insertHandleDescriptor!!.position)
         }
+
         top = Math.max(0, Math.min(top, editor.height - height - 5))
-        val handleLeftX = editor.getOffset(editor.getCursor().leftLine, editor.getCursor().leftColumn)
+        val handleLeftX = editor.getOffset(editor.cursor.leftLine, editor.cursor.leftColumn)
         val handleRightX =
-            editor.getOffset(editor.getCursor().rightLine, editor.getCursor().rightColumn)
+            editor.getOffset(editor.cursor.rightLine, editor.cursor.rightColumn)
         val panelX = (handleLeftX + handleRightX) / 2f - rootView.measuredWidth / 2f
         setLocationAbsolutely(panelX, top.toFloat())
         show()
@@ -262,12 +283,12 @@ class EditorTextActionWindow(editor: CodeEditor) :
      */
     private fun updateBtnState() {
         pasteBtn.isEnabled = editor.hasClip()
-        copyBtn.visibility = if (editor.getCursor().isSelected()) View.VISIBLE else View.GONE
+        copyBtn.visibility = if (editor.cursor.isSelected()) View.VISIBLE else View.GONE
         pasteBtn.visibility = if (editor.isEditable) View.VISIBLE else View.GONE
         cutBtn.visibility =
-            if (editor.getCursor().isSelected() && editor.isEditable) View.VISIBLE else View.GONE
+            if (editor.cursor.isSelected() && editor.isEditable) View.VISIBLE else View.GONE
         longSelectBtn.visibility =
-            if (!editor.getCursor().isSelected() && editor.isEditable) View.VISIBLE else View.GONE
+            if (!editor.cursor.isSelected() && editor.isEditable) View.VISIBLE else View.GONE
         rootView.measure(
             View.MeasureSpec.makeMeasureSpec(1000000, View.MeasureSpec.AT_MOST),
             View.MeasureSpec.makeMeasureSpec(100000, View.MeasureSpec.AT_MOST)
@@ -279,7 +300,8 @@ class EditorTextActionWindow(editor: CodeEditor) :
     }
 
     override fun show() {
-        if (!isEnabled || editor.snippetController?.isInSnippet() == true || !editor.hasFocus() || editor.isInMouseMode) {
+        val snippetController: io.github.abc15018045126.sora.widget.snippet.SnippetController? = editor.snippetController
+        if (!isEnabled || snippetController?.isInSnippet() == true || !editor.hasFocus() || editor.isInMouseMode) {
             return
         }
         super.show()
@@ -294,10 +316,10 @@ class EditorTextActionWindow(editor: CodeEditor) :
                 editor.cutText()
         } else if (id == R.id.panel_btn_paste) {
             editor.pasteText()
-            editor.setSelection(editor.getCursor().rightLine, editor.getCursor().rightColumn)
+            editor.setSelection(editor.cursor.rightLine, editor.cursor.rightColumn)
         } else if (id == R.id.panel_btn_copy) {
             editor.copyText()
-            editor.setSelection(editor.getCursor().rightLine, editor.getCursor().rightColumn)
+            editor.setSelection(editor.cursor.rightLine, editor.cursor.rightColumn)
         } else if (id == R.id.panel_btn_long_select) {
             editor.beginLongSelect()
         }

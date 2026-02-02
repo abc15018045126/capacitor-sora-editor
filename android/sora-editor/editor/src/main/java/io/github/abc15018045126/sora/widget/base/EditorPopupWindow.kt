@@ -207,7 +207,7 @@ open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
             return false
         }
         return try {
-            val cursor = editor.getCursor() ?: return false
+            val cursor = editor.cursor ?: return false
             val line = cursor.leftLine
             val column = cursor.leftColumn
             val cursorLeft = editor.getCharOffsetX(line, column)

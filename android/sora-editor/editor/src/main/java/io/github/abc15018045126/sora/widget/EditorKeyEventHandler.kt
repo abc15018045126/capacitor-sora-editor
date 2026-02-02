@@ -31,7 +31,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
 
     /**
      * Check if the given [KeyEvent] is a key binding event.
-     * [EditorKeyEventHandler.keyMetaStates] must be notified about the key event before this
+     * [EditorKeyEventHandler.getKeyMetaStates()] must be notified about the key event before this
      * method is called.
      *
      * @param keyCode The keycode.
@@ -78,7 +78,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
      */
     fun onKeyDown(keyCode: Int, @NonNull event: KeyEvent): Boolean {
         keyMetaStates.onKeyDown(event)
-        val eventManager = editor.eventManager
+        val eventManager = editor.eventManager!!
 
         val editorKeyEvent = EditorKeyEvent(editor, event, EditorKeyEvent.Type.DOWN)
         val keybindingEvent = KeyBindingEvent(
@@ -147,8 +147,8 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
         val editorText = editor.text
         when (keyCode) {
             KeyEvent.KEYCODE_BACK -> {
-                if (editorCursor.isSelected()) {
-                    editor.setSelection(editorCursor.leftLine, editorCursor.leftColumn)
+                if (editorCursor!!.isSelected()) {
+                    editor.setSelection(editorCursor!!.leftLine, editorCursor!!.leftColumn)
                     return true
                 }
                 if (editor.isInLongSelect) {
@@ -186,7 +186,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                                 editor.deleteText()
                             }
                         } else {
-                            connection.deleteSurroundingText(0, 1)
+                            connection!!.deleteSurroundingText(0, 1)
                         }
                     }
                     editor.notifyIMEExternalCursorChange()
@@ -205,8 +205,8 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
             KeyEvent.KEYCODE_DPAD_DOWN -> {
                 if (isCtrlPressed) {
                     if (isShiftPressed) {
-                        val left = editorCursor.left()
-                        val right = editorCursor.right()
+                        val left = editorCursor!!.left()
+                        val right = editorCursor!!.right()
                         val lines = editorText.lineCount
                         if (right.line == lines - 1) {
                             // last line, cannot move down
@@ -221,7 +221,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                             right.line + 1,
                             next.length
                         )
-                        editorText.insert(left.line, 0, next + editor.lineSeparator.content)
+                        editorText.insert(left.line, 0, next + editor.lineSeparator!!.content)
                         editorText.endBatchEdit()
 
                         // Update selection
@@ -248,7 +248,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
 
                         return true
                     }
-                    editor.touchHandler.scrollBy(0f, editor.rowHeight.toFloat())
+                    editor.touchHandler!!.scrollBy(0f, editor.rowHeight.toFloat())
                     return true
                 }
                 editor.moveOrExtendSelection(SelectionMovement.DOWN, isShiftPressed)
@@ -257,8 +257,8 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
             KeyEvent.KEYCODE_DPAD_UP -> {
                 if (isCtrlPressed) {
                     if (isShiftPressed) {
-                        val left = editorCursor.left()
-                        val right = editorCursor.right()
+                        val left = editorCursor!!.left()
+                        val right = editorCursor!!.right()
                         if (left.line == 0) {
                             // first line, cannot move up
                             return true
@@ -270,7 +270,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                         editorText.insert(
                             right.line - 1,
                             editorText.getColumnCount(right.line - 1),
-                            editor.lineSeparator.content + prev
+                            editor.lineSeparator!!.content + prev
                         )
                         editorText.endBatchEdit()
 
@@ -298,7 +298,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
 
                         return true
                     }
-                    editor.touchHandler.scrollBy(0f, -editor.rowHeight.toFloat())
+                    editor.touchHandler!!.scrollBy(0f, -editor.rowHeight.toFloat())
                     return true
                 }
                 editor.moveOrExtendSelection(SelectionMovement.UP, isShiftPressed)
@@ -324,7 +324,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                 if (isCtrlPressed) {
                     editor.moveOrExtendSelection(SelectionMovement.TEXT_END, isShiftPressed)
                 } else {
-                    val movement = if (editor.props.rowBasedHomeEnd) SelectionMovement.ROW_END else SelectionMovement.LINE_END
+                    val movement = if (editor.props!!.rowBasedHomeEnd) SelectionMovement.ROW_END else SelectionMovement.LINE_END
                     editor.moveOrExtendSelection(movement, isShiftPressed)
                 }
                 return true
@@ -333,7 +333,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                 if (isCtrlPressed) {
                     editor.moveOrExtendSelection(SelectionMovement.TEXT_START, isShiftPressed)
                 } else {
-                    val movement = if (editor.props.rowBasedHomeEnd) SelectionMovement.ROW_START else SelectionMovement.LINE_START
+                    val movement = if (editor.props!!.rowBasedHomeEnd) SelectionMovement.ROW_START else SelectionMovement.LINE_START
                     editor.moveOrExtendSelection(movement, isShiftPressed)
                 }
                 return true
@@ -393,8 +393,8 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                 return true
             }
             KeyEvent.KEYCODE_ESCAPE -> {
-                if (editorCursor.isSelected()) {
-                    val newPosition = if (editor.props.positionOfCursorWhenExitSelecting) editorCursor.right() else editorCursor.left()
+                if (editorCursor!!.isSelected()) {
+                    val newPosition = if (editor.props!!.positionOfCursorWhenExitSelecting) editorCursor!!.right() else editorCursor!!.left()
                     editor.setSelection(newPosition.line, newPosition.column, true)
                 }
                 return true
@@ -428,8 +428,8 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                 dead = true
             }
 
-            if (editorCursor.left + 1 == editorCursor.right) {
-                val base = editorText[editorCursor.left]
+            if (editorCursor!!.left + 1 == editorCursor!!.right) {
+                val base = editorText[editorCursor!!.left]
                 val composed = KeyCharacterMap.getDeadChar(base.toInt(), charCode)
                 if (composed != base.toInt() && event.repeatCount == 0) {
                     charCode = composed
@@ -439,24 +439,25 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
 
             if (dead) {
                 val cursor = editor.cursor
-                if (!editor.isTextSelected || (editorCursor.left + 1 == editorCursor.right && editorText[editorCursor.left].toInt() == charCode)) {
+                if (!editor.isTextSelected || (editorCursor!!.left + 1 == editorCursor!!.right && editorText[editorCursor!!.left].toInt() == charCode)) {
                     editor.setSelection(
-                        editorCursor.rightLine,
-                        editorCursor.rightColumn,
+                        editorCursor!!.rightLine,
+                        editorCursor!!.rightColumn,
                         SelectionChangeEvent.CAUSE_DEAD_KEYS
                     )
                     editor.commitText(String(Character.toChars(charCode)))
+                    val c = cursor!!
                     val charCount = Character.charCount(
                         Character.codePointBefore(
-                            editor.text.getLine(cursor.rightLine),
-                            cursor.rightColumn
+                            editor.text.getLine(c.rightLine),
+                            c.rightColumn
                         )
                     )
                     editor.setSelectionRegion(
-                        cursor.rightLine,
-                        cursor.rightColumn - charCount,
-                        cursor.rightLine,
-                        cursor.rightColumn,
+                        c.rightLine,
+                        c.rightColumn - charCount,
+                        c.rightLine,
+                        c.rightColumn,
                         SelectionChangeEvent.CAUSE_DEAD_KEYS
                     )
                 }
@@ -505,13 +506,13 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
             }
             KeyEvent.KEYCODE_W -> editor.selectCurrentWord()
             KeyEvent.KEYCODE_J -> {
-                if (!isShiftPressed || editorCursor.isSelected()) {
+                if (!isShiftPressed || editorCursor!!.isSelected()) {
                     // TODO If the cursor is selected, then the selected lines must be joined.
                     editorResult = false
                 } else {
-                    val line = editorCursor.leftLine
+                    val line = editorCursor!!.leftLine
                     editor.setSelection(line, editorText.getColumnCount(line))
-                    connection.deleteSurroundingText(0, 1)
+                    connection!!.deleteSurroundingText(0, 1)
                     editor.ensureSelectionVisible()
                 }
             }
@@ -530,18 +531,18 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
         val editorCursor = editor.cursor
         val editorText = editor.text
         if (editor.isEditable) {
-            val lineSeparator = editor.lineSeparator.content
-            val editorLanguage = editor.editorLanguage
+            val lineSeparator = editor.lineSeparator!!.content
+            val editorLanguage = editor.editorLanguage!!
 
             if (isShiftPressed && !isAltPressed && !isCtrlPressed) {
                 // Shift + Enter
-                return startNewLine(editor, editorCursor, editorText, editorKeyEvent, keybindingEvent)
+                return startNewLine(editor, editorCursor!!, editorText, editorKeyEvent, keybindingEvent)
             }
 
             if (isCtrlPressed && !isShiftPressed) {
                 if (isAltPressed) {
                     // Ctrl + Alt + Enter
-                    var line = editorCursor.left().line
+                    var line = editorCursor!!.left().line
                     if (line == 0) {
                         editorText.insert(0, 0, lineSeparator)
                         editor.setSelection(0, 0)
@@ -550,12 +551,12 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                     } else {
                         line--
                         editor.setSelection(line, editorText.getColumnCount(line))
-                        return startNewLine(editor, editorCursor, editorText, editorKeyEvent, keybindingEvent)
+                        return startNewLine(editor, editorCursor!!, editorText, editorKeyEvent, keybindingEvent)
                     }
                 }
 
                 // Ctrl + Enter
-                val left = editorCursor.left().fromThis()
+                val left = editorCursor!!.left().fromThis()
                 editor.commitText(lineSeparator)
                 editor.setSelection(left.line, left.column)
                 editor.ensureSelectionVisible()
@@ -563,24 +564,24 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
             }
 
             val handlers = editorLanguage.newlineHandlers
-            if (handlers == null || editorCursor.isSelected()) {
+            if (handlers == null || editorCursor!!.isSelected()) {
                 editor.commitText(lineSeparator, true)
             } else {
                 var consumed = false
                 for (handler in handlers) {
                     if (handler != null) {
-                        if (handler.matchesRequirement(editorText, editorCursor.left(), editor.styles)) {
+                        if (handler.matchesRequirement(editorText, editorCursor!!.left(), editor.styles!!)) {
                             try {
                                 val result = handler.handleNewline(
                                     editorText,
-                                    editorCursor.left(),
-                                    editor.styles,
+                                    editorCursor!!.left(),
+                                    editor.styles!!,
                                     editor.tabWidth
                                 )
                                 editor.commitText(result.text, false)
                                 val delta = result.shiftLeft
                                 if (delta != 0) {
-                                    val newSel = (editorCursor.left - delta).coerceAtLeast(0)
+                                    val newSel = (editorCursor!!.left - delta).coerceAtLeast(0)
                                     val charPosition = editorText.getIndexer().getCharPosition(newSel)
                                     editor.setSelection(charPosition.line, charPosition.column)
                                 }
@@ -608,9 +609,9 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
         e: EditorKeyEvent,
         keybindingEvent: KeyBindingEvent
     ): Boolean {
-        val line = editorCursor.right().line
+        val line = editorCursor!!.right().line
         editor.setSelection(line, editorText.getColumnCount(line))
-        editor.commitText(editor.lineSeparator.content)
+        editor.commitText(editor.lineSeparator!!.content)
         editor.ensureSelectionVisible()
         return keybindingEvent.result(true) || e.result(true)
     }
@@ -625,7 +626,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
     fun onKeyUp(keyCode: Int, @NonNull event: KeyEvent): Boolean {
         keyMetaStates.onKeyUp(event)
 
-        val eventManager = editor.eventManager
+        val eventManager = editor.eventManager!!
 
         val e = EditorKeyEvent(editor, event, EditorKeyEvent.Type.UP)
         if ((eventManager.dispatchEvent(e) and InterceptTarget.TARGET_EDITOR) != 0) {
@@ -663,7 +664,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
      */
     fun onKeyMultiple(keyCode: Int, repeatCount: Int, @NonNull event: KeyEvent): Boolean {
         val e = EditorKeyEvent(editor, event, EditorKeyEvent.Type.MULTIPLE)
-        val eventManager = editor.eventManager
+        val eventManager = editor.eventManager!!
         if ((eventManager.dispatchEvent(e) and InterceptTarget.TARGET_EDITOR) != 0) {
             return e.result(false)
         }

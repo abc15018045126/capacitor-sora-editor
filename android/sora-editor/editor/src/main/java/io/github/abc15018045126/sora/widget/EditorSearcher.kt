@@ -34,20 +34,23 @@ import java.util.regex.Pattern
 open class EditorSearcher(private val editor: CodeEditor) {
 
     @JvmField
-    protected var currentPattern: String? = null
+    internal var currentPattern: String? = null
 
     @JvmField
-    protected var searchOptions: SearchOptions? = null
+    internal var searchOptions: SearchOptions? = null
+
 
     @JvmField
-    protected var currentThread: Thread? = null
+    internal var currentThread: Thread? = null
+
 
     /**
      * Search results. Note that it is naturally sorted by start index (and also end index).
      * No overlapping region is permitted.
      */
     @JvmField
-    protected var lastResults: LongArrayList? = null
+    internal var lastResults: LongArrayList? = null
+
 
     var isCyclicJumping: Boolean = true
 
@@ -137,7 +140,8 @@ open class EditorSearcher(private val editor: CodeEditor) {
     val currentMatchedPositionIndex: Int
         get() {
             checkState()
-            val cur = editor.cursor
+            val cur = editor.cursor!!
+
             if (!cur.isSelected()) {
                 return -1
             }
@@ -179,7 +183,8 @@ open class EditorSearcher(private val editor: CodeEditor) {
         checkState()
         if (isResultValid()) {
             val res = lastResults ?: return false
-            val right = editor.cursor.right
+            val right = editor.cursor!!.right
+
             var index = res.lowerBoundByFirst(right)
             if (index == res.size && isCyclicJumping) {
                 index = 0
@@ -215,7 +220,8 @@ open class EditorSearcher(private val editor: CodeEditor) {
             if (res == null || res.size == 0) {
                 return false
             }
-            val left = editor.cursor.left
+            val left = editor.cursor!!.left
+
             var index = res.lowerBoundByFirst(left)
             if (index == res.size || IntPair.getFirst(res.get(index)) >= left) {
                 index--
@@ -269,8 +275,9 @@ open class EditorSearcher(private val editor: CodeEditor) {
                 if (options?.type == SearchOptions.TYPE_REGULAR_EXPRESSION &&
                     options.regexBackrefGrammar != null
                 ) {
-                    val cursor = editor.cursor
+                    val cursor = editor.cursor!!
                     val currentText = editor.text.substring(cursor.left, cursor.right)
+
                     val pattern = Pattern.compile(
                         currentPattern!!,
                         (if (options.caseInsensitive) Pattern.CASE_INSENSITIVE else 0) or Pattern.MULTILINE
@@ -373,32 +380,38 @@ open class EditorSearcher(private val editor: CodeEditor) {
                         delta += newLength - oldLength
                     }
                 }
-                editor.postInLifecycle {
-                    val pos = editor.cursor.left()
+                io.github.abc15018045126.sora.util.EditorHandler.post {
+                    if (editor.isReleased) return@post
+                    val pos = editor.cursor!!.left()
+
                     editor.text.replace(
                         0,
                         0,
-                        editor.getLineCount() - 1,
-                        editor.text.getColumnCount(editor.getLineCount() - 1),
+                        editor.lineCount - 1,
+                        editor.text.getColumnCount(editor.lineCount - 1),
                         sb
                     )
+
                     editor.setSelectionAround(pos.line, pos.column)
                     dialog.dismiss()
 
                     whenSucceeded?.run()
                 }
             } catch (e: Exception) {
-                editor.postInLifecycle {
+                io.github.abc15018045126.sora.util.EditorHandler.post {
+                    if (editor.isReleased) return@post
                     Toast.makeText(editor.context, "Replace failed:$e", Toast.LENGTH_SHORT).show()
+
                     dialog.dismiss()
                 }
             }
         }.start()
     }
 
-    protected fun isResultValid(): Boolean {
+    internal fun isResultValid(): Boolean {
         return currentThread == null || !currentThread!!.isAlive
     }
+
 
     /**
      * Search options for [EditorSearcher.search]
@@ -502,7 +515,8 @@ open class EditorSearcher(private val editor: CodeEditor) {
                 }
             }
             if (checkNotCancelled()) {
-                editor.postInLifecycle {
+                io.github.abc15018045126.sora.util.EditorHandler.post {
+                    if (editor.isReleased) return@post
                     if (currentThread == localThread) {
                         lastResults = results
                         editor.invalidate()
@@ -510,6 +524,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
                         currentThread = null
                     }
                 }
+
             }
         }
     }

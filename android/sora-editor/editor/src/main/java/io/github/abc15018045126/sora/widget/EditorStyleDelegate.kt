@@ -36,8 +36,9 @@ class EditorStyleDelegate(editor: CodeEditor) : StyleReceiver {
         runOnUiThread {
             val provider = bracketsProvider
             val editor = editorRef.get()
-            if (provider != null && editor != null && !editor.cursor.isSelected() && editor.isHighlightBracketPair) {
-                foundBracketPair = provider.getPairedBracketAt(editor.text, editor.cursor.left)
+            if (provider != null && editor != null && !editor.cursor!!.isSelected() && editor.isHighlightBracketPair()) {
+                foundBracketPair = provider.getPairedBracketAt(editor.text, editor.cursor!!.left)
+
                 editor.invalidate()
             }
         }
@@ -53,9 +54,14 @@ class EditorStyleDelegate(editor: CodeEditor) : StyleReceiver {
         if (Looper.getMainLooper().thread === Thread.currentThread()) {
             operation.run()
         } else {
-            editor.postInLifecycle(operation)
+            io.github.abc15018045126.sora.util.EditorHandler.post {
+                if (!editor.isReleased) {
+                    operation.run()
+                }
+            }
         }
     }
+
 
     override fun setStyles(sourceManager: AnalyzeManager, styles: Styles?) {
         setStyles(sourceManager, styles, null)
@@ -63,7 +69,8 @@ class EditorStyleDelegate(editor: CodeEditor) : StyleReceiver {
 
     override fun setStyles(sourceManager: AnalyzeManager, styles: Styles?, action: Runnable?) {
         val editor = editorRef.get()
-        if (editor != null && sourceManager === editor.editorLanguage.analyzeManager) {
+        if (editor != null && sourceManager === editor.editorLanguage?.analyzeManager) {
+
             runOnUiThread {
                 action?.run()
                 editor.setStyles(styles)
@@ -73,14 +80,16 @@ class EditorStyleDelegate(editor: CodeEditor) : StyleReceiver {
 
     override fun setDiagnostics(sourceManager: AnalyzeManager, diagnostics: DiagnosticsContainer?) {
         val editor = editorRef.get()
-        if (editor != null && sourceManager === editor.editorLanguage.analyzeManager) {
-            runOnUiThread { editor.setDiagnostics(diagnostics) }
+        if (editor != null && sourceManager === editor.editorLanguage?.analyzeManager) {
+
+            runOnUiThread { editor.diagnostics = diagnostics }
         }
     }
 
     override fun updateBracketProvider(sourceManager: AnalyzeManager, provider: BracketsProvider?) {
         val editor = editorRef.get()
-        if (editor != null && sourceManager === editor.editorLanguage.analyzeManager && bracketsProvider !== provider) {
+        if (editor != null && sourceManager === editor.editorLanguage?.analyzeManager && bracketsProvider !== provider) {
+
             this.bracketsProvider = provider
             postUpdateBracketPair()
         }
@@ -88,7 +97,8 @@ class EditorStyleDelegate(editor: CodeEditor) : StyleReceiver {
 
     override fun updateStyles(sourceManager: AnalyzeManager, styles: Styles, range: StyleUpdateRange) {
         val editor = editorRef.get()
-        if (editor != null && sourceManager === editor.editorLanguage.analyzeManager) {
+        if (editor != null && sourceManager === editor.editorLanguage?.analyzeManager) {
+
             runOnUiThread { editor.updateStyles(styles, range) }
         }
     }

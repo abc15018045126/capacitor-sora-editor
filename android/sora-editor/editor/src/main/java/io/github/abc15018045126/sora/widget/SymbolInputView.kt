@@ -8,6 +8,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import androidx.annotation.NonNull
 import io.github.abc15018045126.sora.R
+import io.github.abc15018045126.sora.widget.snippet.SnippetController
 
 /**
  * A simple symbol input view implementation for editor.
@@ -77,8 +78,9 @@ class SymbolInputView @JvmOverloads constructor(
                 }
 
                 if ("\t" == insertText[finalI]) {
-                    if (currentEditor.snippetController.isInSnippet()) {
-                        currentEditor.snippetController.shiftToNextTabStop()
+                    val snippetController: io.github.abc15018045126.sora.widget.snippet.SnippetController? = currentEditor.snippetController
+                    if (snippetController != null && snippetController.isInSnippet()) {
+                        snippetController.shiftToNextTabStop()
                     } else {
                         currentEditor.indentOrCommitTab()
                     }

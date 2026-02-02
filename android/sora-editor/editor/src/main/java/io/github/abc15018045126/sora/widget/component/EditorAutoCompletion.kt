@@ -18,6 +18,7 @@ import io.github.abc15018045126.sora.text.ContentReference
 import io.github.abc15018045126.sora.widget.CodeEditor
 import io.github.abc15018045126.sora.widget.base.EditorPopupWindow
 import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
+import io.github.abc15018045126.sora.widget.snippet.SnippetController
 
 /**
  * Auto-completion component for CodeEditor.
@@ -124,11 +125,13 @@ class EditorAutoCompletion(editor: CodeEditor) :
     }
 
     private fun onContentChange(event: ContentChangeEvent) {
-        if (editor.getText().isInBatchEdit || !isEnabled || editor.snippetController?.isInSnippet() == true) {
+        val snippetController: io.github.abc15018045126.sora.widget.snippet.SnippetController? = editor.snippetController
+        if (editor.text.isInBatchEdit || !isEnabled || snippetController?.isInSnippet() == true) {
             return
         }
-        val text = editor.getText()
-        val cursor = editor.getCursor()
+        val text = editor.text
+        val cursor = editor.cursor!!
+
         if (cursor.isSelected()) {
             dismiss()
             return
@@ -152,24 +155,27 @@ class EditorAutoCompletion(editor: CodeEditor) :
     }
 
     fun requireCompletion() {
-        val cursor = editor.getCursor()
+        val cursor = editor.cursor
         val line = cursor.leftLine
         val col = cursor.leftColumn
-        val text = editor.getText()
+        val text = editor.text
         
         thread?.cancel()
         
-        val lang = editor.editorLanguage
+        val lang = editor.editorLanguage!!
         val publisher = CompletionPublisher(editor.handler, {
-            editor.postInLifecycle {
+            io.github.abc15018045126.sora.util.EditorHandler.post {
+                if (editor.isReleased) return@post
                 val currentThread = thread
                 if (currentThread != null && !currentThread.isCancelled) {
                     onCompletionsProvided(currentThread.publisher.getItems(), false)
                 }
             }
+
         }, lang.interruptionLevel)
 
         val t = CompletionThread(publisher, text, cursor.left(), lang)
+
         thread = t
         t.start()
     }
@@ -208,7 +214,7 @@ class EditorAutoCompletion(editor: CodeEditor) :
     private fun updateCompletionWindowPosition() {
         if (!isShowing) return
         
-        val cursor = editor.getCursor()
+        val cursor = editor.cursor
         val line = cursor.leftLine
         val col = cursor.leftColumn
         
@@ -234,7 +240,9 @@ class EditorAutoCompletion(editor: CodeEditor) :
     }
 
     override fun show() {
-        if (!isEnabled || editor.snippetController.isInSnippet() || !editor.hasFocus() || editor.isInMouseMode) {
+        val snippetController: io.github.abc15018045126.sora.widget.snippet.SnippetController? = editor.snippetController
+        if (!isEnabled || snippetController?.isInSnippet() == true || !editor.hasFocus() || editor.isInMouseMode) {
+
             return
         }
         super.show()
@@ -260,10 +268,11 @@ class EditorAutoCompletion(editor: CodeEditor) :
     }
 
     fun selectCompletion(item: CompletionItem) {
-        val cursor = editor.getCursor()
-        item.performCompletion(editor, editor.getText(), cursor.left())
+        val cursor = editor.cursor!!
+        item.performCompletion(editor, editor.text, cursor.left())
         dismiss()
     }
+
 
     class CompletionThread(
         val publisher: CompletionPublisher,

@@ -4,6 +4,8 @@ import android.animation.ValueAnimator
 import io.github.abc15018045126.sora.widget.CodeEditor
 import io.github.abc15018045126.sora.widget.style.CursorAnimator
 
+import io.github.abc15018045126.sora.widget.layout.Layout
+
 /**
  * Default cursor animation implementation
  *
@@ -27,12 +29,13 @@ class MoveCursorAnimator(private val editor: CodeEditor) : CursorAnimator, Value
     }
 
     override fun markStartPos() {
-        val line = editor.cursor.leftLine
-        val pos = editor.layout.getCharLayoutOffset(line, editor.cursor.leftColumn)
+        val line = editor.cursor!!.leftLine
+        val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
+        val pos = layout.getCharLayoutOffset(line, editor.cursor!!.leftColumn)
         startX = editor.measureTextRegionOffset() + pos[1]
         startY = pos[0] - minusHeight()
-        startSize = getHeightOfRows(editor.layout.getRowCountForLine(line)).toFloat()
-        startBottom = editor.layout.getCharLayoutOffset(line, editor.text.getColumnCount(line))[0]
+        startSize = getHeightOfRows(layout.getRowCountForLine(line)).toFloat()
+        startBottom = layout.getCharLayoutOffset(line, editor.text.getColumnCount(line))[0]
     }
 
     override fun isRunning(): Boolean {
@@ -47,7 +50,7 @@ class MoveCursorAnimator(private val editor: CodeEditor) : CursorAnimator, Value
     }
 
     private fun minusHeight(): Float {
-        return if (editor.props.textBackgroundWrapTextOnly) editor.lineSpacingPixels / 2f else 0f
+        return if (editor.props!!.textBackgroundWrapTextOnly) editor.lineSpacingPixels / 2f else 0f
     }
 
     override fun markEndPos() {
@@ -64,20 +67,21 @@ class MoveCursorAnimator(private val editor: CodeEditor) : CursorAnimator, Value
         if (System.currentTimeMillis() - lastAnimateTime < 100) {
             return
         }
-        val line = editor.cursor.leftLine
+        val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
+        val line = editor.cursor!!.leftLine
         animatorX.removeAllUpdateListeners()
-        val pos = editor.layout.getCharLayoutOffset(editor.cursor.leftLine, editor.cursor.leftColumn)
+        val pos = layout.getCharLayoutOffset(editor.cursor!!.leftLine, editor.cursor!!.leftColumn)
 
         animatorX = ValueAnimator.ofFloat(startX, pos[1] + editor.measureTextRegionOffset())
         animatorY = ValueAnimator.ofFloat(startY, pos[0] - minusHeight())
 
         animatorBackground = ValueAnimator.ofFloat(
             startSize,
-            getHeightOfRows(editor.layout.getRowCountForLine(editor.cursor.leftLine)).toFloat()
+            getHeightOfRows(layout.getRowCountForLine(editor.cursor!!.leftLine)).toFloat()
         )
         animatorBgBottom = ValueAnimator.ofFloat(
             startBottom,
-            editor.layout.getCharLayoutOffset(line, editor.text.getColumnCount(line))[0]
+            layout.getCharLayoutOffset(line, editor.text.getColumnCount(line))[0]
         )
 
         animatorX.addUpdateListener(this)

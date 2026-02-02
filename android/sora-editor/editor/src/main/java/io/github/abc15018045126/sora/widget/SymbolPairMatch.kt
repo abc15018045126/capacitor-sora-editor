@@ -164,7 +164,8 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
         @JvmField
         val close: String
         private var symbolPairEx: SymbolPairEx? = null
-        private var cursorOffset = 0
+        var cursorOffset = 0
+            private set
         var insertOffset = 0
             private set
 
@@ -186,8 +187,9 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
         open fun shouldReplace(editor: CodeEditor): Boolean {
             val ex = symbolPairEx ?: return true
             val content = editor.text
-            val currentLine = content.getLine(editor.cursor.leftLine)
-            return ex.shouldReplace(editor, currentLine, editor.cursor.leftColumn)
+            val currentLine = content.getLine(editor.cursor?.leftLine ?: 0)
+            return ex.shouldReplace(editor, currentLine, editor.cursor?.leftColumn ?: 0)
+
         }
 
         fun shouldDoAutoSurround(content: Content): Boolean {
@@ -200,9 +202,6 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
             insertOffset = offsetIndex
         }
 
-        fun getCursorOffset(): Int {
-            return cursorOffset
-        }
 
         interface SymbolPairEx {
             /**
@@ -249,12 +248,12 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
             putPair('[', SymbolPair("[", "]"))
             putPair('"', SymbolPair("\"", "\"", object : SymbolPair.SymbolPairEx {
                 override fun shouldDoAutoSurround(content: Content): Boolean {
-                    return content.getCursor().isSelected()
+                    return content.cursor.isSelected()
                 }
             }))
             putPair('\'', SymbolPair("'", "'", object : SymbolPair.SymbolPairEx {
                 override fun shouldDoAutoSurround(content: Content): Boolean {
-                    return content.getCursor().isSelected()
+                    return content.cursor.isSelected()
                 }
             }))
         }

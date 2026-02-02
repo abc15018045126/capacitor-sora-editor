@@ -13,7 +13,8 @@ class EditorScroller(@NonNull private val editor: CodeEditor) {
     }
 
     fun startScroll(startX: Int, startY: Int, dx: Int, dy: Int) {
-        startScroll(startX, startY, dx, dy, editor.props.scrollAnimationDurationMs)
+        startScroll(startX, startY, dx, dy, editor.props!!.scrollAnimationDurationMs)
+
     }
 
     fun startScroll(startX: Int, startY: Int, dx: Int, dy: Int, duration: Int) {

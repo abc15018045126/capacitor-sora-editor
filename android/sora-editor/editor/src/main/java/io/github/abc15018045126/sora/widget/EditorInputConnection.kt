@@ -19,6 +19,8 @@ import androidx.annotation.RequiresApi
 import io.github.abc15018045126.sora.event.ContentChangeEvent
 import io.github.abc15018045126.sora.event.ImePrivateCommandEvent
 import io.github.abc15018045126.sora.event.SelectionChangeEvent
+import io.github.abc15018045126.sora.event.EventReceiver
+import io.github.abc15018045126.sora.event.Unsubscribe
 import io.github.abc15018045126.sora.text.CharPosition
 import io.github.abc15018045126.sora.text.ComposingText
 import io.github.abc15018045126.sora.text.Content
@@ -40,16 +42,18 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
     private var connectionInvalid: Boolean = false
 
     init {
-        editor.subscribeEvent(ContentChangeEvent::class.java) { event, _ ->
-            if (event.action == ContentChangeEvent.ACTION_INSERT) {
-                composingText.shiftOnInsert(event.changeStart.index, event.changeEnd.index)
-            } else if (event.action == ContentChangeEvent.ACTION_DELETE) {
-                composingText.shiftOnDelete(event.changeStart.index, event.changeEnd.index)
+        editor.subscribeEvent(ContentChangeEvent::class.java, object : EventReceiver<ContentChangeEvent> {
+            override fun onReceive(event: ContentChangeEvent, unsubscribe: Unsubscribe) {
+                if (event.action == ContentChangeEvent.ACTION_INSERT) {
+                    composingText.shiftOnInsert(event.changeStart.index, event.changeEnd.index)
+                } else if (event.action == ContentChangeEvent.ACTION_DELETE) {
+                    composingText.shiftOnDelete(event.changeStart.index, event.changeEnd.index)
+                }
             }
-        }
+        })
     }
 
-    protected fun markInvalid() {
+    internal fun markInvalid() {
         connectionInvalid = true
         composingText.reset()
         resetBatchEdit()
@@ -59,7 +63,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
     /**
      * Reset the state of this connection
      */
-    protected fun reset() {
+    internal fun reset() {
         resetBatchEdit()
         composingText.reset()
         connectionInvalid = false
@@ -80,7 +84,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
          *
          * @return Cursor
          */
-        get() = editor.cursor
+        get() = editor.cursor!!
 
     override fun commitText(text: CharSequence?, newCursorPosition: Int): Boolean {
         if (DEBUG) logger.d("commitText text = $text, pos = $newCursorPosition")
@@ -132,8 +136,8 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
             mutableEnd = 0
             mutableStart = mutableEnd
         }
-        if (!ignoreIPCLimit && mutableEnd - mutableStart > editor.props.maxIPCTextLength) {
-            mutableEnd = mutableStart + max(0, editor.props.maxIPCTextLength)
+        if (!ignoreIPCLimit && mutableEnd - mutableStart > editor.props!!.maxIPCTextLength) {
+            mutableEnd = mutableStart + max(0, editor.props!!.maxIPCTextLength)
         }
         val sub = origin.subSequence(mutableStart, mutableEnd).toString()
         if (flags == GET_TEXT_WITH_STYLES) {
@@ -172,7 +176,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         return sub
     }
 
-    protected fun getTextRegion(start: Int, end: Int, flags: Int): CharSequence? {
+    internal fun getTextRegion(start: Int, end: Int, flags: Int): CharSequence? {
         try {
             val res = getTextRegionInternal(start, end, flags, false)
             if (DEBUG) logger.d("getTextRegion result:$res")
@@ -195,7 +199,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
     }
 
     override fun getSelectedText(flags: Int): CharSequence? {
-        if (editor.props.disallowSuggestions) {
+        if (editor.props!!.disallowSuggestions) {
             return null
         }
         //This text should be limited because when the user try to select all text
@@ -206,16 +210,16 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
     }
 
     override fun getTextBeforeCursor(length: Int, flags: Int): CharSequence? {
-        if (editor.props.disallowSuggestions) {
+        if (editor.props!!.disallowSuggestions) {
             return ""
         }
         val end = cursor.left
-        val start = max(end - length, end - editor.props.maxIPCTextLength)
+        val start = max(end - length, end - editor.props!!.maxIPCTextLength)
         return getTextRegion(start, end, flags)
     }
 
     override fun getTextAfterCursor(length: Int, flags: Int): CharSequence? {
-        if (editor.props.disallowSuggestions) {
+        if (editor.props!!.disallowSuggestions) {
             return ""
         }
         val end = cursor.right
@@ -242,12 +246,12 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         )
     }
 
-    protected fun commitTextInternal(text: CharSequence, applyAutoIndent: Boolean) {
+    internal fun commitTextInternal(text: CharSequence, applyAutoIndent: Boolean) {
         var mutableText = text
         val composingStateBefore = composingText.isComposing()
         // NOTE: Text styles are ignored by editor
         // Remove composing text first if there is
-        if (editor.props.trackComposingTextOnCommit) {
+        if (editor.props!!.trackComposingTextOnCommit) {
             if (composingText.isComposing()) {
                 val composingStr = editor.text.subSequence(composingText.startIndex, composingText.endIndex).toString()
                 val commitText = mutableText.toString()
@@ -359,7 +363,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
     @Synchronized
     override fun beginBatchEdit(): Boolean {
         if (DEBUG) logger.d("beginBatchEdit")
-        if (editor.props.disallowSuggestions) {
+        if (editor.props!!.disallowSuggestions) {
             return editor.text.isInBatchEdit // Do not start new batch edit layer
         }
         return editor.text.beginBatchEdit()
@@ -387,7 +391,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         if (!editor.isEditable || connectionInvalid || !editor.acceptsComposingText()) {
             return false
         }
-        if (editor.props.disallowSuggestions) {
+        if (editor.props!!.disallowSuggestions) {
             composingText.reset()
             commitText(text, 0)
             //editor.restartInput();
@@ -408,7 +412,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         } else {
             // Already have composing text
             if (composingText.isComposing()) {
-                if (editor.props.minimizeComposingTextUpdate) {
+                if (editor.props!!.minimizeComposingTextUpdate) {
                     setComposingTextCompat(text.toString())
                 } else {
                     editor.text.replace(composingText.startIndex, composingText.endIndex, text)
@@ -445,7 +449,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         if (!editor.isEditable || connectionInvalid) {
             return false
         }
-        if (editor.props.disallowSuggestions) {
+        if (editor.props!!.disallowSuggestions) {
             return false
         }
         composingText.reset()
@@ -469,7 +473,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         var mutableStart = start
         var mutableEnd = end
         if (DEBUG) logger.d("setSelection, s = $mutableStart, e = $mutableEnd")
-        if (!editor.isEditable || connectionInvalid || editor.props.disallowSuggestions) {
+        if (!editor.isEditable || connectionInvalid || editor.props!!.disallowSuggestions) {
             return false
         }
         mutableStart = getWrappedIndex(mutableStart)
@@ -500,7 +504,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         var mutableStart = start
         var mutableEnd = end
         if (DEBUG) logger.d("setComposingRegion, s = $mutableStart, e = $mutableEnd")
-        if (!editor.isEditable || connectionInvalid || !editor.acceptsComposingText() || editor.props.disallowSuggestions) {
+        if (!editor.isEditable || connectionInvalid || !editor.acceptsComposingText() || editor.props!!.disallowSuggestions) {
             return false
         }
         if (mutableStart == mutableEnd) {
@@ -578,7 +582,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
 
     override fun getExtractedText(request: ExtractedTextRequest?, flags: Int): ExtractedText? {
         if (DEBUG) logger.d("getExtractedText, flags = $flags")
-        if (editor.props.disallowSuggestions || editor.props.disableTextExtracting) {
+        if (editor.props!!.disallowSuggestions || editor.props!!.disableTextExtracting) {
             return null
         }
         if ((flags and GET_EXTRACTED_TEXT_MONITOR) != 0) {
@@ -606,7 +610,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
     @RequiresApi(31)
     override fun getSurroundingText(beforeLength: Int, afterLength: Int, flags: Int): SurroundingText? {
         if (DEBUG) logger.d("getSurroundingText, beforeLen = $beforeLength, afterLen = $afterLength")
-        if (editor.props.disallowSuggestions) {
+        if (editor.props!!.disallowSuggestions) {
             return SurroundingText("", 0, 0, -1)
         }
         require(!((beforeLength or afterLength) < 0)) { "length < 0" }

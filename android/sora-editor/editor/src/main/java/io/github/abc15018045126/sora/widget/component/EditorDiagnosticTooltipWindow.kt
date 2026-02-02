@@ -143,8 +143,12 @@ open class EditorDiagnosticTooltipWindow(editor: CodeEditor) : EditorPopupWindow
 
         fun postUpdate(delay: Long = ViewUtils.HOVER_TOOLTIP_SHOW_TIMEOUT) {
             editor.removeCallbacks(callback)
-            editor.postDelayedInLifecycle(callback, delay)
+            io.github.abc15018045126.sora.util.EditorHandler.postDelayed({
+                if (editor.isReleased) return@postDelayed
+                callback.run()
+            }, delay)
         }
+
         eventManager.subscribeAlways<HoverEvent> { e ->
             if (editor.isInMouseMode) {
                 fun updateLastHover() {
@@ -255,10 +259,12 @@ open class EditorDiagnosticTooltipWindow(editor: CodeEditor) : EditorPopupWindow
     }
 
     protected open fun isSelectionVisible(): Boolean {
-        val selection = editor.cursor.left()
-        editor.layout.getCharLayoutOffset(selection.line, selection.column, buffer)
+        val selection = editor.cursor!!.left()
+        val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
+        layout.getCharLayoutOffset(selection.line, selection.column, buffer)
         return buffer[0] >= editor.offsetY && buffer[0] - editor.rowHeight <= editor.offsetY + editor.height && buffer[1] >= editor.offsetX && buffer[1] - 100f /* larger than a single character */ <= editor.offsetX + editor.width
     }
+
 
     protected open fun updateDiagnostic(diagnostic: DiagnosticDetail?, region: DiagnosticRegion?, position: CharPosition?) {
         if (!isEnabled) {

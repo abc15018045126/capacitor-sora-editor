@@ -384,7 +384,7 @@ open class EditorColorScheme @JvmOverloads constructor(private val dark: Boolean
                 val editors = globalDefault.editors.toTypedArray()
                 for (ref in editors) {
                     val editor = ref.get()
-                    editor?.setColorScheme(finalColorScheme)
+                    editor?.colorScheme = finalColorScheme
                 }
             }
             globalDefault = finalColorScheme

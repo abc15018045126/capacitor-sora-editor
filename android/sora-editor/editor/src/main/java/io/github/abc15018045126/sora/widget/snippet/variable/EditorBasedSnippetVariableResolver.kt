@@ -15,19 +15,19 @@ class EditorBasedSnippetVariableResolver(private val editor: CodeEditor) : ISnip
 
     override fun resolve(name: String): String {
         return when (name) {
-            "TM_CURRENT_LINE", "TM_LINE_NUMBER" -> (editor.getCursor().leftLine + 1).toString()
-            "TM_LINE_INDEX" -> editor.getCursor().leftLine.toString()
-            "CURSOR_INDEX" -> editor.getCursor().left.toString()
-            "CURSOR_NUMBER" -> (editor.getCursor().left + 1).toString()
+            "TM_CURRENT_LINE", "TM_LINE_NUMBER" -> (editor.cursor.leftLine + 1).toString()
+            "TM_LINE_INDEX" -> editor.cursor.leftLine.toString()
+            "CURSOR_INDEX" -> editor.cursor.left.toString()
+            "CURSOR_NUMBER" -> (editor.cursor.left + 1).toString()
             "TM_CURRENT_WORD" -> {
                 val text = editor.text
-                val lineIndex = text.getCursor().leftLine
+                val lineIndex = text.cursor.leftLine
                 val line = text.getLine(lineIndex)
-                val res = ICUUtils.getWordRange(line, text.getCursor().leftColumn, true)
+                val res = ICUUtils.getWordRange(line, text.cursor.leftColumn, true)
                 line.subSequence(IntPair.getFirst(res), IntPair.getSecond(res)).toString()
             }
             "SELECTION", "TM_SELECTED_TEXT" -> {
-                val cursor = editor.getCursor()
+                val cursor = editor.cursor
                 editor.text.subSequence(cursor.left, cursor.right).toString()
             }
             else -> throw IllegalArgumentException("Unsupported variable name:$name")
