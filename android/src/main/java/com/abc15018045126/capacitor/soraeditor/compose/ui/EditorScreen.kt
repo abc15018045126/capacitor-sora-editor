@@ -222,7 +222,8 @@ fun SoraEditorView(
     fontFamily: String = "Monospace",
     scrollbarColor: String = "#A0888888",
     showScrollLineInfo: Boolean = true,
-    scrollbarStyle: String = "default"
+    scrollbarStyle: String = "default",
+    isFastMode: Boolean = false
 ) {
     var editorInstance by remember { mutableStateOf<CodeEditor?>(null) }
     
@@ -237,6 +238,7 @@ fun SoraEditorView(
     var lastAppliedEditable by remember { mutableStateOf<Boolean?>(null) }
     var lastAppliedHighlightCurrentLine by remember { mutableStateOf<Boolean?>(null) }
     var lastAppliedShowScrollLineInfo by remember { mutableStateOf<Boolean?>(null) }
+    var lastAppliedFastMode by remember { mutableStateOf<Boolean?>(null) }
 
     // Ensure we always have the latest callbacks even if factory is not re-run
     val currentOnTap by rememberUpdatedState(onTap)
@@ -431,6 +433,7 @@ fun SoraEditorView(
                         renderer?.setVerticalScrollbarThumbDrawable(null)
                         renderer?.setHorizontalScrollbarThumbDrawable(null)
                     }
+                    view.isCursorAnimationEnabled = !isFastMode
                 } catch (e: Exception) {}
                 
                 editorInstance = this
@@ -477,6 +480,10 @@ fun SoraEditorView(
             if (lastAppliedShowScrollLineInfo != showScrollLineInfo) {
                 view.isDisplayLnPanel = showScrollLineInfo
                 lastAppliedShowScrollLineInfo = showScrollLineInfo
+            }
+            if (lastAppliedFastMode != isFastMode) {
+                view.isCursorAnimationEnabled = !isFastMode
+                lastAppliedFastMode = isFastMode
             }
             
             // Update font family
@@ -788,7 +795,8 @@ fun EditorScreen(
                         fontFamily = uiState.fontFamily,
                         scrollbarColor = uiState.scrollbarColor,
                         showScrollLineInfo = uiState.showScrollLineInfo,
-                        scrollbarStyle = uiState.scrollbarStyle
+                        scrollbarStyle = uiState.scrollbarStyle,
+                        isFastMode = uiState.isFastMode
                     )
                 }
                 
@@ -1185,6 +1193,7 @@ fun EditorSettingsScreen(
                 SettingsSwitchItem("自动换行", "自动折行显示", uiState.wordWrap) { viewModel.toggleWordWrap(localContext) }
                 SettingsSwitchItem("高亮当前行", "突出显示光标所在的行", uiState.highlightCurrentLine) { viewModel.setHighlightCurrentLine(localContext, it) }
                 SettingsSwitchItem("自动保存", "编辑时自动保存", uiState.autoSave) { viewModel.setAutoSave(localContext, it) }
+                SettingsSwitchItem("极速模式", "禁用动画（如光标移动）以获得更快的响应", uiState.isFastMode) { viewModel.setFastMode(localContext, it) }
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("字体样式", style = MaterialTheme.typography.titleMedium)

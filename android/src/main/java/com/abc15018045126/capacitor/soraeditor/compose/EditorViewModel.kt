@@ -68,7 +68,8 @@ data class EditorUiState(
     val keyboardAdjust: Boolean = true,
     val symbolBarColor: String = "#F5F5F5",
     val symbolTextColor: String = "#FF000000",
-    val symbolBarStyle: String = "rounded" // "rounded", "flat"
+    val symbolBarStyle: String = "rounded", // "rounded", "flat"
+    val isFastMode: Boolean = false
 )
 
 class EditorViewModel : ViewModel() {
@@ -462,6 +463,11 @@ class EditorViewModel : ViewModel() {
         saveSettings(context)
     }
 
+    fun setFastMode(context: Context, enabled: Boolean) {
+        _uiState.update { it.copy(isFastMode = enabled) }
+        saveSettings(context)
+    }
+
     fun renameFile(newName: String): Boolean {
         val currentFile = File(_uiState.value.filePath)
         val parent = currentFile.parentFile
@@ -542,7 +548,8 @@ class EditorViewModel : ViewModel() {
             keyboardAdjust = true,
             symbolBarColor = "#F5F5F5",
             symbolTextColor = "#FF000000",
-            symbolBarStyle = "rounded"
+            symbolBarStyle = "rounded",
+            isFastMode = false
         ) }
         saveSettings(context)
     }
@@ -594,6 +601,7 @@ class EditorViewModel : ViewModel() {
             put("symbolBarColor", _uiState.value.symbolBarColor)
             put("symbolTextColor", _uiState.value.symbolTextColor)
             put("symbolBarStyle", _uiState.value.symbolBarStyle)
+            put("isFastMode", _uiState.value.isFastMode)
         }
         prefs.edit().putString("settings_json", json.toString()).apply()
     }
@@ -637,7 +645,8 @@ class EditorViewModel : ViewModel() {
             keyboardAdjust = json.optBoolean("keyboardAdjust", true),
             symbolBarColor = json.optString("symbolBarColor", "#F5F5F5"),
             symbolTextColor = json.optString("symbolTextColor", "#FF000000"),
-            symbolBarStyle = json.optString("symbolBarStyle", "rounded")
+            symbolBarStyle = json.optString("symbolBarStyle", "rounded"),
+            isFastMode = json.optBoolean("isFastMode", false)
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -681,7 +690,8 @@ class EditorViewModel : ViewModel() {
                 keyboardAdjust = json.optBoolean("keyboardAdjust", _uiState.value.keyboardAdjust),
                 symbolBarColor = json.optString("symbolBarColor", _uiState.value.symbolBarColor),
                 symbolTextColor = json.optString("symbolTextColor", _uiState.value.symbolTextColor),
-                symbolBarStyle = json.optString("symbolBarStyle", _uiState.value.symbolBarStyle)
+                symbolBarStyle = json.optString("symbolBarStyle", _uiState.value.symbolBarStyle),
+                isFastMode = json.optBoolean("isFastMode", _uiState.value.isFastMode)
             )
             saveSettings(context)
             true
@@ -727,6 +737,7 @@ class EditorViewModel : ViewModel() {
             put("symbolBarColor", _uiState.value.symbolBarColor)
             put("symbolTextColor", _uiState.value.symbolTextColor)
             put("symbolBarStyle", _uiState.value.symbolBarStyle)
+            put("isFastMode", _uiState.value.isFastMode)
         } .toString(4)
     }
 }
