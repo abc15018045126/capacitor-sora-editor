@@ -227,6 +227,7 @@ fun SoraEditorView(
     initialPreviewLines: Int = 20,
     lineNumberAlign: String = "left",
     isLineNumberRightOfDivider: Boolean = false,
+    isLineNumberPinned: Boolean = false,
     lineNumberColor: String = "#FF000000",
     lineDividerColor: String = "#A0888888",
     editorTextColor: String = "auto"
@@ -248,6 +249,7 @@ fun SoraEditorView(
     var lastAppliedInitialPreviewLines by remember { mutableStateOf<Int?>(null) }
     var lastAppliedLineNumberAlign by remember { mutableStateOf("") }
     var lastAppliedIsLineNumberRightOfDivider by remember { mutableStateOf<Boolean?>(null) }
+    var lastAppliedIsLineNumberPinned by remember { mutableStateOf<Boolean?>(null) }
     var lastAppliedLineNumberColor by remember { mutableStateOf("") }
     var lastAppliedLineDividerColor by remember { mutableStateOf("") }
 
@@ -454,6 +456,7 @@ fun SoraEditorView(
                     setInitialPreviewLines(initialPreviewLines)
                     setLineNumberPaintAlign(if (lineNumberAlign == "right") android.graphics.Paint.Align.RIGHT else if (lineNumberAlign == "center") android.graphics.Paint.Align.CENTER else android.graphics.Paint.Align.LEFT)
                     setLineNumberRightOfDivider(isLineNumberRightOfDivider)
+                    setPinLineNumber(isLineNumberPinned)
                     colorScheme.setColor(EditorColorScheme.LINE_NUMBER, android.graphics.Color.parseColor(lineNumberColor))
                     colorScheme.setColor(EditorColorScheme.LINE_DIVIDER, android.graphics.Color.parseColor(lineDividerColor))
                 } catch (e: Exception) {}
@@ -518,6 +521,10 @@ fun SoraEditorView(
             if (lastAppliedIsLineNumberRightOfDivider != isLineNumberRightOfDivider) {
                 view.setLineNumberRightOfDivider(isLineNumberRightOfDivider)
                 lastAppliedIsLineNumberRightOfDivider = isLineNumberRightOfDivider
+            }
+            if (lastAppliedIsLineNumberPinned != isLineNumberPinned) {
+                view.setPinLineNumber(isLineNumberPinned)
+                lastAppliedIsLineNumberPinned = isLineNumberPinned
             }
             if (lastAppliedLineNumberColor != lineNumberColor) {
                 try { view.colorScheme.setColor(EditorColorScheme.LINE_NUMBER, android.graphics.Color.parseColor(lineNumberColor)) } catch(e: Exception) {}
@@ -831,6 +838,7 @@ fun EditorScreen(
                         fontSize = uiState.fontSize,
                         showLineNumbers = uiState.showLineNumbers,
                         wordWrap = uiState.wordWrap,
+                        isLineNumberPinned = uiState.isLineNumberPinned,
                         editable = !uiState.isReadOnly,
                         backgroundColor = uiState.backgroundColor,
                         searchMatchBackgroundColor = uiState.searchMatchBackgroundColor,
@@ -1254,6 +1262,7 @@ fun EditorSettingsScreen(
                 }
 
                 SettingsSwitchItem("显示行号", "在左侧显示行号", uiState.showLineNumbers) { viewModel.toggleLineNumbers(localContext) }
+                SettingsSwitchItem("固定行号", "行号固定不随行移动 (Sticky)", uiState.isLineNumberPinned) { viewModel.toggleLineNumberPinned(localContext) }
                 SettingsSwitchItem("自动换行", "自动折行显示", uiState.wordWrap) { viewModel.toggleWordWrap(localContext) }
                 SettingsSwitchItem("高亮当前行", "突出显示光标所在的行", uiState.highlightCurrentLine) { viewModel.setHighlightCurrentLine(localContext, it) }
                 SettingsSwitchItem("行号位于竖线右侧", "将行号显示在分隔线右侧（靠近代码）", uiState.isLineNumberRightOfDivider) { viewModel.setLineNumberRightOfDivider(localContext, it) }

@@ -73,6 +73,7 @@ data class EditorUiState(
     val initialPreviewLines: Int = 20,
     val lineNumberAlign: String = "left", // "left", "right", "center"
     val isLineNumberRightOfDivider: Boolean = false,
+    val isLineNumberPinned: Boolean = false,
     val lineNumberColor: String = "#FF000000",
     val lineDividerColor: String = "#A0888888",
     val editorTextColor: String = "auto"
@@ -158,6 +159,11 @@ class EditorViewModel : ViewModel() {
         if (_uiState.value.autoSave) {
             queueAutoSave(context)
         }
+    }
+
+    fun toggleLineNumberPinned(context: Context) {
+        _uiState.update { it.copy(isLineNumberPinned = !it.isLineNumberPinned) }
+        saveSettings(context)
     }
 
     private fun queueAutoSave(context: Context) {
@@ -584,6 +590,7 @@ class EditorViewModel : ViewModel() {
             initialPreviewLines = 20,
             lineNumberAlign = "left",
             isLineNumberRightOfDivider = false,
+            isLineNumberPinned = false,
             lineNumberColor = "#FF000000",
             lineDividerColor = "#A0888888",
             editorTextColor = "auto"
@@ -642,6 +649,7 @@ class EditorViewModel : ViewModel() {
             put("initialPreviewLines", _uiState.value.initialPreviewLines)
             put("lineNumberAlign", _uiState.value.lineNumberAlign)
             put("isLineNumberRightOfDivider", _uiState.value.isLineNumberRightOfDivider)
+            put("isLineNumberPinned", _uiState.value.isLineNumberPinned)
             put("lineNumberColor", _uiState.value.lineNumberColor)
             put("lineDividerColor", _uiState.value.lineDividerColor)
             put("editorTextColor", _uiState.value.editorTextColor)
@@ -693,6 +701,7 @@ class EditorViewModel : ViewModel() {
             initialPreviewLines = json.optInt("initialPreviewLines", 20),
             lineNumberAlign = json.optString("lineNumberAlign", "left"),
             isLineNumberRightOfDivider = json.optBoolean("isLineNumberRightOfDivider", false),
+            isLineNumberPinned = json.optBoolean("isLineNumberPinned", false),
             lineNumberColor = json.optString("lineNumberColor", "#FF000000"),
             lineDividerColor = json.optString("lineDividerColor", "#A0888888"),
             editorTextColor = json.optString("editorTextColor", "auto")
@@ -744,6 +753,7 @@ class EditorViewModel : ViewModel() {
                 initialPreviewLines = json.optInt("initialPreviewLines", _uiState.value.initialPreviewLines),
                 lineNumberAlign = json.optString("lineNumberAlign", _uiState.value.lineNumberAlign),
                 isLineNumberRightOfDivider = json.optBoolean("isLineNumberRightOfDivider", _uiState.value.isLineNumberRightOfDivider),
+                isLineNumberPinned = json.optBoolean("isLineNumberPinned", _uiState.value.isLineNumberPinned),
                 lineNumberColor = json.optString("lineNumberColor", _uiState.value.lineNumberColor),
                 lineDividerColor = json.optString("lineDividerColor", _uiState.value.lineDividerColor),
                 editorTextColor = json.optString("editorTextColor", _uiState.value.editorTextColor)

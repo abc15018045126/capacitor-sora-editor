@@ -497,7 +497,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
             editor.handleDescRight!!.setEmpty()
         }
 
-        val lineNumberNotPinned = editor.isLineNumberEnabled && (editor.isWordwrap || !editor.isLineNumberPinned)
+        val lineNumberNotPinned = editor.isLineNumberEnabled && !editor.isLineNumberPinned
 
         val postDrawLineNumbers: LongArrayList = this.postDrawLineNumbers
         postDrawLineNumbers.clear()
@@ -505,7 +505,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         postDrawCurrentLines.clear()
         val postDrawCursor: MutableList<DrawCursorTask?> = ArrayList(3)
         val firstLn: MutableInt? =
-            if (editor.isFirstLineNumberAlwaysVisible && editor.isWordwrap) MutableInt(-1) else null
+            if (editor.isFirstLineNumberAlwaysVisible && editor.isWordwrap && !editor.isLineNumberPinned) MutableInt(-1) else null
 
         canvas.save()
         val stuckLineBottom = getStuckLineBottom(stuckLines)
