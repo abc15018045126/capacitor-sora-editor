@@ -24,7 +24,8 @@ enum class LineSeparator(val content: String) {
     /**
      * Unknown or no line separator
      */
-    NONE("");
+    NONE(""),
+    ;
 
     val length: Int
         get() = content.length
@@ -34,7 +35,11 @@ enum class LineSeparator(val content: String) {
 
     companion object {
         @JvmStatic
-        fun fromSeparatorString(text: CharSequence, start: Int, end: Int): LineSeparator {
+        fun fromSeparatorString(
+            text: CharSequence,
+            start: Int,
+            end: Int,
+        ): LineSeparator {
             val len = end - start
             if (len == 1) {
                 val ch = text[start]

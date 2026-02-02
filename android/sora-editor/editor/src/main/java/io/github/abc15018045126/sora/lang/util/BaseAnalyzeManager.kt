@@ -12,7 +12,6 @@ import io.github.abc15018045126.sora.text.ContentReference
  * @author abc15018045126
  */
 abstract class BaseAnalyzeManager : AnalyzeManager {
-
     override var receiver: StyleReceiver? = null
 
     /**
@@ -28,7 +27,10 @@ abstract class BaseAnalyzeManager : AnalyzeManager {
         private set
 
     @CallSuper
-    override fun reset(content: ContentReference, extraArguments: Bundle) {
+    override fun reset(
+        content: ContentReference,
+        extraArguments: Bundle,
+    ) {
         this.extraArguments = extraArguments
         this.contentRef = content
         rerun()
@@ -40,5 +42,4 @@ abstract class BaseAnalyzeManager : AnalyzeManager {
         this.contentRef = null
         this.extraArguments = null
     }
-
 }

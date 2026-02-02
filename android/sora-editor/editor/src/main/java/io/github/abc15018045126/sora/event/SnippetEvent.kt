@@ -19,9 +19,8 @@ class SnippetEvent(
     editor: CodeEditor,
     val action: Int,
     val currentTabStop: Int,
-    val totalTabStop: Int
+    val totalTabStop: Int,
 ) : Event(editor) {
-
     companion object {
         /**
          * Called before controller shifts to any tab stop

@@ -8,7 +8,7 @@ class NewlineHandleResult(
     /**
      * Count to shift left from the end of {@link NewlineHandleResult#text}
      */
-    @JvmField val shiftLeft: Int
+    @JvmField val shiftLeft: Int,
 ) {
     init {
         if (shiftLeft < 0 || shiftLeft > text.length) {

@@ -1,7 +1,6 @@
 package io.github.abc15018045126.sora.lang.completion.snippet
 
 class PlaceholderItem : SnippetItem {
-
     var definition: PlaceholderDefinition
     private var text: String? = null
 

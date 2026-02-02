@@ -1,11 +1,11 @@
 package io.github.abc15018045126.sora.lang.completion
 
 import android.os.Handler
+import io.github.abc15018045126.sora.lang.Language
 import java.util.ArrayList
 import java.util.Collections
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
-import io.github.abc15018045126.sora.lang.Language
 
 /**
  * CompletionPublisher manages completion items to be added in one completion analyzing process.
@@ -34,9 +34,8 @@ import io.github.abc15018045126.sora.lang.Language
 class CompletionPublisher(
     private val handler: Handler,
     private val callback: Runnable,
-    private val languageInterruptionLevel: Int
+    private val languageInterruptionLevel: Int,
 ) {
-
     companion object {
         /**
          * Default value for [CompletionPublisher.setUpdateThreshold]

@@ -25,7 +25,6 @@
 package io.github.abc15018045126.sora.util
 
 interface ShareableData<T> : Cloneable {
-
     /**
      * Declare that the object is retained by an owner
      */
@@ -46,5 +45,4 @@ interface ShareableData<T> : Cloneable {
      * Otherwise, the object is cloned and the cloned object is returned.
      */
     fun toMutable(): T
-
 }

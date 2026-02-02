@@ -28,7 +28,6 @@ import androidx.collection.IntSet
 import io.github.abc15018045126.sora.lang.analysis.StyleUpdateRange
 
 class IntSetUpdateRange(val lineSet: IntSet) : StyleUpdateRange {
-
     val lines = IntArray(lineSet.size)
 
     init {
@@ -51,8 +50,6 @@ class IntSetUpdateRange(val lineSet: IntSet) : StyleUpdateRange {
             }
 
             override fun hasNext() = index < lines.size
-
         }
     }
-
 }

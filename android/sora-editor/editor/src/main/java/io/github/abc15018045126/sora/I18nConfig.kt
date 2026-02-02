@@ -12,14 +12,16 @@ import android.util.SparseIntArray
  * @author abc15018045126
  */
 object I18nConfig {
-
     private val mapping = SparseIntArray()
 
     /**
      * Map the given editor resId to new one
      */
     @JvmStatic
-    fun mapTo(originalResId: Int, newResId: Int) {
+    fun mapTo(
+        originalResId: Int,
+        newResId: Int,
+    ) {
         mapping.put(originalResId, newResId)
     }
 
@@ -36,7 +38,10 @@ object I18nConfig {
      * Get mapped resource string
      */
     @JvmStatic
-    fun getString(context: Context, resId: Int): String {
+    fun getString(
+        context: Context,
+        resId: Int,
+    ): String {
         return context.getString(getResourceId(resId))
     }
 }

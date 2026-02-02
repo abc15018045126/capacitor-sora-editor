@@ -6,7 +6,6 @@ package io.github.abc15018045126.sora.widget.schemes
  * Thanks to liyujiang-gzu (GitHub @liyujiang-gzu)
  */
 class SchemeEclipse : EditorColorScheme() {
-
     override fun applyDefault() {
         super.applyDefault()
         setColor(ANNOTATION, 0xff646464.toInt())

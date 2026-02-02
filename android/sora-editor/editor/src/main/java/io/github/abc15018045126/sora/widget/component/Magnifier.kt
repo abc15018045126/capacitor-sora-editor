@@ -31,7 +31,6 @@ import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
  * @author abc15018045126
  */
 class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
-
     private val eventManager = view.createSubEventManager()
     private val popup = PopupWindow()
     private val image: ImageView
@@ -62,11 +61,12 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
         popup.height = (view.dpUnit * 70).toInt()
         popup.width = (view.dpUnit * 100).toInt()
         popup.contentView = contentView
-        maxTextSize = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_SP,
-            28f,
-            contentView.resources.displayMetrics
-        )
+        maxTextSize =
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_SP,
+                28f,
+                contentView.resources.displayMetrics,
+            )
         applyBackgroundTint()
         eventManager.subscribeAlways(ColorSchemeUpdateEvent::class.java) {
             applyBackgroundTint()
@@ -109,7 +109,9 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
      *
      * @param scaleFactor Scale factor. Must not be under 1.0
      */
-    fun setScaleFactor(@FloatRange(from = 1.0, fromInclusive = false) scaleFactor: Float) {
+    fun setScaleFactor(
+        @FloatRange(from = 1.0, fromInclusive = false) scaleFactor: Float,
+    ) {
         if (scaleFactor <= 1.0f) {
             throw IllegalArgumentException("factor can not be under 1.0")
         }
@@ -121,7 +123,9 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
      *
      * @param maxTextSize Text size in px
      */
-    fun setMaxTextSize(@Px maxTextSize: Float) {
+    fun setMaxTextSize(
+        @Px maxTextSize: Float,
+    ) {
         this.maxTextSize = maxTextSize
     }
 
@@ -151,7 +155,10 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
      * Show the magnifier according to the given position.
      * X and Y are relative to the code editor view
      */
-    fun show(x: Int, y: Int) {
+    fun show(
+        x: Int,
+        y: Int,
+    ) {
         if (!isEnabled) {
             return
         }
@@ -275,7 +282,7 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
                             popup.height.toFloat(),
                             view.dpUnit * roundFactor,
                             view.dpUnit * roundFactor,
-                            paint
+                            paint,
                         )
                         paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
                         canvas.drawBitmap(scaled, 0f, 0f, paint)
@@ -286,7 +293,7 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
                         Log.w("Magnifier", "Failed to copy pixels, error = $statusCode")
                     }
                 },
-                view.handler
+                view.handler,
             )
         } catch (e: IllegalArgumentException) {
             dismiss()
@@ -342,7 +349,7 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
             popup.height.toFloat(),
             view.dpUnit * roundFactor,
             view.dpUnit * roundFactor,
-            paint
+            paint,
         )
         paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
         canvas.drawBitmap(scaled, 0f, 0f, paint)
@@ -350,5 +357,4 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
 
         image.setImageBitmap(dest)
     }
-
 }

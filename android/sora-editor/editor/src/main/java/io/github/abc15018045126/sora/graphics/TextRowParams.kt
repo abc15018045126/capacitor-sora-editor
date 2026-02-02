@@ -43,20 +43,21 @@ data class TextRowParams(
     val colorScheme: EditorColorScheme,
     val miscPaint: Paint,
     val graphPaint: Paint,
-    val graphMetrics: Paint.FontMetricsInt
+    val graphMetrics: Paint.FontMetricsInt,
 ) {
-    fun toInlayHintRenderParams() = InlayHintRenderParams(
-        tabWidth,
-        textMetrics,
-        textTop,
-        textBottom,
-        textHeight,
-        textBaseline,
-        rowTop,
-        rowBottom,
-        rowHeight,
-        roundTextBackgroundFactor
-    )
+    fun toInlayHintRenderParams() =
+        InlayHintRenderParams(
+            tabWidth,
+            textMetrics,
+            textTop,
+            textBottom,
+            textHeight,
+            textBaseline,
+            rowTop,
+            rowBottom,
+            rowHeight,
+            roundTextBackgroundFactor,
+        )
 }
 
 data class InlayHintRenderParams(
@@ -69,5 +70,5 @@ data class InlayHintRenderParams(
     val rowTop: Int,
     val rowBottom: Int,
     val rowHeight: Int,
-    val roundTextBackgroundFactor: Float
+    val roundTextBackgroundFactor: Float,
 )

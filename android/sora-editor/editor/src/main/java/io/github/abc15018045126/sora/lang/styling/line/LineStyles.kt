@@ -30,7 +30,6 @@ package io.github.abc15018045126.sora.lang.styling.line
  * @author abc15018045126
  */
 class LineStyles(override var line: Int) : LineAnchorStyle(line) {
-
     private val styles = mutableListOf<LineAnchorStyle>()
 
     /**
@@ -81,5 +80,4 @@ class LineStyles(override var line: Int) : LineAnchorStyle(line) {
     fun typedElementCount(type: Class<Any>): Int {
         return styles.filter { type.isInstance(it) }.size
     }
-
 }

@@ -3,8 +3,9 @@ package io.github.abc15018045126.sora.widget
 import android.widget.OverScroller
 import androidx.annotation.NonNull
 
-class EditorScroller(@NonNull private val editor: CodeEditor) {
-
+class EditorScroller(
+    @NonNull private val editor: CodeEditor,
+) {
     private val scroller: OverScroller = OverScroller(editor.context)
 
     fun setEditorOffsets() {
@@ -12,12 +13,22 @@ class EditorScroller(@NonNull private val editor: CodeEditor) {
         editor.scrollY = scroller.currY
     }
 
-    fun startScroll(startX: Int, startY: Int, dx: Int, dy: Int) {
+    fun startScroll(
+        startX: Int,
+        startY: Int,
+        dx: Int,
+        dy: Int,
+    ) {
         startScroll(startX, startY, dx, dy, editor.props!!.scrollAnimationDurationMs)
-
     }
 
-    fun startScroll(startX: Int, startY: Int, dx: Int, dy: Int, duration: Int) {
+    fun startScroll(
+        startX: Int,
+        startY: Int,
+        dx: Int,
+        dy: Int,
+        duration: Int,
+    ) {
         scroller.startScroll(startX, startY, dx, dy, duration)
         setEditorOffsets()
     }
@@ -72,8 +83,16 @@ class EditorScroller(@NonNull private val editor: CodeEditor) {
     }
 
     fun fling(
-        startX: Int, startY: Int, velocityX: Int, velocityY: Int,
-        minX: Int, maxX: Int, minY: Int, maxY: Int, overX: Int, overY: Int
+        startX: Int,
+        startY: Int,
+        velocityX: Int,
+        velocityY: Int,
+        minX: Int,
+        maxX: Int,
+        minY: Int,
+        maxY: Int,
+        overX: Int,
+        overY: Int,
     ) {
         scroller.fling(startX, startY, velocityX, velocityY, minX, maxX, minY, maxY, overX, overY)
         setEditorOffsets()

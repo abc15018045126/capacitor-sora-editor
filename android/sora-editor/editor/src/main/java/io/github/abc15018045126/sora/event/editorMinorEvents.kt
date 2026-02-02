@@ -119,7 +119,7 @@ class HoverEvent(
  * Triggered when drag selecting is stopped
  */
 class DragSelectStopEvent(
-    editor: CodeEditor
+    editor: CodeEditor,
 ) : Event(editor)
 
 /**
@@ -130,7 +130,7 @@ class DragSelectStopEvent(
 class CreateContextMenuEvent(
     editor: CodeEditor,
     val menu: ContextMenu,
-    val position: CharPosition
+    val position: CharPosition,
 ) : Event(editor)
 
 /**
@@ -141,7 +141,7 @@ class CreateContextMenuEvent(
 class TextSizeChangeEvent(
     editor: CodeEditor,
     val oldTextSize: Float,
-    val newTextSize: Float
+    val newTextSize: Float,
 ) : Event(editor)
 
 /**
@@ -151,9 +151,7 @@ class TextSizeChangeEvent(
  * @author abc15018045126
  */
 class PublishSearchResultEvent(editor: CodeEditor) : Event(editor) {
-
     fun getSearcher() = editor.searcher
-
 }
 
 /**

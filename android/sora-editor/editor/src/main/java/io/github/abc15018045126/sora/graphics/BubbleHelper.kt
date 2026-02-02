@@ -11,7 +11,6 @@ import kotlin.math.sqrt
  * @author abc15018045126
  */
 object BubbleHelper {
-
     private val tempMatrix = Matrix()
 
     /**
@@ -20,7 +19,10 @@ object BubbleHelper {
      * @param bounds The bounds for the bubble
      */
     @JvmStatic
-    fun buildBubblePath(path: Path, bounds: RectF) {
+    fun buildBubblePath(
+        path: Path,
+        bounds: RectF,
+    ) {
         path.reset()
 
         var width = bounds.width()
@@ -49,11 +51,16 @@ object BubbleHelper {
         centerY: Float,
         radius: Float,
         startAngle: Float,
-        sweepAngle: Float
+        sweepAngle: Float,
     ) {
         path.arcTo(
-            centerX - radius, centerY - radius, centerX + radius, centerY + radius,
-            startAngle, sweepAngle, false
+            centerX - radius,
+            centerY - radius,
+            centerX + radius,
+            centerY + radius,
+            startAngle,
+            sweepAngle,
+            false,
         )
     }
 }

@@ -9,7 +9,6 @@ import io.github.abc15018045126.sora.annotations.UnsupportedUserUsage
  * @author abc15018045126
  */
 interface ContentListener {
-
     /**
      * This is to notify you that you will receive [ContentListener.afterDelete]
      * and [ContentListener.afterInsert] calls.
@@ -36,7 +35,7 @@ interface ContentListener {
         startColumn: Int,
         endLine: Int,
         endColumn: Int,
-        insertedContent: CharSequence
+        insertedContent: CharSequence,
     )
 
     /**
@@ -55,7 +54,7 @@ interface ContentListener {
         startColumn: Int,
         endLine: Int,
         endColumn: Int,
-        deletedContent: CharSequence
+        deletedContent: CharSequence,
     )
 
     /**

@@ -9,7 +9,6 @@ import io.github.abc15018045126.sora.lang.styling.Span
  * @param <T> Token type
  */
 interface IncrementalAnalyzeManager<S, T> : AnalyzeManager {
-
     /**
      * Get the initial at document start
      */
@@ -24,14 +23,21 @@ interface IncrementalAnalyzeManager<S, T> : AnalyzeManager {
      * Compare the two states.
      * Return true if they equal
      */
-    fun stateEquals(state: S, another: S): Boolean
+    fun stateEquals(
+        state: S,
+        another: S,
+    ): Boolean
 
     /**
      * Tokenize for the given line
      *
      * @param lineIndex -1 for unknown
      */
-    fun tokenizeLine(line: CharSequence, state: S, lineIndex: Int): LineTokenizeResult<S, T>
+    fun tokenizeLine(
+        line: CharSequence,
+        state: S,
+        lineIndex: Int,
+    ): LineTokenizeResult<S, T>
 
     /**
      * Generate spans for the line
@@ -52,7 +58,6 @@ interface IncrementalAnalyzeManager<S, T> : AnalyzeManager {
      * Saved state
      */
     class LineTokenizeResult<S_, T_> {
-
         /**
          * State at line end
          */
@@ -87,7 +92,5 @@ interface IncrementalAnalyzeManager<S, T> : AnalyzeManager {
             spans = null
             return this
         }
-
     }
-
 }

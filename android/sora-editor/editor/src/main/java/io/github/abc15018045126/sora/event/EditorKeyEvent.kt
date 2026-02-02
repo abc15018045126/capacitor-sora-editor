@@ -18,9 +18,8 @@ import io.github.abc15018045126.sora.widget.CodeEditor
 open class EditorKeyEvent(
     editor: CodeEditor,
     private val src: KeyEvent,
-    val eventType: Type
+    val eventType: Type,
 ) : ResultedEvent<Boolean>(editor) {
-
     private val shiftPressed: Boolean = editor.getKeyMetaStates().isShiftPressed
     private val altPressed: Boolean = editor.getKeyMetaStates().isAltPressed
 
@@ -98,6 +97,6 @@ open class EditorKeyEvent(
         /**
          * Used for {@link CodeEditor#onKeyMultiple(int, int, KeyEvent)}.
          */
-        MULTIPLE
+        MULTIPLE,
     }
 }

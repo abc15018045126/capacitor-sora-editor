@@ -3,7 +3,6 @@ package io.github.abc15018045126.sora.widget.snippet.variable
 import android.content.ClipboardManager
 
 class ClipboardBasedSnippetVariableResolver(private val clipboardManager: ClipboardManager?) : ISnippetVariableResolver {
-
     override fun getResolvableNames(): Array<String> {
         return arrayOf("CLIPBOARD")
     }

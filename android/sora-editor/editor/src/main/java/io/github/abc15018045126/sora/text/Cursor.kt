@@ -8,7 +8,6 @@ import io.github.abc15018045126.sora.util.IntPair
  * @author abc15018045126
  */
 class Cursor(private val content: Content) {
-
     private val indexer: CachedIndexer = CachedIndexer(content)
     private var leftSel: CharPosition = CharPosition().toBOF()
     private var rightSel: CharPosition = CharPosition().toBOF()
@@ -24,7 +23,10 @@ class Cursor(private val content: Content) {
      * @param line   The line position
      * @param column The column position
      */
-    fun set(line: Int, column: Int) {
+    fun set(
+        line: Int,
+        column: Int,
+    ) {
         setLeft(line, column)
         setRight(line, column)
     }
@@ -35,7 +37,10 @@ class Cursor(private val content: Content) {
      * @param line   The line position
      * @param column The column position
      */
-    fun setLeft(line: Int, column: Int) {
+    fun setLeft(
+        line: Int,
+        column: Int,
+    ) {
         leftSel = indexer.getCharPosition(line, column).fromThis()
     }
 
@@ -45,7 +50,10 @@ class Cursor(private val content: Content) {
      * @param line   The line position
      * @param column The column position
      */
-    fun setRight(line: Int, column: Int) {
+    fun setRight(
+        line: Int,
+        column: Int,
+    ) {
         rightSel = indexer.getCharPosition(line, column).fromThis()
     }
 
@@ -88,7 +96,10 @@ class Cursor(private val content: Content) {
      * @param column The column to query
      * @return Whether is in selected region
      */
-    fun isInSelectedRegion(line: Int, column: Int): Boolean {
+    fun isInSelectedRegion(
+        line: Int,
+        column: Int,
+    ): Boolean {
         if (line in leftLine..rightLine) {
             var yes = true
             if (line == leftLine) {
@@ -236,7 +247,10 @@ class Cursor(private val content: Content) {
      * @param startLine   Start line
      * @param startColumn Start column
      */
-    internal fun beforeInsert(startLine: Int, startColumn: Int) {
+    internal fun beforeInsert(
+        startLine: Int,
+        startColumn: Int,
+    ) {
         cache0 = indexer.getCharPosition(startLine, startColumn).fromThis()
     }
 
@@ -248,7 +262,12 @@ class Cursor(private val content: Content) {
      * @param endLine     End line
      * @param endColumn   End column
      */
-    internal fun beforeDelete(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int) {
+    internal fun beforeDelete(
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+    ) {
         cache1 = indexer.getCharPosition(startLine, startColumn).fromThis()
         cache2 = indexer.getCharPosition(endLine, endColumn).fromThis()
     }
@@ -270,8 +289,11 @@ class Cursor(private val content: Content) {
      * @param insertedContent Inserted content
      */
     internal fun afterInsert(
-        startLine: Int, startColumn: Int, endLine: Int, endColumn: Int,
-        insertedContent: CharSequence
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+        insertedContent: CharSequence,
     ) {
         indexer.afterInsert(content, startLine, startColumn, endLine, endColumn, insertedContent)
         val beginIdx = cache0?.index ?: 0
@@ -293,8 +315,11 @@ class Cursor(private val content: Content) {
      * @param deletedContent Deleted content
      */
     internal fun afterDelete(
-        startLine: Int, startColumn: Int, endLine: Int, endColumn: Int,
-        deletedContent: CharSequence
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+        deletedContent: CharSequence,
     ) {
         indexer.afterDelete(content, startLine, startColumn, endLine, endColumn, deletedContent)
         val beginIdx = cache1?.index ?: 0

@@ -4,10 +4,11 @@ import java.util.Random
 import java.util.UUID
 
 class RandomBasedSnippetVariableResolver : ISnippetVariableResolver {
-
     override fun getResolvableNames(): Array<String> {
         return arrayOf(
-            "RANDOM", "RANDOM_HEX", "UUID"
+            "RANDOM",
+            "RANDOM_HEX",
+            "UUID",
         )
     }
 

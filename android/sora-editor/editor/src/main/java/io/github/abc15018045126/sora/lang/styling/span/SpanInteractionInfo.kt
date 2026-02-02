@@ -28,7 +28,6 @@ package io.github.abc15018045126.sora.lang.styling.span
  * Interaction attributes for a [Span].
  */
 interface SpanInteractionInfo : SpanExt {
-
     fun isClickable(): Boolean
 
     fun isLongClickable(): Boolean
@@ -36,5 +35,4 @@ interface SpanInteractionInfo : SpanExt {
     fun isDoubleClickable(): Boolean
 
     fun getData(): Any?
-
 }

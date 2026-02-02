@@ -32,17 +32,14 @@ import java.util.regex.Pattern
  * @author abc15018045126
  */
 open class EditorSearcher(private val editor: CodeEditor) {
-
     @JvmField
     internal var currentPattern: String? = null
 
     @JvmField
     internal var searchOptions: SearchOptions? = null
 
-
     @JvmField
     internal var currentThread: Thread? = null
-
 
     /**
      * Search results. Note that it is naturally sorted by start index (and also end index).
@@ -50,7 +47,6 @@ open class EditorSearcher(private val editor: CodeEditor) {
      */
     @JvmField
     internal var lastResults: LongArrayList? = null
-
 
     var isCyclicJumping: Boolean = true
 
@@ -75,7 +71,10 @@ open class EditorSearcher(private val editor: CodeEditor) {
      * @throws IllegalArgumentException if pattern length is zero
      * @throws java.util.regex.PatternSyntaxException if pattern is invalid when regex is enabled.
      */
-    fun search(pattern: String, options: SearchOptions) {
+    fun search(
+        pattern: String,
+        options: SearchOptions,
+    ) {
         if (pattern.isEmpty()) {
             throw IllegalArgumentException("pattern length must be > 0")
         }
@@ -199,7 +198,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
                     pos1.column,
                     pos2.line,
                     pos2.column,
-                    SelectionChangeEvent.CAUSE_SEARCH
+                    SelectionChangeEvent.CAUSE_SEARCH,
                 )
                 return true
             }
@@ -239,7 +238,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
                     pos1.column,
                     pos2.line,
                     pos2.column,
-                    SelectionChangeEvent.CAUSE_SEARCH
+                    SelectionChangeEvent.CAUSE_SEARCH,
                 )
                 return true
             }
@@ -278,19 +277,21 @@ open class EditorSearcher(private val editor: CodeEditor) {
                     val cursor = editor.cursor!!
                     val currentText = editor.text.substring(cursor.left, cursor.right)
 
-                    val pattern = Pattern.compile(
-                        currentPattern!!,
-                        (if (options.caseInsensitive) Pattern.CASE_INSENSITIVE else 0) or Pattern.MULTILINE
-                    )
+                    val pattern =
+                        Pattern.compile(
+                            currentPattern!!,
+                            (if (options.caseInsensitive) Pattern.CASE_INSENSITIVE else 0) or Pattern.MULTILINE,
+                        )
                     val matcher = pattern.matcher(currentText)
                     if (!matcher.find()) {
                         return
                     }
-                    finalReplacement = RegexBackrefHelper.computeReplacement(
-                        matcher,
-                        options.regexBackrefGrammar,
-                        replacement
-                    )
+                    finalReplacement =
+                        RegexBackrefHelper.computeReplacement(
+                            matcher,
+                            options.regexBackrefGrammar,
+                            replacement,
+                        )
                 }
                 editor.commitText(finalReplacement, false, false)
             }
@@ -306,7 +307,10 @@ open class EditorSearcher(private val editor: CodeEditor) {
      * @throws IllegalStateException if no search is in progress
      */
     @JvmOverloads
-    fun replaceAll(replacement: String, whenSucceeded: Runnable? = null) {
+    fun replaceAll(
+        replacement: String,
+        whenSucceeded: Runnable? = null,
+    ) {
         if (!editor.isEditable) {
             return
         }
@@ -315,18 +319,19 @@ open class EditorSearcher(private val editor: CodeEditor) {
             Toast.makeText(
                 editor.context,
                 I18nConfig.getResourceId(R.string.sora_editor_editor_search_busy),
-                Toast.LENGTH_SHORT
+                Toast.LENGTH_SHORT,
             ).show()
             return
         }
         val context = editor.context
-        val dialog = ProgressDialog.show(
-            context,
-            I18nConfig.getString(context, R.string.sora_editor_replaceAll),
-            I18nConfig.getString(context, R.string.sora_editor_editor_search_replacing),
-            true,
-            false
-        )
+        val dialog =
+            ProgressDialog.show(
+                context,
+                I18nConfig.getString(context, R.string.sora_editor_replaceAll),
+                I18nConfig.getString(context, R.string.sora_editor_editor_search_replacing),
+                true,
+                false,
+            )
         val res = lastResults!!
         val options = searchOptions!!
         val patternStr = currentPattern!!
@@ -335,10 +340,11 @@ open class EditorSearcher(private val editor: CodeEditor) {
                 val sb = editor.text.toStringBuilder()
                 val backrefGrammar = options.regexBackrefGrammar
                 if (options.type == SearchOptions.TYPE_REGULAR_EXPRESSION && backrefGrammar != null) {
-                    val regex = Pattern.compile(
-                        patternStr,
-                        (if (options.caseInsensitive) Pattern.CASE_INSENSITIVE else 0) or Pattern.MULTILINE
-                    )
+                    val regex =
+                        Pattern.compile(
+                            patternStr,
+                            (if (options.caseInsensitive) Pattern.CASE_INSENSITIVE else 0) or Pattern.MULTILINE,
+                        )
                     var matcher: java.util.regex.Matcher? = null
                     var tokens: List<RegexBackrefToken>? = null
                     var delta = 0
@@ -357,10 +363,11 @@ open class EditorSearcher(private val editor: CodeEditor) {
                             continue
                         }
                         if (tokens == null) {
-                            tokens = RegexBackrefParser(backrefGrammar).parse(
-                                replacement,
-                                matcher.groupCount()
-                            )
+                            tokens =
+                                RegexBackrefParser(backrefGrammar).parse(
+                                    replacement,
+                                    matcher.groupCount(),
+                                )
                         }
                         val computedReplacement = RegexBackrefHelper.computeReplacement(matcher, tokens)
                         val newLength = computedReplacement.length
@@ -389,7 +396,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
                         0,
                         editor.lineCount - 1,
                         editor.text.getColumnCount(editor.lineCount - 1),
-                        sb
+                        sb,
                     )
 
                     editor.setSelectionAround(pos.line, pos.column)
@@ -412,43 +419,44 @@ open class EditorSearcher(private val editor: CodeEditor) {
         return currentThread == null || !currentThread!!.isAlive
     }
 
-
     /**
      * Search options for [EditorSearcher.search]
      */
-    class SearchOptions @JvmOverloads constructor(
-        @field:IntRange(from = 1, to = 3) @get:IntRange(from = 1, to = 3) val type: Int,
-        val caseInsensitive: Boolean,
-        val regexBackrefGrammar: RegexBackrefGrammar? = null
-    ) {
-        companion object {
-            /**
-             * Normal text searching
-             */
-            const val TYPE_NORMAL = 1
+    class SearchOptions
+        @JvmOverloads
+        constructor(
+            @field:IntRange(from = 1, to = 3) @get:IntRange(from = 1, to = 3) val type: Int,
+            val caseInsensitive: Boolean,
+            val regexBackrefGrammar: RegexBackrefGrammar? = null,
+        ) {
+            companion object {
+                /**
+                 * Normal text searching
+                 */
+                const val TYPE_NORMAL = 1
 
-            /**
-             * Text searching by whole word
-             */
-            const val TYPE_WHOLE_WORD = 2
+                /**
+                 * Text searching by whole word
+                 */
+                const val TYPE_WHOLE_WORD = 2
 
-            /**
-             * Use regular expression for text searching
-             */
-            const val TYPE_REGULAR_EXPRESSION = 3
-        }
+                /**
+                 * Use regular expression for text searching
+                 */
+                const val TYPE_REGULAR_EXPRESSION = 3
+            }
 
-        constructor(caseInsensitive: Boolean, useRegex: Boolean) : this(
-            if (useRegex) TYPE_REGULAR_EXPRESSION else TYPE_NORMAL,
-            caseInsensitive
-        )
+            constructor(caseInsensitive: Boolean, useRegex: Boolean) : this(
+                if (useRegex) TYPE_REGULAR_EXPRESSION else TYPE_NORMAL,
+                caseInsensitive,
+            )
 
-        init {
-            if (type < 1 || type > 3) {
-                throw IllegalArgumentException("invalid type")
+            init {
+                if (type < 1 || type > 3) {
+                    throw IllegalArgumentException("invalid type")
+                }
             }
         }
-    }
 
     /**
      * Run for regex matching
@@ -456,7 +464,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
     private inner class SearchRunnable(
         content: Content,
         private val options: SearchOptions,
-        private val pattern: String
+        private val pattern: String,
     ) : Runnable {
         private val text: StringBuilder = content.toStringBuilder()
         private var localThread: Thread? = null
@@ -486,10 +494,11 @@ open class EditorSearcher(private val editor: CodeEditor) {
                 SearchOptions.TYPE_WHOLE_WORD -> {
                     patternStr = "\\b" + Pattern.quote(patternStr) + "\\b"
                     // fall-through
-                    val regex = Pattern.compile(
-                        patternStr,
-                        (if (ignoreCase) Pattern.CASE_INSENSITIVE else 0) or Pattern.MULTILINE
-                    )
+                    val regex =
+                        Pattern.compile(
+                            patternStr,
+                            (if (ignoreCase) Pattern.CASE_INSENSITIVE else 0) or Pattern.MULTILINE,
+                        )
                     val stringText = text.toString()
                     val matcher = regex.matcher(stringText)
                     while (matcher.find() && checkNotCancelled()) {
@@ -500,10 +509,11 @@ open class EditorSearcher(private val editor: CodeEditor) {
                     }
                 }
                 SearchOptions.TYPE_REGULAR_EXPRESSION -> {
-                    val regex = Pattern.compile(
-                        patternStr,
-                        (if (ignoreCase) Pattern.CASE_INSENSITIVE else 0) or Pattern.MULTILINE
-                    )
+                    val regex =
+                        Pattern.compile(
+                            patternStr,
+                            (if (ignoreCase) Pattern.CASE_INSENSITIVE else 0) or Pattern.MULTILINE,
+                        )
                     val stringText = text.toString()
                     val matcher = regex.matcher(stringText)
                     while (matcher.find() && checkNotCancelled()) {
@@ -524,7 +534,6 @@ open class EditorSearcher(private val editor: CodeEditor) {
                         currentThread = null
                     }
                 }
-
             }
         }
     }

@@ -124,14 +124,18 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
      * @param index Querying index
      */
     @VisibleForTesting
-    fun findIndexForward(start: CharPosition, index: Int, dest: CharPosition) {
+    fun findIndexForward(
+        start: CharPosition,
+        index: Int,
+        dest: CharPosition,
+    ) {
         if (start.index > index) {
             throw IllegalArgumentException("Unable to find backward from method findIndexForward()")
         }
         var workLine = start.line
         var workColumn = start.column
         var workIndex = start.index
-        //Move the column to the line end
+        // Move the column to the line end
         run {
             val addition = max(content.getLineSeparatorUnsafe(workLine).length - 1, 0)
             val column = content.getColumnCountUnsafe(workLine) + addition
@@ -160,7 +164,11 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
      * @param index Querying index
      */
     @VisibleForTesting
-    fun findIndexBackward(start: CharPosition, index: Int, dest: CharPosition) {
+    fun findIndexBackward(
+        start: CharPosition,
+        index: Int,
+        dest: CharPosition,
+    ) {
         if (start.index < index) {
             throw IllegalArgumentException("Unable to find forward from method findIndexBackward()")
         }
@@ -198,14 +206,19 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
      * @param column Querying column
      */
     @VisibleForTesting
-    fun findLiCoForward(start: CharPosition, line: Int, column: Int, dest: CharPosition) {
+    fun findLiCoForward(
+        start: CharPosition,
+        line: Int,
+        column: Int,
+        dest: CharPosition,
+    ) {
         if (start.line > line) {
             throw IllegalArgumentException("can not find backward from findLiCoForward()")
         }
         var workLine = start.line
         var workIndex = start.index
         run {
-            //Make index to left of line
+            // Make index to left of line
             workIndex = workIndex - start.column
         }
         while (workLine < line) {
@@ -227,14 +240,19 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
      * @param column Querying column
      */
     @VisibleForTesting
-    fun findLiCoBackward(start: CharPosition, line: Int, column: Int, dest: CharPosition) {
+    fun findLiCoBackward(
+        start: CharPosition,
+        line: Int,
+        column: Int,
+        dest: CharPosition,
+    ) {
         if (start.line < line) {
             throw IllegalArgumentException("can not find forward from findLiCoBackward()")
         }
         var workLine = start.line
         var workIndex = start.index
         run {
-            //Make index to the left of line
+            // Make index to the left of line
             workIndex = workIndex - start.column
         }
         while (workLine > line) {
@@ -255,7 +273,11 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
      * @param line   Querying line
      * @param column Querying column
      */
-    private fun findInLine(pos: CharPosition, line: Int, column: Int) {
+    private fun findInLine(
+        pos: CharPosition,
+        line: Int,
+        column: Int,
+    ) {
         if (pos.line != line) {
             throw IllegalArgumentException("can not find other lines with findInLine()")
         }
@@ -279,7 +301,10 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         }
     }
 
-    override fun getCharIndex(line: Int, column: Int): Int {
+    override fun getCharIndex(
+        line: Int,
+        column: Int,
+    ): Int {
         return getCharPosition(line, column).index
     }
 
@@ -297,7 +322,10 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         return pos
     }
 
-    override fun getCharPosition(index: Int, dest: CharPosition) {
+    override fun getCharPosition(
+        index: Int,
+        dest: CharPosition,
+    ) {
         content.checkIndex(index, Content.CHECK_TYPE_INDEX)
         content.lock(false)
         try {
@@ -317,13 +345,20 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         }
     }
 
-    override fun getCharPosition(line: Int, column: Int): CharPosition {
+    override fun getCharPosition(
+        line: Int,
+        column: Int,
+    ): CharPosition {
         val pos = CharPosition()
         getCharPosition(line, column, pos)
         return pos
     }
 
-    override fun getCharPosition(line: Int, column: Int, dest: CharPosition) {
+    override fun getCharPosition(
+        line: Int,
+        column: Int,
+        dest: CharPosition,
+    ) {
         content.checkLineAndColumn(line, column, Content.CHECK_TYPE_INDEX)
         content.lock(false)
         try {
@@ -349,7 +384,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
 
     @UnsupportedUserUsage
     override fun beforeReplace(content: Content) {
-        //Do nothing
+        // Do nothing
     }
 
     @Synchronized
@@ -360,7 +395,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         startColumn: Int,
         endLine: Int,
         endColumn: Int,
-        insertedContent: CharSequence
+        insertedContent: CharSequence,
     ) {
         for (pos in cachedPositions) {
             if (pos.line == startLine) {
@@ -385,7 +420,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         startColumn: Int,
         endLine: Int,
         endColumn: Int,
-        deletedContent: CharSequence
+        deletedContent: CharSequence,
     ) {
         val garbage: MutableList<CharPosition> = ArrayList()
         for (pos in cachedPositions) {

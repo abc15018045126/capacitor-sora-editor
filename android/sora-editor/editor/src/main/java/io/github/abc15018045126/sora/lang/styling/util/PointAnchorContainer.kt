@@ -33,30 +33,32 @@ package io.github.abc15018045126.sora.lang.styling.util
  */
 open class PointAnchoredContainer<T : PointAnchoredObject> {
     companion object {
-        val comparator = object : Comparator<PointAnchoredObject> {
-            override fun compare(
-                o1: PointAnchoredObject?,
-                o2: PointAnchoredObject?
-            ): Int {
-                if (o1 == null && o2 == null) return 0
-                if (o1 == null) return -1
-                if (o2 == null) return 1
-                val res = o1.line.compareTo(o2.line)
-                if (res != 0) return res
-                return o1.column.compareTo(o2.column)
+        val comparator =
+            object : Comparator<PointAnchoredObject> {
+                override fun compare(
+                    o1: PointAnchoredObject?,
+                    o2: PointAnchoredObject?,
+                ): Int {
+                    if (o1 == null && o2 == null) return 0
+                    if (o1 == null) return -1
+                    if (o2 == null) return 1
+                    val res = o1.line.compareTo(o2.line)
+                    if (res != 0) return res
+                    return o1.column.compareTo(o2.column)
+                }
             }
-        }
     }
 
     private val objects = mutableListOf<T>()
 
     private fun getInsertionPoint(e: PointAnchoredObject): Int {
         val result = objects.binarySearch(e, comparator)
-        val insertionPoint = if (result < 0) {
-            -(result + 1)
-        } else {
-            result
-        }
+        val insertionPoint =
+            if (result < 0) {
+                -(result + 1)
+            } else {
+                result
+            }
         return insertionPoint
     }
 
@@ -64,7 +66,7 @@ open class PointAnchoredContainer<T : PointAnchoredObject> {
         var index = getInsertionPoint(e)
         while (index + 1 < objects.size && comparator.compare(
                 objects[index],
-                objects[index + 1]
+                objects[index + 1],
             ) == 0
         ) {
             index++
@@ -115,7 +117,12 @@ open class PointAnchoredContainer<T : PointAnchoredObject> {
         return objects.map { it.line }.distinct().toIntArray()
     }
 
-    fun updateOnInsertion(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int) {
+    fun updateOnInsertion(
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+    ) {
         var index = getInsertionPointFirst(Anchor(startLine, startColumn))
         val delta = endLine - startLine
         while (index < objects.size) {
@@ -131,7 +138,12 @@ open class PointAnchoredContainer<T : PointAnchoredObject> {
         }
     }
 
-    fun updateOnDeletion(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int) {
+    fun updateOnDeletion(
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+    ) {
         val start = getInsertionPointFirst(Anchor(startLine, startColumn))
         var index = start
         var deleteEnd = -1
@@ -141,7 +153,7 @@ open class PointAnchoredContainer<T : PointAnchoredObject> {
             if (e.line < endLine || (e.line == endLine && e.column < endColumn)) {
                 deleteEnd = index
             } else if (e.line == endLine) {
-                /* e.column >= endColumn */
+                // e.column >= endColumn
                 val columnDelta = if (startLine == endLine) (endColumn - startColumn) else endColumn
                 e.column -= columnDelta
             } else {
@@ -157,9 +169,8 @@ open class PointAnchoredContainer<T : PointAnchoredObject> {
 
     private class Anchor(
         override var line: Int,
-        override var column: Int
+        override var column: Int,
     ) : PointAnchoredObject
-
 }
 
 interface PointAnchoredObject {

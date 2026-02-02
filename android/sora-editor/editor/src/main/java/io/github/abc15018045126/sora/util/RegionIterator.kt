@@ -12,9 +12,8 @@ open class RegionIterator(
      * Get length of the full region.
      */
     val max: Int,
-    vararg providers: RegionProvider
+    vararg providers: RegionProvider,
 ) {
-
     private val providers: Array<out RegionProvider> = providers
     private val pointers: IntArray = IntArray(providers.size)
     private val pointerStates: BooleanArray = BooleanArray(providers.size)
@@ -74,7 +73,10 @@ open class RegionIterator(
         return if (end <= pointerValue && pointerValue < max || pointerStates[i]) pointers[i] - 1 else pointers[i]
     }
 
-    fun getPointerValue(i: Int, j: Int): Int {
+    fun getPointerValue(
+        i: Int,
+        j: Int,
+    ): Int {
         val provider = providers[i]
         if (j < 0) {
             return 0
@@ -107,7 +109,6 @@ open class RegionIterator(
      * sequence must follow a ascent order.
      */
     interface RegionProvider {
-
         /**
          * Get count of dividing points
          */

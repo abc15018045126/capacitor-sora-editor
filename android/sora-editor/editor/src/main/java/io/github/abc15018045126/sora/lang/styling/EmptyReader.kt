@@ -3,10 +3,10 @@ package io.github.abc15018045126.sora.lang.styling
 import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
 
 class EmptyReader : Spans.Reader {
-
-    private val spans: List<Span> = listOf(
-        SpanFactory.obtainNoExt(0, EditorColorScheme.TEXT_NORMAL.toLong())
-    )
+    private val spans: List<Span> =
+        listOf(
+            SpanFactory.obtainNoExt(0, EditorColorScheme.TEXT_NORMAL.toLong()),
+        )
 
     override fun moveToLine(line: Int) {
     }

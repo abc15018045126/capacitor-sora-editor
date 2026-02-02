@@ -24,7 +24,6 @@
 
 package io.github.abc15018045126.sora.lang.completion
 
-
 /**
  * Completion item kinds.
  */
@@ -59,7 +58,8 @@ enum class CompletionItemKind(
     Operator(23, 0xffeaabb6),
     TypeParameter(24, 0xfff1c883),
     User(25),
-    Issue(26);
+    Issue(26),
+    ;
 
     private val displayString = name[0].toString()
 

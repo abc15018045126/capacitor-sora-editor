@@ -18,7 +18,7 @@ private typealias SelectionMovementComputeFunc = ((CodeEditor, CharPosition) -> 
  */
 enum class SelectionMovement(
     private val computeFunc: SelectionMovementComputeFunc,
-    val basePosition: MovingBasePosition = MovingBasePosition.SELECTION_ANCHOR
+    val basePosition: MovingBasePosition = MovingBasePosition.SELECTION_ANCHOR,
 ) {
     /** Move Up */
     UP({ editor, pos ->
@@ -120,11 +120,12 @@ enum class SelectionMovement(
     LINE_START({ editor, pos ->
         if (editor.props!!.enhancedHomeAndEnd) {
 
-            val column = IntPair.getFirst(
-                TextUtils.findLeadingAndTrailingWhitespacePos(
-                    editor.text.getLine(pos.line)
+            val column =
+                IntPair.getFirst(
+                    TextUtils.findLeadingAndTrailingWhitespacePos(
+                        editor.text.getLine(pos.line),
+                    ),
                 )
-            )
             if (pos.column == column || column == editor.text.getColumnCount(pos.line)) {
                 // Move to start if already at enhanced start / line is space-filled
                 editor.text.indexer.getCharPosition(pos.line, 0)
@@ -141,11 +142,12 @@ enum class SelectionMovement(
         val colNum = editor.text.getColumnCount(pos.line)
         if (editor.props!!.enhancedHomeAndEnd) {
 
-            val column = IntPair.getSecond(
-                TextUtils.findLeadingAndTrailingWhitespacePos(
-                    editor.text.getLine(pos.line)
+            val column =
+                IntPair.getSecond(
+                    TextUtils.findLeadingAndTrailingWhitespacePos(
+                        editor.text.getLine(pos.line),
+                    ),
                 )
-            )
             if (pos.column != column) {
                 editor.text.indexer.getCharPosition(pos.line, column)
             } else {
@@ -180,11 +182,14 @@ enum class SelectionMovement(
             }
         if (editor.props!!.enhancedHomeAndEnd) {
 
-            val column = IntPair.getFirst(
-                TextUtils.findLeadingAndTrailingWhitespacePos(
-                    editor.text.getLine(pos.line), row.startColumn, maxColumn
+            val column =
+                IntPair.getFirst(
+                    TextUtils.findLeadingAndTrailingWhitespacePos(
+                        editor.text.getLine(pos.line),
+                        row.startColumn,
+                        maxColumn,
+                    ),
                 )
-            )
             if (pos.column == column || column == maxColumn) {
                 // Move to start if already at enhanced start / line is space-filled
                 editor.text.indexer.getCharPosition(pos.line, row.startColumn)
@@ -210,11 +215,14 @@ enum class SelectionMovement(
             }
         if (editor.props!!.enhancedHomeAndEnd) {
 
-            val column = IntPair.getSecond(
-                TextUtils.findLeadingAndTrailingWhitespacePos(
-                    editor.text.getLine(pos.line), row.startColumn, maxColumn
+            val column =
+                IntPair.getSecond(
+                    TextUtils.findLeadingAndTrailingWhitespacePos(
+                        editor.text.getLine(pos.line),
+                        row.startColumn,
+                        maxColumn,
+                    ),
                 )
-            )
             if (pos.column != column) {
                 editor.text.indexer.getCharPosition(pos.line, column)
             } else {
@@ -223,7 +231,8 @@ enum class SelectionMovement(
         } else {
             editor.text.indexer.getCharPosition(row.lineIndex, maxColumn)
         }
-    });
+    }),
+    ;
 
     /**
      * For [CodeEditor.moveSelection]
@@ -231,12 +240,14 @@ enum class SelectionMovement(
     enum class MovingBasePosition {
         LEFT_SELECTION,
         RIGHT_SELECTION,
-        SELECTION_ANCHOR
+        SELECTION_ANCHOR,
     }
 
     @UnsupportedUserUsage
-    fun getPositionAfterMovement(editor: CodeEditor, pos: CharPosition): CharPosition {
+    fun getPositionAfterMovement(
+        editor: CodeEditor,
+        pos: CharPosition,
+    ): CharPosition {
         return this.computeFunc(editor, pos)
     }
 }
-

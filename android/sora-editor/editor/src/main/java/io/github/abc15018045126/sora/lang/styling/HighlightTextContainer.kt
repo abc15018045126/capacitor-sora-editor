@@ -33,14 +33,13 @@ import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
  * updates them according to document insert/delete operations.
  */
 class HighlightTextContainer {
-
     class HighlightText(
         var startLine: Int,
         var startColumn: Int,
         var endLine: Int,
         var endColumn: Int,
         val color: ResolvableColor = EditorColor(EditorColorScheme.TEXT_HIGHLIGHT_BACKGROUND),
-        val borderColor: ResolvableColor = EditorColor(EditorColorScheme.TEXT_HIGHLIGHT_BORDER)
+        val borderColor: ResolvableColor = EditorColor(EditorColorScheme.TEXT_HIGHLIGHT_BORDER),
     ) {
         internal fun hasLength(): Boolean {
             return startLine < endLine || (startLine == endLine && startColumn < endColumn)
@@ -117,7 +116,12 @@ class HighlightTextContainer {
         return lines.toIntArray()
     }
 
-    fun updateOnInsertion(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int) {
+    fun updateOnInsertion(
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+    ) {
         if (highlights.isEmpty() || isNoOp(startLine, startColumn, endLine, endColumn)) {
             return
         }
@@ -126,27 +130,29 @@ class HighlightTextContainer {
                 continue
             }
             if (comparePositions(startLine, startColumn, highlight.startLine, highlight.startColumn) < 0) {
-                val newStart = shiftForInsertion(
-                    highlight.startLine,
-                    highlight.startColumn,
-                    startLine,
-                    startColumn,
-                    endLine,
-                    endColumn
-                )
+                val newStart =
+                    shiftForInsertion(
+                        highlight.startLine,
+                        highlight.startColumn,
+                        startLine,
+                        startColumn,
+                        endLine,
+                        endColumn,
+                    )
                 highlight.startLine = newStart.first
                 highlight.startColumn = newStart.second
             }
 
             if (comparePositions(startLine, startColumn, highlight.endLine, highlight.endColumn) < 0) {
-                val newEnd = shiftForInsertion(
-                    highlight.endLine,
-                    highlight.endColumn,
-                    startLine,
-                    startColumn,
-                    endLine,
-                    endColumn
-                )
+                val newEnd =
+                    shiftForInsertion(
+                        highlight.endLine,
+                        highlight.endColumn,
+                        startLine,
+                        startColumn,
+                        endLine,
+                        endColumn,
+                    )
                 highlight.endLine = newEnd.first
                 highlight.endColumn = newEnd.second
             }
@@ -154,7 +160,12 @@ class HighlightTextContainer {
         highlights.sortWith(highlightComparator)
     }
 
-    fun updateOnDeletion(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int) {
+    fun updateOnDeletion(
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+    ) {
         if (highlights.isEmpty() || isNoOp(startLine, startColumn, endLine, endColumn)) {
             return
         }
@@ -192,10 +203,15 @@ class HighlightTextContainer {
                 !startsBefore && endsAfter -> {
                     highlight.startLine = startLine
                     highlight.startColumn = startColumn
-                    val newEnd = shiftPositionAfterDeletion(
-                        highlight.endLine, highlight.endColumn,
-                        startLine, startColumn, endLine, endColumn
-                    )
+                    val newEnd =
+                        shiftPositionAfterDeletion(
+                            highlight.endLine,
+                            highlight.endColumn,
+                            startLine,
+                            startColumn,
+                            endLine,
+                            endColumn,
+                        )
                     highlight.endLine = newEnd.first
                     highlight.endColumn = newEnd.second
                     if (!highlight.hasLength()) {
@@ -203,10 +219,15 @@ class HighlightTextContainer {
                     }
                 }
                 startsBefore && endsAfter -> {
-                    val newEnd = shiftPositionAfterDeletion(
-                        highlight.endLine, highlight.endColumn,
-                        startLine, startColumn, endLine, endColumn
-                    )
+                    val newEnd =
+                        shiftPositionAfterDeletion(
+                            highlight.endLine,
+                            highlight.endColumn,
+                            startLine,
+                            startColumn,
+                            endLine,
+                            endColumn,
+                        )
                     highlight.endLine = newEnd.first
                     highlight.endColumn = newEnd.second
                 }
@@ -220,24 +241,26 @@ class HighlightTextContainer {
         startLine: Int,
         startColumn: Int,
         endLine: Int,
-        endColumn: Int
+        endColumn: Int,
     ) {
-        val newStart = shiftPositionAfterDeletion(
-            highlight.startLine,
-            highlight.startColumn,
-            startLine,
-            startColumn,
-            endLine,
-            endColumn
-        )
-        val newEnd = shiftPositionAfterDeletion(
-            highlight.endLine,
-            highlight.endColumn,
-            startLine,
-            startColumn,
-            endLine,
-            endColumn
-        )
+        val newStart =
+            shiftPositionAfterDeletion(
+                highlight.startLine,
+                highlight.startColumn,
+                startLine,
+                startColumn,
+                endLine,
+                endColumn,
+            )
+        val newEnd =
+            shiftPositionAfterDeletion(
+                highlight.endLine,
+                highlight.endColumn,
+                startLine,
+                startColumn,
+                endLine,
+                endColumn,
+            )
         highlight.startLine = newStart.first
         highlight.startColumn = newStart.second
         highlight.endLine = newEnd.first
@@ -267,7 +290,7 @@ class HighlightTextContainer {
         startLine: Int,
         startColumn: Int,
         endLine: Int,
-        endColumn: Int
+        endColumn: Int,
     ): Pair<Int, Int> {
         if (comparePositions(line, column, startLine, startColumn) < 0) {
             return line to column
@@ -290,7 +313,7 @@ class HighlightTextContainer {
         startLine: Int,
         startColumn: Int,
         endLine: Int,
-        endColumn: Int
+        endColumn: Int,
     ): Pair<Int, Int> {
         val lineDelta = endLine - startLine
         if (lineDelta == 0) {
@@ -310,30 +333,32 @@ class HighlightTextContainer {
         startLine: Int,
         startColumn: Int,
         endLine: Int,
-        endColumn: Int
+        endColumn: Int,
     ): Boolean {
         return startLine == endLine && startColumn == endColumn
     }
 
     companion object {
-        private val highlightComparator = Comparator<HighlightText> { o1, o2 ->
-            val startCompare = comparePositions(
-                o1.startLine,
-                o1.startColumn,
-                o2.startLine,
-                o2.startColumn
-            )
-            if (startCompare != 0) {
-                return@Comparator startCompare
+        private val highlightComparator =
+            Comparator<HighlightText> { o1, o2 ->
+                val startCompare =
+                    comparePositions(
+                        o1.startLine,
+                        o1.startColumn,
+                        o2.startLine,
+                        o2.startColumn,
+                    )
+                if (startCompare != 0) {
+                    return@Comparator startCompare
+                }
+                comparePositions(o1.endLine, o1.endColumn, o2.endLine, o2.endColumn)
             }
-            comparePositions(o1.endLine, o1.endColumn, o2.endLine, o2.endColumn)
-        }
 
         private fun comparePositions(
             line1: Int,
             column1: Int,
             line2: Int,
-            column2: Int
+            column2: Int,
         ): Int {
             if (line1 != line2) {
                 return line1 - line2
@@ -342,4 +367,3 @@ class HighlightTextContainer {
         }
     }
 }
-

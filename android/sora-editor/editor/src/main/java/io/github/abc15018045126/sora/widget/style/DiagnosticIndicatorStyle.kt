@@ -9,5 +9,5 @@ enum class DiagnosticIndicatorStyle {
     NONE,
     LINE,
     DOUBLE_LINE,
-    WAVY_LINE
+    WAVY_LINE,
 }

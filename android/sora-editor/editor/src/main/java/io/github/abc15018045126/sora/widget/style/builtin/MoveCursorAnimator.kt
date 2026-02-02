@@ -2,9 +2,8 @@ package io.github.abc15018045126.sora.widget.style.builtin
 
 import android.animation.ValueAnimator
 import io.github.abc15018045126.sora.widget.CodeEditor
-import io.github.abc15018045126.sora.widget.style.CursorAnimator
-
 import io.github.abc15018045126.sora.widget.layout.Layout
+import io.github.abc15018045126.sora.widget.style.CursorAnimator
 
 /**
  * Default cursor animation implementation
@@ -12,7 +11,6 @@ import io.github.abc15018045126.sora.widget.layout.Layout
  * @author abc15018045126
  */
 class MoveCursorAnimator(private val editor: CodeEditor) : CursorAnimator, ValueAnimator.AnimatorUpdateListener {
-
     private val duration: Long = 120
     private var animatorX: ValueAnimator = ValueAnimator()
     private var animatorY: ValueAnimator = ValueAnimator()
@@ -75,14 +73,16 @@ class MoveCursorAnimator(private val editor: CodeEditor) : CursorAnimator, Value
         animatorX = ValueAnimator.ofFloat(startX, pos[1] + editor.measureTextRegionOffset())
         animatorY = ValueAnimator.ofFloat(startY, pos[0] - minusHeight())
 
-        animatorBackground = ValueAnimator.ofFloat(
-            startSize,
-            getHeightOfRows(layout.getRowCountForLine(editor.cursor!!.leftLine)).toFloat()
-        )
-        animatorBgBottom = ValueAnimator.ofFloat(
-            startBottom,
-            layout.getCharLayoutOffset(line, editor.text.getColumnCount(line))[0]
-        )
+        animatorBackground =
+            ValueAnimator.ofFloat(
+                startSize,
+                getHeightOfRows(layout.getRowCountForLine(editor.cursor!!.leftLine)).toFloat(),
+            )
+        animatorBgBottom =
+            ValueAnimator.ofFloat(
+                startBottom,
+                layout.getCharLayoutOffset(line, editor.text.getColumnCount(line))[0],
+            )
 
         animatorX.addUpdateListener(this)
 

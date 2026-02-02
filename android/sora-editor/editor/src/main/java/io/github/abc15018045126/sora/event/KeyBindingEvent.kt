@@ -30,5 +30,5 @@ class KeyBindingEvent(
      *
      * @return <code>true</code> if the editor can handle this event. <code>false</code> otherwise.
      */
-    val canEditorHandle: Boolean
+    val canEditorHandle: Boolean,
 ) : EditorKeyEvent(editor, src, type)

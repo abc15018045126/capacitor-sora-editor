@@ -26,7 +26,6 @@ package io.github.abc15018045126.sora.util
 
 import android.content.Context
 import android.content.res.Configuration
-
 import android.inputmethodservice.InputMethodService
 
 /**
@@ -35,7 +34,6 @@ import android.inputmethodservice.InputMethodService
  * @author Akash Yadav
  */
 object KeyboardUtils {
-
     /**
      * Check if hardware keyboard is connected.
      * Based on default implementation of [InputMethodService.onEvaluateInputViewShown].
@@ -49,7 +47,9 @@ object KeyboardUtils {
     fun isHardKeyboardConnected(context: Context?): Boolean {
         if (context == null) return false
         val config = context.resources.configuration
-        return (config.keyboard != Configuration.KEYBOARD_NOKEYS
-                || config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO)
+        return (
+            config.keyboard != Configuration.KEYBOARD_NOKEYS ||
+                config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO
+        )
     }
 }

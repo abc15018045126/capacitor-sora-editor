@@ -62,7 +62,6 @@ import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
  * @author abc15018045126
  */
 open class TextInlayHintRenderer : InlayHintRenderer() {
-
     companion object {
         val DefaultInstance = TextInlayHintRenderer()
     }
@@ -75,7 +74,7 @@ open class TextInlayHintRenderer : InlayHintRenderer() {
     override fun onMeasure(
         inlayHint: InlayHint,
         paint: Paint,
-        params: InlayHintRenderParams
+        params: InlayHintRenderParams,
     ): Float {
         localPaint.typeface = paint.typeface
         localPaint.textSize = paint.textSize * 0.75f
@@ -91,7 +90,7 @@ open class TextInlayHintRenderer : InlayHintRenderer() {
         paint: Paint,
         params: InlayHintRenderParams,
         colorScheme: EditorColorScheme,
-        measuredWidth: Float
+        measuredWidth: Float,
     ) {
         val centerY = (params.textTop + params.textBottom) / 2f
         localPaint.typeface = paint.typeface
@@ -105,12 +104,12 @@ open class TextInlayHintRenderer : InlayHintRenderer() {
             centerY - myLineHeight / 2f,
             measuredWidth - margin * 0.5f,
             centerY + myLineHeight / 2f,
-            params.textHeight * 0.15f, params.textHeight * 0.15f,
-            localPaint
+            params.textHeight * 0.15f,
+            params.textHeight * 0.15f,
+            localPaint,
         )
         localPaint.color = colorScheme.getColor(EditorColorScheme.TEXT_INLAY_HINT_FOREGROUND)
         val myBaseline = centerY + (myLineHeight / 2f - localPaint.descent())
         canvas.drawText((inlayHint as? TextInlayHint)?.text ?: "", margin, myBaseline, localPaint)
     }
-
 }

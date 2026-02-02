@@ -8,29 +8,45 @@ import kotlin.math.max
  * TrieTree to query values quickly
  */
 class TrieTree<T> {
-
     @JvmField
     val root: Node<T> = Node()
     private var maxLen = 0
 
-    fun put(v: String, token: T) {
+    fun put(
+        v: String,
+        token: T,
+    ) {
         maxLen = max(v.length, maxLen)
         addInternal(root, v, 0, v.length, token)
     }
 
-    fun put(v: CharSequence, off: Int, len: Int, token: T) {
+    fun put(
+        v: CharSequence,
+        off: Int,
+        len: Int,
+        token: T,
+    ) {
         maxLen = max(maxLen, len)
         addInternal(root, v, off, len, token)
     }
 
-    operator fun get(s: CharSequence, offset: Int, len: Int): T? {
+    operator fun get(
+        s: CharSequence,
+        offset: Int,
+        len: Int,
+    ): T? {
         if (len > maxLen) {
             return null
         }
         return getInternal(root, s, offset, len)
     }
 
-    private fun getInternal(node: Node<T>, s: CharSequence, offset: Int, len: Int): T? {
+    private fun getInternal(
+        node: Node<T>,
+        s: CharSequence,
+        offset: Int,
+        len: Int,
+    ): T? {
         if (len == 0) {
             return node.token
         }
@@ -39,7 +55,13 @@ class TrieTree<T> {
         return getInternal(sub, s, offset + 1, len - 1)
     }
 
-    private fun addInternal(node: Node<T>, v: CharSequence, i: Int, len: Int, token: T) {
+    private fun addInternal(
+        node: Node<T>,
+        v: CharSequence,
+        i: Int,
+        len: Int,
+        token: T,
+    ) {
         val point = v[i]
         var sub = node.map.get(point)
         if (sub == null) {
@@ -54,7 +76,6 @@ class TrieTree<T> {
     }
 
     class Node<T> {
-
         @JvmField
         val map: HashCharMap<Node<T>> = HashCharMap()
 
@@ -68,7 +89,6 @@ class TrieTree<T> {
      * @author abc15018045126
      */
     class HashCharMap<V> {
-
         private val columns: Array<LinkedPair<V>?> = arrayOfNulls(CAPACITY)
         private val ends: Array<LinkedPair<V>?> = arrayOfNulls(CAPACITY)
 
@@ -92,7 +112,10 @@ class TrieTree<T> {
             return null
         }
 
-        private fun get(first: Char, position: Int): LinkedPair<V>? {
+        private fun get(
+            first: Char,
+            position: Int,
+        ): LinkedPair<V>? {
             var pair = columns[position]
             while (pair != null) {
                 if (pair.first == first) {
@@ -103,7 +126,10 @@ class TrieTree<T> {
             return null
         }
 
-        fun put(first: Char, second: V) {
+        fun put(
+            first: Char,
+            second: V,
+        ) {
             val position = position(first.code)
             if (ends[position] == null) {
                 val pair = LinkedPair<V>()
@@ -131,7 +157,9 @@ class TrieTree<T> {
      */
     class LinkedPair<V> {
         @JvmField var next: LinkedPair<V>? = null
+
         @JvmField var first: Char = '\u0000'
+
         @JvmField var second: V? = null
     }
 }

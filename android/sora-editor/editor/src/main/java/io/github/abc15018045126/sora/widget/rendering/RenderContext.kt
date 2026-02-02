@@ -34,14 +34,14 @@ import io.github.abc15018045126.sora.widget.CodeEditor
  * @author abc15018045126
  */
 class RenderContext(val editor: CodeEditor) {
-
     val cache = RenderCache()
 
-    val renderNodeHolder: RenderNodeHolder? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        RenderNodeHolder(editor)
-    } else {
-        null
-    }
+    val renderNodeHolder: RenderNodeHolder? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            RenderNodeHolder(editor)
+        } else {
+            null
+        }
 
     val tabWidth
         get() = editor.tabWidth
@@ -58,14 +58,20 @@ class RenderContext(val editor: CodeEditor) {
         }
     }
 
-    fun updateForInsertion(startLine: Int, endLine: Int) {
+    fun updateForInsertion(
+        startLine: Int,
+        endLine: Int,
+    ) {
         cache.updateForInsertion(startLine, endLine)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             renderNodeHolder?.afterInsert(startLine, endLine)
         }
     }
 
-    fun updateForDeletion(startLine: Int, endLine: Int) {
+    fun updateForDeletion(
+        startLine: Int,
+        endLine: Int,
+    ) {
         cache.updateForDeletion(startLine, endLine)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             renderNodeHolder?.afterDelete(startLine, endLine)
@@ -75,5 +81,4 @@ class RenderContext(val editor: CodeEditor) {
     fun reset(lineCount: Int) {
         cache.reset(lineCount)
     }
-
 }

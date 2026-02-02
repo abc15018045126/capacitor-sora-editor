@@ -36,56 +36,59 @@ import java.util.concurrent.ArrayBlockingQueue
  * @property factory A factory method to create new instances of [SpanT].
  * @author Akash Yadav
  */
-open class SpanPool<SpanT : Span> @JvmOverloads constructor(
-  capacity: Int = DEFAULT_CAPACITY,
-  private val factory: (column: Int, style: Long) -> SpanT
-) {
+open class SpanPool<SpanT : Span>
+    @JvmOverloads
+    constructor(
+        capacity: Int = DEFAULT_CAPACITY,
+        private val factory: (column: Int, style: Long) -> SpanT,
+    ) {
+        private val cacheQueue = ArrayBlockingQueue<SpanT>(capacity)
 
-  private val cacheQueue = ArrayBlockingQueue<SpanT>(capacity)
+        companion object {
+            /**
+             * Small capacity (8192 objects). This should be used for spans that will not
+             * be used too frequently (for example, [StaticColorSpan]).
+             */
+            const val CAPACITY_SMALL = 8192
 
-  companion object {
+            /**
+             * Small capacity ([CAPACITY_SMALL] * 2 objects). This should be used for spans
+             * that will be used frequently (for example, [Span]).
+             */
+            const val CAPACITY_LARGE = CAPACITY_SMALL * 2
 
-    /**
-     * Small capacity (8192 objects). This should be used for spans that will not
-     * be used too frequently (for example, [StaticColorSpan]).
-     */
-    const val CAPACITY_SMALL = 8192
+            /**
+             * The default pool capacity. Same as [CAPACITY_LARGE].
+             */
+            const val DEFAULT_CAPACITY = CAPACITY_LARGE
+        }
 
-    /**
-     * Small capacity ([CAPACITY_SMALL] * 2 objects). This should be used for spans
-     * that will be used frequently (for example, [Span]).
-     */
-    const val CAPACITY_LARGE = CAPACITY_SMALL * 2
+        /**
+         * Return the given span to the pool. This method should not be called directly.
+         * Instead, call [Span.recycle] and it should automatically return itself to the
+         * pool.
+         *
+         * @param span The [SpanT] to recycle.
+         * @return Wheter the span was recycled successfully.
+         */
+        open fun offer(span: SpanT): Boolean {
+            return cacheQueue.offer(span)
+        }
 
-    /**
-     * The default pool capacity. Same as [CAPACITY_LARGE].
-     */
-    const val DEFAULT_CAPACITY = CAPACITY_LARGE
-  }
-
-  /**
-   * Return the given span to the pool. This method should not be called directly.
-   * Instead, call [Span.recycle] and it should automatically return itself to the
-   * pool.
-   *
-   * @param span The [SpanT] to recycle.
-   * @return Wheter the span was recycled successfully.
-   */
-  open fun offer(span: SpanT): Boolean {
-    return cacheQueue.offer(span)
-  }
-
-  /**
-   * Returns a recycled span or creates a new one if the pool is empty.
-   *
-   * @param column The new column index for the span.
-   * @param style The new style for the span.
-   * @return The recycled [SpanT], or a new instance of [SpanT] if the pool is empty.
-   */
-  open fun obtain(column: Int, style: Long): SpanT {
-    return cacheQueue.poll()?.also {
-      it.column = column
-      it.style = style
-    } ?: factory(column, style)
-  }
-}
+        /**
+         * Returns a recycled span or creates a new one if the pool is empty.
+         *
+         * @param column The new column index for the span.
+         * @param style The new style for the span.
+         * @return The recycled [SpanT], or a new instance of [SpanT] if the pool is empty.
+         */
+        open fun obtain(
+            column: Int,
+            style: Long,
+        ): SpanT {
+            return cacheQueue.poll()?.also {
+                it.column = column
+                it.style = style
+            } ?: factory(column, style)
+        }
+    }

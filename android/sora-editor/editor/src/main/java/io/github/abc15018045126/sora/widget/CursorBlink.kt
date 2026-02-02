@@ -11,9 +11,8 @@ import io.github.abc15018045126.sora.event.Unsubscribe
  */
 internal class CursorBlink(
     val editor: CodeEditor,
-    period: Int
+    period: Int,
 ) : Runnable, EventReceiver<SelectionChangeEvent> {
-
     @JvmField
     var visibility: Boolean = true
 
@@ -32,7 +31,10 @@ internal class CursorBlink(
         editor.subscribeEvent(SelectionChangeEvent::class.java, this)
     }
 
-    override fun onReceive(event: SelectionChangeEvent, unsubscribe: Unsubscribe) {
+    override fun onReceive(
+        event: SelectionChangeEvent,
+        unsubscribe: Unsubscribe,
+    ) {
         onSelectionChanged()
     }
 
@@ -53,8 +55,10 @@ internal class CursorBlink(
 
     fun isSelectionVisible(): Boolean {
         val buf = buffer ?: return false
-        return (buf[0] >= editor.offsetY && buf[0] - editor.rowHeight <= editor.offsetY + editor.height
-                && buf[1] >= editor.offsetX && buf[1] - 100f /* larger than a single character */ <= editor.offsetX + editor.width)
+        return (
+            buf[0] >= editor.offsetY && buf[0] - editor.rowHeight <= editor.offsetY + editor.height &&
+                buf[1] >= editor.offsetX && buf[1] - 100f /* larger than a single character */ <= editor.offsetX + editor.width
+        )
     }
 
     override fun run() {

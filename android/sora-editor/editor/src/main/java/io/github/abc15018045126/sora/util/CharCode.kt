@@ -24,12 +24,10 @@
 
 package io.github.abc15018045126.sora.util
 
-
 /**
  * An inlined enum containing useful character codes.
  */
 object CharCode {
-
     /**
      * The `\t` character.
      */
@@ -42,12 +40,10 @@ object CharCode {
      */
     const val DoubleQuote = 34
 
-
     /**
      * The `$` character.
      */
     const val DollarSign = 36
-
 
     /**
      * The `'` character.
@@ -79,7 +75,6 @@ object CharCode {
      */
     const val Slash = 47
 
-
     /**
      * The `:` character.
      */
@@ -90,12 +85,10 @@ object CharCode {
      */
     const val LessThan = 60
 
-
     /**
      * The `>` character.
      */
     const val GreaterThan = 62
-
 
     /**
      * The `[` character.
@@ -117,7 +110,6 @@ object CharCode {
      */
     const val Underline = 95
 
-
     /**
      * The `{` character.
      */
@@ -127,6 +119,4 @@ object CharCode {
      * The `}` character.
      */
     const val CloseCurlyBrace = 125
-
 }
-

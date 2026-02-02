@@ -16,5 +16,5 @@ enum class TokenType(val targetCharacter: Char = '\u0000') {
     Dash('-'),
     QuestionMark('?'),
     Backtick('`'),
-    EOF
+    EOF,
 }

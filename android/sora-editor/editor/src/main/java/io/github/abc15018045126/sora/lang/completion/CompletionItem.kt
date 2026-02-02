@@ -18,7 +18,6 @@ import io.github.abc15018045126.sora.widget.CodeEditor
  * @see SimpleCompletionItem
  */
 abstract class CompletionItem {
-
     /**
      * Icon for displaying in adapter
      */
@@ -110,7 +109,11 @@ abstract class CompletionItem {
      * @param text     The text in editor. You can make modifications to it.
      * @param position The requested completion position (the one passed to completion thread)
      */
-    open fun performCompletion(editor: CodeEditor, text: Content, position: CharPosition) {
+    open fun performCompletion(
+        editor: CodeEditor,
+        text: Content,
+        position: CharPosition,
+    ) {
         performCompletion(editor, text, position.line, position.column)
     }
 
@@ -127,5 +130,10 @@ abstract class CompletionItem {
      * @param column The auto-completion column
      * @see #performCompletion(CodeEditor, Content, CharPosition) Editor calls this method to do completion
      */
-    abstract fun performCompletion(editor: CodeEditor, text: Content, line: Int, column: Int)
+    abstract fun performCompletion(
+        editor: CodeEditor,
+        text: Content,
+        line: Int,
+        column: Int,
+    )
 }

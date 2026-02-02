@@ -15,7 +15,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
  * @author abc15018045126
  */
 open class Content : CharSequence {
-
     internal val lines: MutableList<ContentLine>
     private val contentListeners: MutableList<ContentListener>
     private val lock: ReadWriteLock?
@@ -96,7 +95,10 @@ open class Content : CharSequence {
      * @param column The column position of character
      * @return The character at the given position
      */
-    fun charAt(line: Int, column: Int): Char {
+    fun charAt(
+        line: Int,
+        column: Int,
+    ): Char {
         lock(false)
         return try {
             checkLineAndColumn(line, column, CHECK_TYPE_READ)
@@ -109,7 +111,10 @@ open class Content : CharSequence {
     override val length: Int
         get() = textLength
 
-    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
+    override fun subSequence(
+        startIndex: Int,
+        endIndex: Int,
+    ): CharSequence {
         if (startIndex > endIndex) {
             throw StringIndexOutOfBoundsException("start > end")
         }
@@ -123,7 +128,10 @@ open class Content : CharSequence {
         }
     }
 
-    fun substring(start: Int, end: Int): String {
+    fun substring(
+        start: Int,
+        end: Int,
+    ): String {
         if (start > end) {
             throw StringIndexOutOfBoundsException("start > end")
         }
@@ -183,7 +191,13 @@ open class Content : CharSequence {
     /**
      * Get region of the given line
      */
-    fun getRegionOnLine(line: Int, start: Int, end: Int, dest: CharArray, offset: Int) {
+    fun getRegionOnLine(
+        line: Int,
+        start: Int,
+        end: Int,
+        dest: CharArray,
+        offset: Int,
+    ) {
         lock(false)
         try {
             lines[line].getChars(start, end, dest, offset)
@@ -195,14 +209,20 @@ open class Content : CharSequence {
     /**
      * Get characters of line
      */
-    fun getLineChars(line: Int, dest: CharArray) {
+    fun getLineChars(
+        line: Int,
+        dest: CharArray,
+    ) {
         getRegionOnLine(line, 0, getColumnCount(line), dest, 0)
     }
 
     /**
      * Transform the (line,column) position to index
      */
-    fun getCharIndex(line: Int, column: Int): Int {
+    fun getCharIndex(
+        line: Int,
+        column: Int,
+    ): Int {
         lock(false)
         return try {
             getIndexer().getCharIndex(line, column)
@@ -233,7 +253,11 @@ open class Content : CharSequence {
     /**
      * Insert content to this object
      */
-    fun insert(line: Int, column: Int, text: CharSequence) {
+    fun insert(
+        line: Int,
+        column: Int,
+        text: CharSequence,
+    ) {
         lock(true)
         documentVersion.getAndIncrement()
         try {
@@ -243,7 +267,11 @@ open class Content : CharSequence {
         }
     }
 
-    private fun insertInternal(line: Int, column: Int, text: CharSequence) {
+    private fun insertInternal(
+        line: Int,
+        column: Int,
+        text: CharSequence,
+    ) {
         var col = column
         checkLineAndColumn(line, col, CHECK_TYPE_CURSOR)
         if (col > lines[line].length) {
@@ -293,7 +321,10 @@ open class Content : CharSequence {
         dispatchAfterInsert(line, col, workLine, workIndex, text)
     }
 
-    fun delete(start: Int, end: Int) {
+    fun delete(
+        start: Int,
+        end: Int,
+    ) {
         lock(true)
         checkIndex(start, CHECK_TYPE_CURSOR)
         checkIndex(end, CHECK_TYPE_CURSOR)
@@ -309,7 +340,12 @@ open class Content : CharSequence {
         }
     }
 
-    fun delete(startLine: Int, columnOnStartLine: Int, endLine: Int, columnOnEndLine: Int) {
+    fun delete(
+        startLine: Int,
+        columnOnStartLine: Int,
+        endLine: Int,
+        columnOnEndLine: Int,
+    ) {
         lock(true)
         documentVersion.getAndIncrement()
         try {
@@ -319,7 +355,12 @@ open class Content : CharSequence {
         }
     }
 
-    private fun deleteInternal(startLine: Int, columnOnStartLine: Int, endLine: Int, columnOnEndLine: Int) {
+    private fun deleteInternal(
+        startLine: Int,
+        columnOnStartLine: Int,
+        endLine: Int,
+        columnOnEndLine: Int,
+    ) {
         checkLineAndColumn(endLine, columnOnEndLine, CHECK_TYPE_CURSOR)
         checkLineAndColumn(startLine, columnOnStartLine, CHECK_TYPE_CURSOR)
         if (startLine == endLine && columnOnStartLine == columnOnEndLine) return
@@ -395,7 +436,13 @@ open class Content : CharSequence {
         return mut
     }
 
-    fun replace(startLine: Int, columnOnStartLine: Int, endLine: Int, columnOnEndLine: Int, text: CharSequence) {
+    fun replace(
+        startLine: Int,
+        columnOnStartLine: Int,
+        endLine: Int,
+        columnOnEndLine: Int,
+        text: CharSequence,
+    ) {
         lock(true)
         documentVersion.getAndIncrement()
         try {
@@ -407,7 +454,11 @@ open class Content : CharSequence {
         }
     }
 
-    fun replace(startIndex: Int, endIndex: Int, text: CharSequence) {
+    fun replace(
+        startIndex: Int,
+        endIndex: Int,
+        text: CharSequence,
+    ) {
         val start = getIndexer().getCharPosition(startIndex)
         val end = getIndexer().getCharPosition(endIndex)
         replace(start.line, start.column, end.line, end.column, text)
@@ -496,11 +547,22 @@ open class Content : CharSequence {
         return _cursor?.getIndexer() ?: indexer
     }
 
-    fun subContent(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int): Content {
+    fun subContent(
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+    ): Content {
         return subContent(startLine, startColumn, endLine, endColumn, true)
     }
 
-    fun subContent(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int, newContentThreadSafe: Boolean): Content {
+    fun subContent(
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+        newContentThreadSafe: Boolean,
+    ): Content {
         lock(false)
         return try {
             subContentInternal(startLine, startColumn, endLine, endColumn, newContentThreadSafe)
@@ -509,7 +571,13 @@ open class Content : CharSequence {
         }
     }
 
-    private fun subContentInternal(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int, threadSafe: Boolean): Content {
+    private fun subContentInternal(
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+        threadSafe: Boolean,
+    ): Content {
         val c = Content(null, threadSafe)
         c.isUndoEnabled = false
         if (startLine == endLine) {
@@ -564,7 +632,13 @@ open class Content : CharSequence {
         return c
     }
 
-    private fun subStringBuilder(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int, length: Int): StringBuilder {
+    private fun subStringBuilder(
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+        length: Int,
+    ): StringBuilder {
         val sb = StringBuilder(length)
         if (startLine == endLine) {
             val line = lines[startLine]
@@ -626,7 +700,10 @@ open class Content : CharSequence {
         return bidi.isEnabled
     }
 
-    fun isRtlAt(line: Int, column: Int): Boolean {
+    fun isRtlAt(
+        line: Int,
+        column: Int,
+    ): Boolean {
         val dirs = getLineDirections(line)
         for (i in 0 until dirs.runCount) {
             if (column >= dirs.getRunStart(i) && column < dirs.getRunEnd(i)) {
@@ -703,7 +780,13 @@ open class Content : CharSequence {
         }
     }
 
-    private fun dispatchAfterDelete(a: Int, b: Int, c: Int, d: Int, e: CharSequence) {
+    private fun dispatchAfterDelete(
+        a: Int,
+        b: Int,
+        c: Int,
+        d: Int,
+        e: CharSequence,
+    ) {
         undoManager.afterDelete(this, a, b, c, d, e)
         _cursor?.afterDelete(a, b, c, d, e)
         if (indexer is ContentListener) {
@@ -721,7 +804,13 @@ open class Content : CharSequence {
         }
     }
 
-    private fun dispatchAfterInsert(a: Int, b: Int, c: Int, d: Int, e: CharSequence) {
+    private fun dispatchAfterInsert(
+        a: Int,
+        b: Int,
+        c: Int,
+        d: Int,
+        e: CharSequence,
+    ) {
         undoManager.afterInsert(this, a, b, c, d, e)
         _cursor?.afterInsert(a, b, c, d, e)
         if (indexer is ContentListener) {
@@ -732,7 +821,10 @@ open class Content : CharSequence {
         }
     }
 
-    internal fun checkIndex(index: Int, checkType: Int) {
+    internal fun checkIndex(
+        index: Int,
+        checkType: Int,
+    ) {
         if ((if (checkType == CHECK_TYPE_READ) index >= length else index > length) || index < 0) {
             throw StringIndexOutOfBoundsException("Index $index out of bounds. length:$length")
         }
@@ -744,7 +836,11 @@ open class Content : CharSequence {
         }
     }
 
-    internal fun checkLineAndColumn(line: Int, column: Int, checkType: Int) {
+    internal fun checkLineAndColumn(
+        line: Int,
+        column: Int,
+        checkType: Int,
+    ) {
         checkLine(line)
         val text = lines[line]
         when (checkType) {
@@ -779,7 +875,10 @@ open class Content : CharSequence {
 
     fun copyText(newContentThreadSafe: Boolean): Content = copyText(newContentThreadSafe, false)
 
-    fun copyText(newContentThreadSafe: Boolean, shallow: Boolean): Content {
+    fun copyText(
+        newContentThreadSafe: Boolean,
+        shallow: Boolean,
+    ): Content {
         lock(false)
         return try {
             val n = Content(null, newContentThreadSafe)
@@ -827,7 +926,11 @@ open class Content : CharSequence {
 
     internal fun getLineSeparatorUnsafe(line: Int): LineSeparator = lines[line].lineSeparatorSafe
 
-    fun runReadActionsOnLines(startLine: Int, endLine: Int, consumer: ContentLineConsumer) {
+    fun runReadActionsOnLines(
+        startLine: Int,
+        endLine: Int,
+        consumer: ContentLineConsumer,
+    ) {
         lock(false)
         try {
             for (i in startLine..endLine) {
@@ -839,7 +942,11 @@ open class Content : CharSequence {
         }
     }
 
-    fun runReadActionsOnLines(startLine: Int, endLine: Int, consumer: ContentLineConsumer2) {
+    fun runReadActionsOnLines(
+        startLine: Int,
+        endLine: Int,
+        consumer: ContentLineConsumer2,
+    ) {
         lock(false)
         try {
             val flag = ContentLineConsumer2.AbortFlag()
@@ -853,11 +960,19 @@ open class Content : CharSequence {
     }
 
     fun interface ContentLineConsumer {
-        fun accept(lineIndex: Int, line: ContentLine, dirs: Directions)
+        fun accept(
+            lineIndex: Int,
+            line: ContentLine,
+            dirs: Directions,
+        )
     }
 
     fun interface ContentLineConsumer2 {
-        fun accept(lineIndex: Int, line: ContentLine, flag: AbortFlag)
+        fun accept(
+            lineIndex: Int,
+            line: ContentLine,
+            flag: AbortFlag,
+        )
 
         class AbortFlag {
             @JvmField
@@ -882,7 +997,10 @@ open class Content : CharSequence {
                 field = capacity
             }
 
-        private fun textEquals(a: ContentLine, b: ContentLine): Boolean {
+        private fun textEquals(
+            a: ContentLine,
+            b: ContentLine,
+        ): Boolean {
             if (a.length != b.length) return false
             if (a === b) return true
             for (i in 0 until a.length) {

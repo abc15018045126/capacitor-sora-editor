@@ -18,9 +18,8 @@ import kotlin.math.max
  */
 abstract class AbstractLayout(
     @JvmField protected var editor: CodeEditor?,
-    @JvmField protected var text: Content?
+    @JvmField protected var text: Content?,
 ) : Layout {
-
     protected open fun getSpans(line: Int): List<Span> {
         return editor?.getSpansForLine(line)?.filterNotNull() ?: emptyList()
     }
@@ -36,7 +35,7 @@ abstract class AbstractLayout(
         startColumn: Int,
         endLine: Int,
         endColumn: Int,
-        deletedContent: CharSequence
+        deletedContent: CharSequence,
     ) {
     }
 
@@ -46,13 +45,13 @@ abstract class AbstractLayout(
         startColumn: Int,
         endLine: Int,
         endColumn: Int,
-        insertedContent: CharSequence
+        insertedContent: CharSequence,
     ) {
     }
 
     override fun beforeReplace(content: Content) {
     }
-    
+
     override fun beforeModification(content: Content) {
     }
 
@@ -85,7 +84,10 @@ abstract class AbstractLayout(
         }
 
         interface Callback {
-            fun onCompleted(results: Array<Any?>, cancelledCount: Int)
+            fun onCompleted(
+                results: Array<Any?>,
+                cancelledCount: Int,
+            )
         }
     }
 
@@ -114,13 +116,14 @@ abstract class AbstractLayout(
         init {
             val maximumPoolSize = max(2, Runtime.getRuntime().availableProcessors())
             val corePoolSize = 2
-            executor = ThreadPoolExecutor(
-                corePoolSize,
-                maximumPoolSize,
-                1,
-                TimeUnit.MINUTES,
-                LinkedBlockingQueue(128)
-            )
+            executor =
+                ThreadPoolExecutor(
+                    corePoolSize,
+                    maximumPoolSize,
+                    1,
+                    TimeUnit.MINUTES,
+                    LinkedBlockingQueue(128),
+                )
         }
     }
 }

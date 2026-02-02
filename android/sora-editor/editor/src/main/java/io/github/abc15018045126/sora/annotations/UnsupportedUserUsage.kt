@@ -9,6 +9,6 @@ package io.github.abc15018045126.sora.annotations
     AnnotationTarget.FUNCTION,
     AnnotationTarget.FIELD,
     AnnotationTarget.CONSTRUCTOR,
-    AnnotationTarget.CLASS
+    AnnotationTarget.CLASS,
 )
 annotation class UnsupportedUserUsage

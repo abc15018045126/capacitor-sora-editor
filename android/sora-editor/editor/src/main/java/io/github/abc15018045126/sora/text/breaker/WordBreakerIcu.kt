@@ -7,7 +7,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 open class WordBreakerIcu(text: ContentLine) : WordBreaker {
-
     protected val wrappingIterator: BreakIterator
     protected val chars: CharArray
 
@@ -18,7 +17,10 @@ open class WordBreakerIcu(text: ContentLine) : WordBreaker {
         wrappingIterator.setText(textIterator)
     }
 
-    override fun getOptimizedBreakPoint(start: Int, end: Int): Int {
+    override fun getOptimizedBreakPoint(
+        start: Int,
+        end: Int,
+    ): Int {
         var resultEnd = end
         // Merging trailing whitespaces is not supported by editor, so force to break here
         if (resultEnd > 0 && !Character.isWhitespace(chars[resultEnd - 1]) && !wrappingIterator.isBoundary(resultEnd)) {

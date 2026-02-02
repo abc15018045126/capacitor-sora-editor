@@ -8,7 +8,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 class BlockIntList(private val blockSize: Int = 1000) {
-
     companion object {
         private const val CACHE_COUNT = 8
         private const val CACHE_SWITCH = 30
@@ -108,7 +107,10 @@ class BlockIntList(private val blockSize: Int = 1000) {
         add(size, element)
     }
 
-    fun add(index: Int, element: Int) {
+    fun add(
+        index: Int,
+        element: Int,
+    ) {
         var idx = index
         if (idx < 0 || idx > size) {
             throw ArrayIndexOutOfBoundsException("index = $idx, length = $size")
@@ -161,7 +163,10 @@ class BlockIntList(private val blockSize: Int = 1000) {
         return removedValue
     }
 
-    operator fun set(index: Int, element: Int): Int {
+    operator fun set(
+        index: Int,
+        element: Int,
+    ): Int {
         if (index < 0 || index >= size) {
             throw ArrayIndexOutOfBoundsException("index = $index, length = $size")
         }
@@ -179,7 +184,10 @@ class BlockIntList(private val blockSize: Int = 1000) {
         return foundBlock!![foundIndex]
     }
 
-    fun removeRange(fromIndex: Int, toIndex: Int) {
+    fun removeRange(
+        fromIndex: Int,
+        toIndex: Int,
+    ) {
         var fromIdx = fromIndex
         var toIdx = toIndex
         if (toIdx > size || fromIdx < 0 || fromIdx > toIdx) {
@@ -228,7 +236,10 @@ class BlockIntList(private val blockSize: Int = 1000) {
         return size
     }
 
-    private fun cache(index: Int, block: Block): Cache {
+    private fun cache(
+        index: Int,
+        block: Block,
+    ): Cache {
         val c = Cache()
         c.indexOfStart = index
         c.block = block
@@ -241,7 +252,10 @@ class BlockIntList(private val blockSize: Int = 1000) {
         var max: Int = 0
         var next: Block? = null
 
-        fun add(index: Int, element: Int) {
+        fun add(
+            index: Int,
+            element: Int,
+        ) {
             System.arraycopy(data, index, data, index + 1, size - index)
             data[index] = element
             size++
@@ -250,7 +264,10 @@ class BlockIntList(private val blockSize: Int = 1000) {
             }
         }
 
-        operator fun set(index: Int, element: Int): Int {
+        operator fun set(
+            index: Int,
+            element: Int,
+        ): Int {
             val old = data[index]
             data[index] = element
             if (old == max) {
@@ -279,7 +296,10 @@ class BlockIntList(private val blockSize: Int = 1000) {
             return oldValue
         }
 
-        fun remove(start: Int, end: Int) {
+        fun remove(
+            start: Int,
+            end: Int,
+        ) {
             System.arraycopy(data, end, data, start, size - end)
             size -= (end - start)
             compute()

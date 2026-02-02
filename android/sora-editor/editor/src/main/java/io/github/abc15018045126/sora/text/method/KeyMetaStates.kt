@@ -11,7 +11,6 @@ import io.github.abc15018045126.sora.widget.CodeEditor
  * @author abc15018045126
  */
 class KeyMetaStates(private val editor: CodeEditor) : MetaKeyKeyListener() {
-
     /**
      * Dummy text used for Android original APIs
      */

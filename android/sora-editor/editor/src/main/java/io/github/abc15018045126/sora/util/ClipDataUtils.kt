@@ -4,7 +4,6 @@ import android.content.ClipData
 import android.content.Intent
 
 object ClipDataUtils {
-
     @JvmStatic
     fun clipDataToString(clipData: ClipData?): String {
         if (clipData == null) {

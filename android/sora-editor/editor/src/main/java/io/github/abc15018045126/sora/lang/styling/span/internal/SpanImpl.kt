@@ -9,7 +9,6 @@ import io.github.abc15018045126.sora.lang.styling.span.SpanExtAttrs
 import java.util.*
 
 class SpanImpl : Span {
-
     override var column: Int = 0
     override var style: Long = 0L
     override var extra: Any? = null
@@ -26,7 +25,10 @@ class SpanImpl : Span {
         get() = getSpanExt(SpanExtAttrs.EXT_UNDERLINE_COLOR)
         set(value) = setSpanExt(SpanExtAttrs.EXT_UNDERLINE_COLOR, value)
 
-    override fun setSpanExt(extType: Int, ext: SpanExt?) {
+    override fun setSpanExt(
+        extType: Int,
+        ext: SpanExt?,
+    ) {
         if (!SpanExtAttrs.checkType(extType, ext)) {
             throw IllegalArgumentException("type mismatch: extType $extType and extObj $ext")
         }
@@ -96,7 +98,10 @@ class SpanImpl : Span {
         private val pool = SpanPool { c, s -> SpanImpl(c, s) }
 
         @JvmStatic
-        fun obtain(column: Int, style: Long): SpanImpl {
+        fun obtain(
+            column: Int,
+            style: Long,
+        ): SpanImpl {
             return pool.obtain(column, style)
         }
     }

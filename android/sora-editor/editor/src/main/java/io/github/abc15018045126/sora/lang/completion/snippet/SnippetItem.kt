@@ -1,7 +1,6 @@
 package io.github.abc15018045126.sora.lang.completion.snippet
 
 abstract class SnippetItem : Cloneable {
-
     var startIndex: Int = 0
         private set
     var endIndex: Int = 0
@@ -19,7 +18,10 @@ abstract class SnippetItem : Cloneable {
         setIndex(index, index)
     }
 
-    fun setIndex(start: Int, end: Int) {
+    fun setIndex(
+        start: Int,
+        end: Int,
+    ) {
         this.startIndex = start
         this.endIndex = end
     }
@@ -29,5 +31,5 @@ abstract class SnippetItem : Cloneable {
         endIndex += deltaIndex
     }
 
-    public override abstract fun clone(): SnippetItem
+    public abstract override fun clone(): SnippetItem
 }

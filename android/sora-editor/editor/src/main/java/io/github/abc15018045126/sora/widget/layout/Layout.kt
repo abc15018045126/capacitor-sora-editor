@@ -14,7 +14,6 @@ import io.github.abc15018045126.sora.text.ContentListener
  * @author Rose
  */
 interface Layout : ContentListener {
-
     /**
      * Called by editor to destroy this layout
      * This means the layout will never be used again
@@ -46,7 +45,10 @@ interface Layout : ContentListener {
      * @param preloadedLines Lines that are already loaded in editor
      * @return Iterator contains rows
      */
-    fun obtainRowIterator(initialRow: Int, preloadedLines: SparseArray<ContentLine>?): RowIterator
+    fun obtainRowIterator(
+        initialRow: Int,
+        preloadedLines: SparseArray<ContentLine>?,
+    ): RowIterator
 
     /**
      * Get the specific Row
@@ -82,7 +84,10 @@ interface Layout : ContentListener {
      * @return Packed IntPair, first is line and second is column
      * @see io.github.abc15018045126.sora.util.IntPair
      */
-    fun getCharPositionForLayoutOffset(xOffset: Float, yOffset: Float): Long
+    fun getCharPositionForLayoutOffset(
+        xOffset: Float,
+        yOffset: Float,
+    ): Long
 
     /**
      * Get layout offset of a position in text
@@ -92,7 +97,10 @@ interface Layout : ContentListener {
      * @return An array containing layout offset, first element is the bottom of character and second element is the left of character
      */
     @Size(2)
-    fun getCharLayoutOffset(line: Int, column: Int): FloatArray {
+    fun getCharLayoutOffset(
+        line: Int,
+        column: Int,
+    ): FloatArray {
         return getCharLayoutOffset(line, column, FloatArray(2))
     }
 
@@ -104,7 +112,11 @@ interface Layout : ContentListener {
      * @param array  If the array is given, it will try to save the two elements in this array. Otherwise, a new array is created
      * @return An array containing layout offset, first element is the bottom of character and second element is the left of character
      */
-    fun getCharLayoutOffset(line: Int, column: Int, array: FloatArray?): FloatArray
+    fun getCharLayoutOffset(
+        line: Int,
+        column: Int,
+        array: FloatArray?,
+    ): FloatArray
 
     /**
      * Get how many rows are in the given line
@@ -116,14 +128,20 @@ interface Layout : ContentListener {
      *
      * @return A packed pair (line, column) describing the result position
      */
-    fun getUpPosition(line: Int, column: Int): Long
+    fun getUpPosition(
+        line: Int,
+        column: Int,
+    ): Long
 
     /**
      * Get position after moving down once
      *
      * @return A packed pair (line, column) describing the result position
      */
-    fun getDownPosition(line: Int, column: Int): Long
+    fun getDownPosition(
+        line: Int,
+        column: Int,
+    ): Long
 
     /**
      * Get row index for text index

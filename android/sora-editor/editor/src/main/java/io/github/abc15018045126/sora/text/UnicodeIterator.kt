@@ -3,7 +3,6 @@ package io.github.abc15018045126.sora.text
 import io.github.abc15018045126.sora.util.ObjectPool
 
 class UnicodeIterator private constructor() {
-
     private var text: CharSequence? = null
     var codePoint: Int = 0
         private set
@@ -17,7 +16,11 @@ class UnicodeIterator private constructor() {
         sPool.recycle(this)
     }
 
-    fun set(text: CharSequence, start: Int, end: Int) {
+    fun set(
+        text: CharSequence,
+        start: Int,
+        end: Int,
+    ) {
         if ((start or end or (end - start) or (text.length - end)) < 0) {
             throw IndexOutOfBoundsException()
         }
@@ -49,18 +52,23 @@ class UnicodeIterator private constructor() {
     }
 
     companion object {
-        private val sPool = object : ObjectPool<UnicodeIterator>() {
-            override fun allocateNew(): UnicodeIterator {
-                return UnicodeIterator()
-            }
+        private val sPool =
+            object : ObjectPool<UnicodeIterator>() {
+                override fun allocateNew(): UnicodeIterator {
+                    return UnicodeIterator()
+                }
 
-            override fun onRecycleObject(recycledObj: UnicodeIterator) {
-                recycledObj.text = null
+                override fun onRecycleObject(recycledObj: UnicodeIterator) {
+                    recycledObj.text = null
+                }
             }
-        }
 
         @JvmStatic
-        fun obtain(text: CharSequence, start: Int, end: Int): UnicodeIterator {
+        fun obtain(
+            text: CharSequence,
+            start: Int,
+            end: Int,
+        ): UnicodeIterator {
             val r = sPool.obtain()
             r.set(text, start, end)
             return r

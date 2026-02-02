@@ -21,5 +21,5 @@ class LongPressEvent(
     span: Span?,
     spanRange: TextRange?,
     motionRegion: Int,
-    motionBound: Int
+    motionBound: Int,
 ) : EditorMotionEvent(editor, position, event, span, spanRange, motionRegion, motionBound)

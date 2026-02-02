@@ -66,7 +66,10 @@ class RenderNodeHolder(private val editor: CodeEditor) {
         return node
     }
 
-    fun keepCurrentInDisplay(start: Int, end: Int) {
+    fun keepCurrentInDisplay(
+        start: Int,
+        end: Int,
+    ) {
         val itr = cache.iterator()
         while (itr.hasNext()) {
             val node = itr.next()
@@ -81,7 +84,7 @@ class RenderNodeHolder(private val editor: CodeEditor) {
         canvas: Canvas,
         line: Int,
         offsetX: Float,
-        offsetY: Float
+        offsetY: Float,
     ): Int {
         if (!canvas.isHardwareAccelerated) {
             throw UnsupportedOperationException("Only hardware-accelerated canvas can be used")
@@ -112,7 +115,10 @@ class RenderNodeHolder(private val editor: CodeEditor) {
         return node.renderNode.width
     }
 
-    fun afterInsert(startLine: Int, endLine: Int) {
+    fun afterInsert(
+        startLine: Int,
+        endLine: Int,
+    ) {
         cache.forEach { node ->
             if (node.line == startLine) {
                 node.isDirty = true
@@ -122,7 +128,10 @@ class RenderNodeHolder(private val editor: CodeEditor) {
         }
     }
 
-    fun afterDelete(startLine: Int, endLine: Int) {
+    fun afterDelete(
+        startLine: Int,
+        endLine: Int,
+    ) {
         val garbage: MutableList<TextRenderNode> = ArrayList()
         cache.forEach { node ->
             if (node.line == startLine) {
@@ -143,7 +152,7 @@ class RenderNodeHolder(private val editor: CodeEditor) {
          * The target line of this node.
          * -1 for unavailable
          */
-        var line: Int
+        var line: Int,
     ) {
         var renderNode: RenderNode = RenderNode("editorRenderNode")
         var isDirty: Boolean = true
@@ -153,4 +162,3 @@ class RenderNodeHolder(private val editor: CodeEditor) {
         }
     }
 }
-

@@ -12,16 +12,16 @@ import io.github.abc15018045126.sora.widget.style.SelectionHandleStyle.Companion
 import io.github.abc15018045126.sora.widget.style.SelectionHandleStyle.Companion.HANDLE_TYPE_UNDEFINED
 
 open class HandleStyleSideDrop(context: Context) : HandleStyleDrop(context) {
-
     private val size: Int
     private val paint: Paint
 
     init {
-        size = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            22f,
-            context.resources.displayMetrics
-        ).toInt()
+        size =
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                22f,
+                context.resources.displayMetrics,
+            ).toInt()
         paint = Paint()
         paint.isAntiAlias = true
     }
@@ -33,7 +33,7 @@ open class HandleStyleSideDrop(context: Context) : HandleStyleDrop(context) {
         y: Float,
         rowHeight: Int,
         color: Int,
-        descriptor: SelectionHandleStyle.HandleDescriptor
+        descriptor: SelectionHandleStyle.HandleDescriptor,
     ) {
         val radius = size / 2f
         paint.color = color
@@ -48,14 +48,14 @@ open class HandleStyleSideDrop(context: Context) : HandleStyleDrop(context) {
                 y,
                 if (type) cx + radius else cx,
                 y + radius,
-                paint
+                paint,
             )
             descriptor.set(
                 cx - radius,
                 y,
                 cx + radius,
                 y + 2 * radius,
-                if (type) ALIGN_LEFT else ALIGN_RIGHT
+                if (type) ALIGN_LEFT else ALIGN_RIGHT,
             )
         }
     }

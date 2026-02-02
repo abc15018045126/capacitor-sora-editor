@@ -8,7 +8,6 @@ package io.github.abc15018045126.sora.util
  * @author abc15018045126
  */
 object IntPair {
-
     /**
      * Convert an integer to a long whose binary bits are equal to the given integer
      */
@@ -24,7 +23,10 @@ object IntPair {
      * @return Packed value
      */
     @JvmStatic
-    fun pack(first: Int, second: Int): Long {
+    fun pack(
+        first: Int,
+        second: Int,
+    ): Long {
         return (toUnsignedLong(first) shl 32) or toUnsignedLong(second)
     }
 
@@ -58,7 +60,10 @@ object IntPair {
      * @return Packed value
      */
     @JvmStatic
-    fun packIntFloat(first: Int, second: Float): Long {
+    fun packIntFloat(
+        first: Int,
+        second: Float,
+    ): Long {
         return pack(first, java.lang.Float.floatToRawIntBits(second))
     }
 

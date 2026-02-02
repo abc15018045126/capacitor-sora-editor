@@ -4,7 +4,6 @@ package io.github.abc15018045126.sora.lang.styling
  * Update block line positions on edit
  */
 object BlocksUpdater {
-
     /**
      * Update blocks
      *
@@ -13,7 +12,11 @@ object BlocksUpdater {
      * @param delta    Delta for line index
      */
     @JvmStatic
-    fun update(blocks: MutableList<CodeBlock>, restrict: Int, delta: Int) {
+    fun update(
+        blocks: MutableList<CodeBlock>,
+        restrict: Int,
+        delta: Int,
+    ) {
         if (delta == 0) {
             return
         }

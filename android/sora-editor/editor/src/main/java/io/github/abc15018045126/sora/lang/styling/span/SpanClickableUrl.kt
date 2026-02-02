@@ -37,5 +37,4 @@ class SpanClickableUrl(val link: String) : SpanInteractionInfo {
     override fun getData(): String {
         return link
     }
-
 }

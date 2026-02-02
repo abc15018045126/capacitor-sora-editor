@@ -15,7 +15,6 @@ import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
 import kotlin.math.max
 
 class DefaultDiagnosticTooltipLayout : DiagnosticTooltipLayout {
-
     private lateinit var window: EditorDiagnosticTooltipWindow
     private lateinit var root: View
     private lateinit var briefMessageText: TextView
@@ -95,10 +94,11 @@ class DefaultDiagnosticTooltipLayout : DiagnosticTooltipLayout {
         quickfixText.setTextColor(colorScheme.getColor(EditorColorScheme.DIAGNOSTIC_TOOLTIP_ACTION))
         moreActionText.setTextColor(colorScheme.getColor(EditorColorScheme.DIAGNOSTIC_TOOLTIP_ACTION))
 
-        val background = GradientDrawable().apply {
-            cornerRadius = editor.dpUnit * 5
-            setColor(colorScheme.getColor(EditorColorScheme.DIAGNOSTIC_TOOLTIP_BACKGROUND))
-        }
+        val background =
+            GradientDrawable().apply {
+                cornerRadius = editor.dpUnit * 5
+                setColor(colorScheme.getColor(EditorColorScheme.DIAGNOSTIC_TOOLTIP_BACKGROUND))
+            }
         root.background = background
     }
 
@@ -131,7 +131,10 @@ class DefaultDiagnosticTooltipLayout : DiagnosticTooltipLayout {
         }
     }
 
-    override fun measureContent(maxWidth: Int, maxHeight: Int): Pair<Int, Int> {
+    override fun measureContent(
+        maxWidth: Int,
+        maxHeight: Int,
+    ): Pair<Int, Int> {
         val widthSpec = MeasureSpec.makeMeasureSpec(maxWidth, MeasureSpec.AT_MOST)
         var bottomBarHeight = 0
         var bottomBarWidth = 0

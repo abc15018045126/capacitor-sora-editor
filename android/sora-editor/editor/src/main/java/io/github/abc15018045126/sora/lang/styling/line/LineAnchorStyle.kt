@@ -55,12 +55,10 @@ package io.github.abc15018045126.sora.lang.styling.line
  * @author abc15018045126
  */
 abstract class LineAnchorStyle(open var line: Int) : Comparable<LineAnchorStyle> {
-
     /**
      * Custom data from language
      */
     var customData: Any? = null
 
     override fun compareTo(other: LineAnchorStyle) = line.compareTo(other.line)
-
 }

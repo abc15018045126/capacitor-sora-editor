@@ -12,7 +12,6 @@ import java.util.Arrays
  * @author abc15018045126
  */
 class ContentBidi(content: Content) : ContentListener {
-
     private val entries = arrayOfNulls<DirectionsEntry>(MAX_BIDI_CACHE_ENTRY_COUNT)
     private val text: Content = content
     var isEnabled: Boolean = false
@@ -27,7 +26,10 @@ class ContentBidi(content: Content) : ContentListener {
         text.addContentListener(this)
     }
 
-    fun getLineDirections(lineText: ContentLine, line: Int): Directions {
+    fun getLineDirections(
+        lineText: ContentLine,
+        line: Int,
+    ): Directions {
         if (!isEnabled) {
             return Directions(longArrayOf(IntPair.pack(0, 0)), lineText.length)
         }
@@ -54,7 +56,7 @@ class ContentBidi(content: Content) : ContentListener {
         startColumn: Int,
         endLine: Int,
         endColumn: Int,
-        deletedContent: CharSequence
+        deletedContent: CharSequence,
     ) {
         val delta = endLine - startLine
         for (i in entries.indices) {
@@ -76,7 +78,7 @@ class ContentBidi(content: Content) : ContentListener {
         startColumn: Int,
         endLine: Int,
         endColumn: Int,
-        insertedContent: CharSequence
+        insertedContent: CharSequence,
     ) {
         val delta = endLine - startLine
         for (i in entries.indices) {

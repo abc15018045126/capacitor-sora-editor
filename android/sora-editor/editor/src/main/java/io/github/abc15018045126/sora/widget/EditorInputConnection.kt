@@ -17,13 +17,11 @@ import android.view.inputmethod.TextAttribute
 import android.view.inputmethod.TextSnapshot
 import androidx.annotation.RequiresApi
 import io.github.abc15018045126.sora.event.ContentChangeEvent
+import io.github.abc15018045126.sora.event.EventReceiver
 import io.github.abc15018045126.sora.event.ImePrivateCommandEvent
 import io.github.abc15018045126.sora.event.SelectionChangeEvent
-import io.github.abc15018045126.sora.event.EventReceiver
 import io.github.abc15018045126.sora.event.Unsubscribe
-import io.github.abc15018045126.sora.text.CharPosition
 import io.github.abc15018045126.sora.text.ComposingText
-import io.github.abc15018045126.sora.text.Content
 import io.github.abc15018045126.sora.text.Cursor
 import io.github.abc15018045126.sora.util.Logger
 import kotlin.math.max
@@ -36,21 +34,28 @@ import kotlin.math.min
  */
 internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnection(targetView, true) {
     private val editor: CodeEditor = targetView
+
     @JvmField
     internal var composingText: ComposingText = ComposingText()
     internal var imeConsumingInput: Boolean = false
     private var connectionInvalid: Boolean = false
 
     init {
-        editor.subscribeEvent(ContentChangeEvent::class.java, object : EventReceiver<ContentChangeEvent> {
-            override fun onReceive(event: ContentChangeEvent, unsubscribe: Unsubscribe) {
-                if (event.action == ContentChangeEvent.ACTION_INSERT) {
-                    composingText.shiftOnInsert(event.changeStart.index, event.changeEnd.index)
-                } else if (event.action == ContentChangeEvent.ACTION_DELETE) {
-                    composingText.shiftOnDelete(event.changeStart.index, event.changeEnd.index)
+        editor.subscribeEvent(
+            ContentChangeEvent::class.java,
+            object : EventReceiver<ContentChangeEvent> {
+                override fun onReceive(
+                    event: ContentChangeEvent,
+                    unsubscribe: Unsubscribe,
+                ) {
+                    if (event.action == ContentChangeEvent.ACTION_INSERT) {
+                        composingText.shiftOnInsert(event.changeStart.index, event.changeEnd.index)
+                    } else if (event.action == ContentChangeEvent.ACTION_DELETE) {
+                        composingText.shiftOnDelete(event.changeStart.index, event.changeEnd.index)
+                    }
                 }
-            }
-        })
+            },
+        )
     }
 
     internal fun markInvalid() {
@@ -86,7 +91,10 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
          */
         get() = editor.cursor!!
 
-    override fun commitText(text: CharSequence?, newCursorPosition: Int): Boolean {
+    override fun commitText(
+        text: CharSequence?,
+        newCursorPosition: Int,
+    ): Boolean {
         if (DEBUG) logger.d("commitText text = $text, pos = $newCursorPosition")
 
         if (!editor.isEditable || connectionInvalid || text == null) {
@@ -117,7 +125,12 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
     /**
      * Get content region internally
      */
-    private fun getTextRegionInternal(start: Int, end: Int, flags: Int, ignoreIPCLimit: Boolean): CharSequence? {
+    private fun getTextRegionInternal(
+        start: Int,
+        end: Int,
+        flags: Int,
+        ignoreIPCLimit: Boolean,
+    ): CharSequence? {
         var mutableStart = start
         var mutableEnd = end
         val origin = editor.text
@@ -165,10 +178,10 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
                         Spanned.SPAN_COMPOSING,
                         transferredStart,
                         transferredEnd,
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
                     )
                 } catch (e: IndexOutOfBoundsException) {
-                    //ignored
+                    // ignored
                 }
             }
             return text
@@ -176,7 +189,11 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         return sub
     }
 
-    internal fun getTextRegion(start: Int, end: Int, flags: Int): CharSequence? {
+    internal fun getTextRegion(
+        start: Int,
+        end: Int,
+        flags: Int,
+    ): CharSequence? {
         try {
             val res = getTextRegionInternal(start, end, flags, false)
             if (DEBUG) logger.d("getTextRegion result:$res")
@@ -187,7 +204,11 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         }
     }
 
-    protected fun getTextRegionUnlimited(start: Int, end: Int, flags: Int): CharSequence? {
+    protected fun getTextRegionUnlimited(
+        start: Int,
+        end: Int,
+        flags: Int,
+    ): CharSequence? {
         try {
             val res = getTextRegionInternal(start, end, flags, true)
             if (DEBUG) logger.d("getTextRegion result:$res")
@@ -202,14 +223,17 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         if (editor.props!!.disallowSuggestions) {
             return null
         }
-        //This text should be limited because when the user try to select all text
-        //it can be quite large text and costs time, which will finally cause ANR
+        // This text should be limited because when the user try to select all text
+        // it can be quite large text and costs time, which will finally cause ANR
         val left = cursor.left
         val right = cursor.right
         return if (left == right) null else getTextRegion(left, right, flags)
     }
 
-    override fun getTextBeforeCursor(length: Int, flags: Int): CharSequence? {
+    override fun getTextBeforeCursor(
+        length: Int,
+        flags: Int,
+    ): CharSequence? {
         if (editor.props!!.disallowSuggestions) {
             return ""
         }
@@ -218,7 +242,10 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         return getTextRegion(start, end, flags)
     }
 
-    override fun getTextAfterCursor(length: Int, flags: Int): CharSequence? {
+    override fun getTextAfterCursor(
+        length: Int,
+        flags: Int,
+    ): CharSequence? {
         if (editor.props!!.disallowSuggestions) {
             return ""
         }
@@ -233,20 +260,23 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
                 eventTime, eventTime,
                 KeyEvent.ACTION_DOWN, keyCode, 0, 0,
                 KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
-                KeyEvent.FLAG_SOFT_KEYBOARD or KeyEvent.FLAG_KEEP_TOUCH_MODE
-            )
+                KeyEvent.FLAG_SOFT_KEYBOARD or KeyEvent.FLAG_KEEP_TOUCH_MODE,
+            ),
         )
         sendKeyEvent(
             KeyEvent(
                 SystemClock.uptimeMillis(), eventTime,
                 KeyEvent.ACTION_UP, keyCode, 0, 0,
                 KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
-                KeyEvent.FLAG_SOFT_KEYBOARD or KeyEvent.FLAG_KEEP_TOUCH_MODE
-            )
+                KeyEvent.FLAG_SOFT_KEYBOARD or KeyEvent.FLAG_KEEP_TOUCH_MODE,
+            ),
         )
     }
 
-    internal fun commitTextInternal(text: CharSequence, applyAutoIndent: Boolean) {
+    internal fun commitTextInternal(
+        text: CharSequence,
+        applyAutoIndent: Boolean,
+    ) {
         var mutableText = text
         val composingStateBefore = composingText.isComposing()
         // NOTE: Text styles are ignored by editor
@@ -255,8 +285,9 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
             if (composingText.isComposing()) {
                 val composingStr = editor.text.subSequence(composingText.startIndex, composingText.endIndex).toString()
                 val commitText = mutableText.toString()
-                if (composingText.endIndex == cursor.left && !cursor.isSelected() && commitText.startsWith(
-                        composingStr
+                if (composingText.endIndex == cursor.left && !cursor.isSelected() &&
+                    commitText.startsWith(
+                        composingStr,
                     ) && commitText.length > composingStr.length
                 ) {
                     mutableText = commitText.substring(composingStr.length)
@@ -291,7 +322,10 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         composingText.reset()
     }
 
-    override fun deleteSurroundingText(beforeLength: Int, afterLength: Int): Boolean {
+    override fun deleteSurroundingText(
+        beforeLength: Int,
+        afterLength: Int,
+    ): Boolean {
         if (DEBUG) logger.d("deleteSurroundingText, before = $beforeLength, after = $afterLength")
         if (!editor.isEditable || connectionInvalid) {
             return false
@@ -354,7 +388,10 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         return true
     }
 
-    override fun deleteSurroundingTextInCodePoints(beforeLength: Int, afterLength: Int): Boolean {
+    override fun deleteSurroundingTextInCodePoints(
+        beforeLength: Int,
+        afterLength: Int,
+    ): Boolean {
         // Unsupported operation
         // According to document, we should return false
         return false
@@ -386,7 +423,10 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         }
     }
 
-    override fun setComposingText(text: CharSequence, newCursorPosition: Int): Boolean {
+    override fun setComposingText(
+        text: CharSequence,
+        newCursorPosition: Int,
+    ): Boolean {
         if (DEBUG) logger.d("setComposingText, text = $text, pos = $newCursorPosition")
         if (!editor.isEditable || connectionInvalid || !editor.acceptsComposingText()) {
             return false
@@ -394,7 +434,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         if (editor.props!!.disallowSuggestions) {
             composingText.reset()
             commitText(text, 0)
-            //editor.restartInput();
+            // editor.restartInput();
             return false
         }
         if (TextUtils.indexOf(text, '\n') != -1) {
@@ -469,7 +509,10 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         return index
     }
 
-    override fun setSelection(start: Int, end: Int): Boolean {
+    override fun setSelection(
+        start: Int,
+        end: Int,
+    ): Boolean {
         var mutableStart = start
         var mutableEnd = end
         if (DEBUG) logger.d("setSelection, s = $mutableStart, e = $mutableEnd")
@@ -495,12 +538,15 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
             endPos.line,
             endPos.column,
             false,
-            SelectionChangeEvent.CAUSE_IME
+            SelectionChangeEvent.CAUSE_IME,
         )
         return true
     }
 
-    override fun setComposingRegion(start: Int, end: Int): Boolean {
+    override fun setComposingRegion(
+        start: Int,
+        end: Int,
+    ): Boolean {
         var mutableStart = start
         var mutableEnd = end
         if (DEBUG) logger.d("setComposingRegion, s = $mutableStart, e = $mutableEnd")
@@ -580,7 +626,10 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         return true
     }
 
-    override fun getExtractedText(request: ExtractedTextRequest?, flags: Int): ExtractedText? {
+    override fun getExtractedText(
+        request: ExtractedTextRequest?,
+        flags: Int,
+    ): ExtractedText? {
         if (DEBUG) logger.d("getExtractedText, flags = $flags")
         if (editor.props!!.disallowSuggestions || editor.props!!.disableTextExtracting) {
             return null
@@ -608,7 +657,11 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
     }
 
     @RequiresApi(31)
-    override fun getSurroundingText(beforeLength: Int, afterLength: Int, flags: Int): SurroundingText? {
+    override fun getSurroundingText(
+        beforeLength: Int,
+        afterLength: Int,
+        flags: Int,
+    ): SurroundingText? {
         if (DEBUG) logger.d("getSurroundingText, beforeLen = $beforeLength, afterLen = $afterLength")
         if (editor.props!!.disallowSuggestions) {
             return SurroundingText("", 0, 0, -1)
@@ -617,16 +670,17 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         var startOffset = max(0, cursor.left - beforeLength)
         val selStart = cursor.left
         startOffset = min(startOffset, selStart)
-        val text = getTextRegionUnlimited(
-            startOffset,
-            min(editor.text.length, cursor.right + afterLength),
-            flags
-        )
+        val text =
+            getTextRegionUnlimited(
+                startOffset,
+                min(editor.text.length, cursor.right + afterLength),
+                flags,
+            )
         return SurroundingText(
             text ?: "",
             cursor.left - startOffset,
             cursor.right - startOffset,
-            startOffset
+            startOffset,
         )
     }
 
@@ -639,7 +693,10 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         return true
     }
 
-    override fun performPrivateCommand(action: String?, data: Bundle?): Boolean {
+    override fun performPrivateCommand(
+        action: String?,
+        data: Bundle?,
+    ): Boolean {
         if (connectionInvalid) {
             return false
         }
@@ -652,7 +709,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         end: Int,
         text: CharSequence,
         newCursorPosition: Int,
-        textAttribute: TextAttribute?
+        textAttribute: TextAttribute?,
     ): Boolean {
         if (DEBUG) {
             logger.d("replaceText, st = $start, ed = $end, text = $text, nCurPos = $newCursorPosition")
@@ -678,19 +735,23 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
             composingEnd = composingText.endIndex
         }
 
-        val surroundingText = getSurroundingText(
-            MEMORY_EFFICIENT_TEXT_LENGTH / 2,
-            MEMORY_EFFICIENT_TEXT_LENGTH / 2,
-            GET_TEXT_WITH_STYLES
-        )
+        val surroundingText =
+            getSurroundingText(
+                MEMORY_EFFICIENT_TEXT_LENGTH / 2,
+                MEMORY_EFFICIENT_TEXT_LENGTH / 2,
+                GET_TEXT_WITH_STYLES,
+            )
         if (surroundingText == null) {
             return null
         }
 
-        val cursorCapsMode = getCursorCapsMode(
-            (TextUtils.CAP_MODE_CHARACTERS
-                    or TextUtils.CAP_MODE_WORDS or TextUtils.CAP_MODE_SENTENCES)
-        )
+        val cursorCapsMode =
+            getCursorCapsMode(
+                (
+                    TextUtils.CAP_MODE_CHARACTERS
+                        or TextUtils.CAP_MODE_WORDS or TextUtils.CAP_MODE_SENTENCES
+                ),
+            )
 
         return TextSnapshot(surroundingText, composingStart, composingEnd, cursorCapsMode)
     }

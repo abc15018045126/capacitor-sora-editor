@@ -12,10 +12,17 @@ import io.github.abc15018045126.sora.text.CharPosition
  * @author abc15018045126
  */
 class PlainTextAnalyzeManager : BaseAnalyzeManager() {
+    override fun insert(
+        start: CharPosition,
+        end: CharPosition,
+        insertedContent: CharSequence,
+    ) {}
 
-    override fun insert(start: CharPosition, end: CharPosition, insertedContent: CharSequence) {}
-
-    override fun delete(start: CharPosition, end: CharPosition, deletedContent: CharSequence) {}
+    override fun delete(
+        start: CharPosition,
+        end: CharPosition,
+        deletedContent: CharSequence,
+    ) {}
 
     override fun rerun() {
         val receiver = receiver
@@ -24,7 +31,8 @@ class PlainTextAnalyzeManager : BaseAnalyzeManager() {
             val style = Styles()
             style.spans = PlainTextSpans(ref.lineCount)
             receiver.setStyles(this, style)
-        } else receiver?.setStyles(this, null)
+        } else {
+            receiver?.setStyles(this, null)
+        }
     }
-
 }

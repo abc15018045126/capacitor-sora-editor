@@ -7,9 +7,8 @@ package io.github.abc15018045126.sora.text
  */
 class TextRange(
     @JvmField var start: CharPosition,
-    @JvmField var end: CharPosition
+    @JvmField var end: CharPosition,
 ) {
-
     fun getStart(): CharPosition {
         return start
     }
@@ -41,8 +40,8 @@ class TextRange(
 
     override fun toString(): String {
         return "TextRange{" +
-                "start=" + start +
-                ", end=" + end +
-                '}'
+            "start=" + start +
+            ", end=" + end +
+            '}'
     }
 }

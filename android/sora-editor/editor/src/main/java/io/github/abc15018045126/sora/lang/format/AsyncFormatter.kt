@@ -16,17 +16,16 @@ import kotlin.concurrent.withLock
  * Base class for formatting code in another thread.
  */
 abstract class AsyncFormatter : Formatter {
-
     private val lock = ReentrantLock()
     private val condition: Condition = lock.newCondition()
     private var receiver: WeakReference<Formatter.FormatResultReceiver>? = null
-    
+
     @Volatile
     private var text: Content? = null
-    
+
     @Volatile
     private var range: TextRange? = null
-    
+
     @Volatile
     private var cursorRange: TextRange? = null
 
@@ -40,11 +39,12 @@ abstract class AsyncFormatter : Formatter {
         if (thread == null || thread?.isAlive == false) {
             // Create new thread
             Log.v(LOG_TAG, "Starting a new thread for formatting")
-            thread = FormattingThread().apply {
-                isDaemon = true
-                name = "AsyncFormatter-${nextThreadId()}"
-                start()
-            }
+            thread =
+                FormattingThread().apply {
+                    isDaemon = true
+                    name = "AsyncFormatter-${nextThreadId()}"
+                    start()
+                }
         } else {
             // Wake up thread
             Log.v(LOG_TAG, "Waking up thread for formatting")
@@ -54,7 +54,10 @@ abstract class AsyncFormatter : Formatter {
         }
     }
 
-    override fun format(@NonNull text: Content, @NonNull cursorRange: TextRange) {
+    override fun format(
+        @NonNull text: Content,
+        @NonNull cursorRange: TextRange,
+    ) {
         this.text = text
         range = null
         this.cursorRange = cursorRange
@@ -65,7 +68,11 @@ abstract class AsyncFormatter : Formatter {
         return thread != null && thread?.isAlive == true && lock.isLocked
     }
 
-    override fun formatRegion(@NonNull text: Content, @NonNull rangeToFormat: TextRange, @NonNull cursorRange: TextRange) {
+    override fun formatRegion(
+        @NonNull text: Content,
+        @NonNull rangeToFormat: TextRange,
+        @NonNull cursorRange: TextRange,
+    ) {
         this.text = text
         range = rangeToFormat
         this.cursorRange = cursorRange
@@ -81,7 +88,10 @@ abstract class AsyncFormatter : Formatter {
      */
     @WorkerThread
     @Nullable
-    abstract fun formatAsync(@NonNull text: Content, @NonNull cursorRange: TextRange): TextRange?
+    abstract fun formatAsync(
+        @NonNull text: Content,
+        @NonNull cursorRange: TextRange,
+    ): TextRange?
 
     /**
      * like [Formatter.formatRegion], but run in background thread
@@ -92,9 +102,16 @@ abstract class AsyncFormatter : Formatter {
      */
     @WorkerThread
     @Nullable
-    abstract fun formatRegionAsync(@NonNull text: Content, @NonNull rangeToFormat: TextRange, @NonNull cursorRange: TextRange): TextRange?
+    abstract fun formatRegionAsync(
+        @NonNull text: Content,
+        @NonNull rangeToFormat: TextRange,
+        @NonNull cursorRange: TextRange,
+    ): TextRange?
 
-    private fun sendUpdate(text: Content?, cursorRange: TextRange?) {
+    private fun sendUpdate(
+        text: Content?,
+        cursorRange: TextRange?,
+    ) {
         if (!Thread.currentThread().isInterrupted) {
             receiver?.get()?.onFormatSucceed(text.toString(), cursorRange)
         }
@@ -126,7 +143,6 @@ abstract class AsyncFormatter : Formatter {
     }
 
     private inner class FormattingThread : Thread() {
-
         override fun run() {
             Log.v(LOG_TAG, "AsyncFormatter thread started")
             try {

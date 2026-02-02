@@ -11,7 +11,7 @@ import java.lang.ref.WeakReference
 class SubscriptionReceipt<R : Event> internal constructor(
     private val manager: EventManager,
     private val clazz: Class<R>,
-    receiver: EventReceiver<R>
+    receiver: EventReceiver<R>,
 ) {
     private val receiver: WeakReference<EventReceiver<R>> = WeakReference(receiver)
 

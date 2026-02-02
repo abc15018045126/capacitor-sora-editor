@@ -24,7 +24,6 @@ import androidx.annotation.RequiresApi
  * Taken from {@link android.text.method.BaseKeyListener}
  */
 object TextUtilsP {
-
     private const val LINE_FEED: Int = 0x0A
     private const val CARRIAGE_RETURN: Int = 0x0D
 
@@ -37,7 +36,10 @@ object TextUtilsP {
     // Returns the start offset to be deleted by a backspace key from the given offset.
     @JvmStatic
     @RequiresApi(api = Build.VERSION_CODES.P)
-    fun getOffsetForBackspaceKey(text: CharSequence, offset: Int): Int {
+    fun getOffsetForBackspaceKey(
+        text: CharSequence,
+        offset: Int,
+    ): Int {
         if (offset <= 1) {
             return 0
         }
@@ -80,8 +82,8 @@ object TextUtilsP {
         // The state machine has been stopped.
         val STATE_FINISHED = 13
 
-        var deleteCharCount = 0  // Char count to be deleted by backspace.
-        var lastSeenVSCharCount = 0  // Char count of previous variation selector.
+        var deleteCharCount = 0 // Char count to be deleted by backspace.
+        var lastSeenVSCharCount = 0 // Char count of previous variation selector.
 
         var state = STATE_START
 
@@ -119,7 +121,7 @@ object TextUtilsP {
                 }
                 STATE_ODD_NUMBERED_RIS -> {
                     if (AndroidEmoji.isRegionalIndicatorSymbol(codePoint)) {
-                        deleteCharCount += 2 /* Char count of RIS */
+                        deleteCharCount += 2 // Char count of RIS
                         state = STATE_EVEN_NUMBERED_RIS
                     } else {
                         state = STATE_FINISHED
@@ -127,7 +129,7 @@ object TextUtilsP {
                 }
                 STATE_EVEN_NUMBERED_RIS -> {
                     if (AndroidEmoji.isRegionalIndicatorSymbol(codePoint)) {
-                        deleteCharCount -= 2 /* Char count of RIS */
+                        deleteCharCount -= 2 // Char count of RIS
                         state = STATE_ODD_NUMBERED_RIS
                     } else {
                         state = STATE_FINISHED
@@ -189,9 +191,13 @@ object TextUtilsP {
                 }
                 STATE_BEFORE_ZWJ -> {
                     if (AndroidEmoji.isEmoji(codePoint)) {
-                        deleteCharCount += Character.charCount(codePoint) + 1  // +1 for ZWJ.
-                        state = if (AndroidEmoji.isEmojiModifier(codePoint))
-                            STATE_BEFORE_EMOJI_MODIFIER else STATE_BEFORE_EMOJI
+                        deleteCharCount += Character.charCount(codePoint) + 1 // +1 for ZWJ.
+                        state =
+                            if (AndroidEmoji.isEmojiModifier(codePoint)) {
+                                STATE_BEFORE_EMOJI_MODIFIER
+                            } else {
+                                STATE_BEFORE_EMOJI
+                            }
                     } else if (isVariationSelector(codePoint)) {
                         lastSeenVSCharCount = Character.charCount(codePoint)
                         state = STATE_BEFORE_VS_AND_ZWJ
@@ -211,14 +217,14 @@ object TextUtilsP {
                 }
                 STATE_IN_TAG_SEQUENCE -> {
                     if (AndroidEmoji.isTagSpecChar(codePoint)) {
-                        deleteCharCount += 2 /* Char count of emoji tag spec character. */
+                        deleteCharCount += 2 // Char count of emoji tag spec character.
                         // Keep the same state.
                     } else if (AndroidEmoji.isEmoji(codePoint)) {
                         deleteCharCount += Character.charCount(codePoint)
                         state = STATE_FINISHED
                     } else {
                         // Couldn't find tag_base character. Delete the last tag_term character.
-                        deleteCharCount = 2  // for U+E007F
+                        deleteCharCount = 2 // for U+E007F
                         state = STATE_FINISHED
                     }
                     // TODO: Need handle emoji variation selectors. Issue 35224297

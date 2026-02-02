@@ -6,7 +6,6 @@ package io.github.abc15018045126.sora.util
  * @author abc15018045126
  */
 class LongArrayList {
-
     private var data: LongArray = LongArray(64)
     private var length: Int = 0
 
@@ -34,7 +33,10 @@ class LongArrayList {
      * Set element at given index to {@code value}
      * @throws ArrayIndexOutOfBoundsException if index is invalid
      */
-    fun set(index: Int, value: Long) {
+    fun set(
+        index: Int,
+        value: Long,
+    ) {
         if (index >= length || index < 0) {
             throw ArrayIndexOutOfBoundsException(index)
         }
@@ -59,14 +61,15 @@ class LongArrayList {
             val mid = (low + high) ushr 1
             val midVal = IntPair.getFirst(data[mid])
 
-            if (midVal < key)
+            if (midVal < key) {
                 low = mid + 1
-            else if (midVal > key)
+            } else if (midVal > key) {
                 high = mid - 1
-            else
+            } else {
                 return mid // key found
+            }
         }
-        return low  // key not found.
+        return low // key not found.
     }
 
     fun lowerBound(key: Long): Int {
@@ -77,14 +80,15 @@ class LongArrayList {
             val mid = (low + high) ushr 1
             val midVal = data[mid]
 
-            if (midVal < key)
+            if (midVal < key) {
                 low = mid + 1
-            else if (midVal > key)
+            } else if (midVal > key) {
                 high = mid - 1
-            else
+            } else {
                 return mid // key found
+            }
         }
-        return low  // key not found.
+        return low // key not found.
     }
 
     /**

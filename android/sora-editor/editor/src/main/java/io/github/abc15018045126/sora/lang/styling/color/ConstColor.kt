@@ -38,7 +38,9 @@ class ConstColor : ResolvableColor {
     /**
      * @param color Color int
      */
-    constructor(@ColorInt color: Int) {
+    constructor(
+        @ColorInt color: Int,
+    ) {
         this.color = color
     }
 

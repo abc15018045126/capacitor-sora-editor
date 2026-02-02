@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.os.Build
 
 object GraphicsCompat {
-
     /**
      * {@link Canvas#drawTextRun(char[], int, int, int, int, float, float, boolean, android.graphics.Paint)} is also available on API 21 & 22,
      * but with hidden access.
@@ -23,7 +22,7 @@ object GraphicsCompat {
         x: Float,
         y: Float,
         isRtl: Boolean,
-        paint: android.graphics.Paint
+        paint: android.graphics.Paint,
     ) {
         canvas.drawTextRun(text, index, count, contextIndex, contextCount, x, y, isRtl, paint)
     }
@@ -37,7 +36,7 @@ object GraphicsCompat {
         contextStart: Int,
         contextEnd: Int,
         isRtl: Boolean,
-        offset: Int
+        offset: Int,
     ): Float {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             paint.getRunAdvance(text, start, end, contextStart, contextEnd, isRtl, offset)

@@ -16,19 +16,22 @@ class MutableIntList {
     fun size(): Int {
         return data.size
     }
-    
+
     val size: Int
         get() = data.size
 
     fun clear() {
         data.clear()
     }
-    
-    fun set(index: Int, value: Int) {
+
+    fun set(
+        index: Int,
+        value: Int,
+    ) {
         if (index >= data.size) {
-             for (i in data.size..index) {
-                 data.add(0)
-             }
+            for (i in data.size..index) {
+                data.add(0)
+            }
         }
         data[index] = value
     }

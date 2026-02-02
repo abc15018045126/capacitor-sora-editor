@@ -15,9 +15,8 @@ import java.util.Objects
 open class TextReference(
     ref: CharSequence,
     private val start: Int,
-    private val end: Int
+    private val end: Int,
 ) : CharSequence {
-
     private val ref: CharSequence = Objects.requireNonNull(ref)
     private var validator: Validator? = null
 
@@ -59,14 +58,17 @@ open class TextReference(
         return ref.subSequence(start, end).toString()
     }
 
-    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
+    override fun subSequence(
+        startIndex: Int,
+        endIndex: Int,
+    ): CharSequence {
         if (startIndex < 0 || startIndex >= length) {
             throw StringIndexOutOfBoundsException(startIndex)
         }
         if (endIndex < 0 || endIndex > length) {
-             throw StringIndexOutOfBoundsException(endIndex)
+            throw StringIndexOutOfBoundsException(endIndex)
         }
-        
+
         validateAccess()
         return TextReference(ref, this.start + startIndex, this.start + endIndex).setValidator(validator)
     }

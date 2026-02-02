@@ -1,9 +1,9 @@
 package io.github.abc15018045126.sora.text.bidi
 
 import android.text.TextUtils
-import java.text.Bidi
 import io.github.abc15018045126.sora.util.IntPair
 import io.github.abc15018045126.sora.util.TemporaryCharBuffer
+import java.text.Bidi
 
 /**
  * Text bidirectional utils. Some codes are from AOSP
@@ -11,7 +11,6 @@ import io.github.abc15018045126.sora.util.TemporaryCharBuffer
  * @author abc15018045126
  */
 object TextBidi {
-
     /**
      * Compute text directions for the given text
      */
@@ -35,14 +34,14 @@ object TextBidi {
     @JvmStatic
     fun couldAffectRtl(c: Char): Boolean {
         val i = c.code
-        return (i in 0x0590..0x08FF) ||  // RTL scripts
-                i == 0x200E ||  // Bidi format character
-                i == 0x200F ||  // Bidi format character
-                (i in 0x202A..0x202E) ||  // Bidi format characters
-                (i in 0x2066..0x2069) ||  // Bidi format characters
-                (i in 0xD800..0xDFFF) ||  // Surrogate pairs
-                (i in 0xFB1D..0xFDFF) ||  // Hebrew and Arabic presentation forms
-                (i in 0xFE70..0xFEFE)    // Arabic presentation forms
+        return (i in 0x0590..0x08FF) || // RTL scripts
+            i == 0x200E || // Bidi format character
+            i == 0x200F || // Bidi format character
+            (i in 0x202A..0x202E) || // Bidi format characters
+            (i in 0x2066..0x2069) || // Bidi format characters
+            (i in 0xD800..0xDFFF) || // Surrogate pairs
+            (i in 0xFB1D..0xFDFF) || // Hebrew and Arabic presentation forms
+            (i in 0xFE70..0xFEFE) // Arabic presentation forms
     }
 
     /**

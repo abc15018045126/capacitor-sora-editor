@@ -26,8 +26,6 @@ package io.github.abc15018045126.sora.lang.styling.patching
 
 import java.lang.IllegalStateException
 import java.lang.UnsupportedOperationException
-import java.util.Arrays
-import java.util.Collections
 
 /*******************************************************************************
  *    sora-editor - the awesome code editor for Android
@@ -53,18 +51,18 @@ import java.util.Collections
  *     additional information or have any questions
  ******************************************************************************/
 class SparseStylePatches {
-
     private val patches = mutableListOf<StylePatch>()
 
     private var immutable = false
 
     private fun getInsertionPoint(patch: StylePatch): Int {
         val result = patches.binarySearch(patch)
-        val insertionPoint = if (result < 0) {
-            -(result + 1)
-        } else {
-            result
-        }
+        val insertionPoint =
+            if (result < 0) {
+                -(result + 1)
+            } else {
+                result
+            }
         return insertionPoint
     }
 
@@ -78,7 +76,12 @@ class SparseStylePatches {
         immutable = true
     }
 
-    fun updateForInsertion(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int) {
+    fun updateForInsertion(
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+    ) {
         val coordinator = StylePatch(startLine, 0, startLine, 0)
         var index = getInsertionPoint(coordinator)
         val delta = endLine - startLine
@@ -98,7 +101,12 @@ class SparseStylePatches {
         }
     }
 
-    fun updateForDeletion(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int) {
+    fun updateForDeletion(
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+    ) {
         val coordinator = StylePatch(startLine, 0, startLine, 0)
         var index = getInsertionPoint(coordinator)
         val delta = endLine - startLine
@@ -106,10 +114,8 @@ class SparseStylePatches {
             val e = patches[index]
             // TODO
             if (e.startLine < endLine || (e.startLine == endLine && e.endColumn < endColumn)) {
-
             }
             index++
         }
     }
-
 }

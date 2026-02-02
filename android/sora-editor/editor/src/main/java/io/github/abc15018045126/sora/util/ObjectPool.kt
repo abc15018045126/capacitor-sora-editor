@@ -1,7 +1,6 @@
 package io.github.abc15018045126.sora.util
 
 abstract class ObjectPool<T>(size: Int = 16) {
-
     private val pool: Array<Any?> = arrayOfNulls(size)
 
     open fun recycle(obj: T?) {

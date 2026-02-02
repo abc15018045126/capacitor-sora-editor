@@ -18,7 +18,6 @@ import io.github.abc15018045126.sora.widget.SymbolPairMatch
  * @author abc15018045126
  */
 open class EmptyLanguage : Language {
-
     override val formatter: Formatter
         get() = EmptyFormatter.INSTANCE
 
@@ -29,7 +28,7 @@ open class EmptyLanguage : Language {
         content: ContentReference,
         position: CharPosition,
         publisher: CompletionPublisher,
-        extraArguments: Bundle
+        extraArguments: Bundle,
     ) {
     }
 
@@ -42,7 +41,11 @@ open class EmptyLanguage : Language {
     override val analyzeManager: AnalyzeManager
         get() = EmptyAnalyzeManager.INSTANCE
 
-    override fun getIndentAdvance(content: ContentReference, line: Int, column: Int): Int {
+    override fun getIndentAdvance(
+        content: ContentReference,
+        line: Int,
+        column: Int,
+    ): Int {
         return 0
     }
 
@@ -56,9 +59,16 @@ open class EmptyLanguage : Language {
     }
 
     class EmptyFormatter : Formatter {
-        override fun format(text: Content, cursorRange: TextRange) {}
+        override fun format(
+            text: Content,
+            cursorRange: TextRange,
+        ) {}
 
-        override fun formatRegion(text: Content, rangeToFormat: TextRange, cursorRange: TextRange) {}
+        override fun formatRegion(
+            text: Content,
+            rangeToFormat: TextRange,
+            cursorRange: TextRange,
+        ) {}
 
         override fun setReceiver(receiver: Formatter.FormatResultReceiver?) {}
 
@@ -75,9 +85,17 @@ open class EmptyLanguage : Language {
     }
 
     class EmptyAnalyzeManager : BaseAnalyzeManager() {
-        override fun insert(start: CharPosition, end: CharPosition, insertedContent: CharSequence) {}
+        override fun insert(
+            start: CharPosition,
+            end: CharPosition,
+            insertedContent: CharSequence,
+        ) {}
 
-        override fun delete(start: CharPosition, end: CharPosition, deletedContent: CharSequence) {}
+        override fun delete(
+            start: CharPosition,
+            end: CharPosition,
+            deletedContent: CharSequence,
+        ) {}
 
         override fun rerun() {}
 

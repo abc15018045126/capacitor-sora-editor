@@ -6,15 +6,19 @@ import kotlin.math.min
 
 @UnsupportedUserUsage
 class ComposingText {
-
     @JvmField
     var startIndex: Int = 0
+
     @JvmField
     var endIndex: Int = 0
+
     @JvmField
     var preSetComposing: Boolean = false
 
-    fun set(start: Int, end: Int) {
+    fun set(
+        start: Int,
+        end: Int,
+    ) {
         this.startIndex = start
         this.endIndex = end
     }
@@ -33,7 +37,10 @@ class ComposingText {
         return preSetComposing || (startIndex >= 0 && endIndex >= 0)
     }
 
-    fun shiftOnInsert(insertStart: Int, insertEnd: Int) {
+    fun shiftOnInsert(
+        insertStart: Int,
+        insertEnd: Int,
+    ) {
         val length = insertEnd - insertStart
         if (startIndex <= insertStart && endIndex >= insertStart) {
             endIndex += length
@@ -45,7 +52,10 @@ class ComposingText {
         }
     }
 
-    fun shiftOnDelete(deleteStart: Int, deleteEnd: Int) {
+    fun shiftOnDelete(
+        deleteStart: Int,
+        deleteEnd: Int,
+    ) {
         val length = deleteEnd - deleteStart
         // Compute cross length
         val sharedStart = max(deleteStart, startIndex)

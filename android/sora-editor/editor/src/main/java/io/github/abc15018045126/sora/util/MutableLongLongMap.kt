@@ -5,7 +5,10 @@ import java.util.HashMap
 class MutableLongLongMap {
     private val data = HashMap<Long, Long>()
 
-    fun put(key: Long, value: Long) {
+    fun put(
+        key: Long,
+        value: Long,
+    ) {
         data[key] = value
     }
 
@@ -16,7 +19,7 @@ class MutableLongLongMap {
     fun clear() {
         data.clear()
     }
-    
+
     fun containsKey(key: Long): Boolean {
         return data.containsKey(key)
     }
@@ -31,6 +34,9 @@ class MutableLongLongMap {
     }
 
     interface Consumer {
-        fun accept(key: Long, value: Long): Any?
+        fun accept(
+            key: Long,
+            value: Long,
+        ): Any?
     }
 }

@@ -3,9 +3,8 @@ package io.github.abc15018045126.sora.widget.style.builtin
 import android.animation.Animator
 import android.animation.ValueAnimator
 import io.github.abc15018045126.sora.widget.CodeEditor
-import io.github.abc15018045126.sora.widget.style.CursorAnimator
-
 import io.github.abc15018045126.sora.widget.layout.Layout
+import io.github.abc15018045126.sora.widget.style.CursorAnimator
 
 /**
  * Fade-in/Fade-out cursor animation
@@ -13,7 +12,6 @@ import io.github.abc15018045126.sora.widget.layout.Layout
  * @author Dmitry Rubtsov
  */
 class FadeCursorAnimator(private val editor: CodeEditor) : CursorAnimator, ValueAnimator.AnimatorUpdateListener {
-
     private val duration: Long = 200
 
     private var fadeInAnimator: ValueAnimator = ValueAnimator()
@@ -34,10 +32,11 @@ class FadeCursorAnimator(private val editor: CodeEditor) : CursorAnimator, Value
         lineHeight = (layout.getRowCountForLine(line) * editor.rowHeight).toFloat()
         lineBottom = layout.getCharLayoutOffset(line, editor.text.getColumnCount(line))[0]
 
-        val pos = layout.getCharLayoutOffset(
-            editor.cursor!!.leftLine,
-            editor.cursor!!.leftColumn
-        )
+        val pos =
+            layout.getCharLayoutOffset(
+                editor.cursor!!.leftLine,
+                editor.cursor!!.leftColumn,
+            )
         startX = pos[1] + editor.measureTextRegionOffset()
         startY = pos[0]
     }
@@ -69,29 +68,32 @@ class FadeCursorAnimator(private val editor: CodeEditor) : CursorAnimator, Value
         lineHeight = (layout.getRowCountForLine(line) * editor.rowHeight).toFloat()
         lineBottom = layout.getCharLayoutOffset(line, editor.text.getColumnCount(line))[0]
 
-        val pos = layout.getCharLayoutOffset(
-            editor.cursor!!.leftLine,
-            editor.cursor!!.leftColumn
-        )
+        val pos =
+            layout.getCharLayoutOffset(
+                editor.cursor!!.leftLine,
+                editor.cursor!!.leftColumn,
+            )
         endX = pos[1] + editor.measureTextRegionOffset()
         endY = pos[0]
 
         fadeOutAnimator = ValueAnimator.ofInt(255, 0)
-        fadeOutAnimator.addListener(object : Animator.AnimatorListener {
-            override fun onAnimationCancel(animator: Animator) {
-            }
+        fadeOutAnimator.addListener(
+            object : Animator.AnimatorListener {
+                override fun onAnimationCancel(animator: Animator) {
+                }
 
-            override fun onAnimationRepeat(animator: Animator) {
-            }
+                override fun onAnimationRepeat(animator: Animator) {
+                }
 
-            override fun onAnimationStart(animator: Animator) {
-                phaseEnded = false
-            }
+                override fun onAnimationStart(animator: Animator) {
+                    phaseEnded = false
+                }
 
-            override fun onAnimationEnd(animator: Animator) {
-                phaseEnded = true
-            }
-        })
+                override fun onAnimationEnd(animator: Animator) {
+                    phaseEnded = true
+                }
+            },
+        )
         fadeOutAnimator.addUpdateListener(this)
         fadeOutAnimator.duration = duration
 
@@ -118,14 +120,12 @@ class FadeCursorAnimator(private val editor: CodeEditor) : CursorAnimator, Value
         return startX
     }
 
-
     override fun animatedY(): Float {
         if (phaseEnded || editor.insertHandleDescriptor?.position?.isEmpty == true) {
             return endY
         }
         return startY
     }
-
 
     override fun animatedLineHeight(): Float {
         return lineHeight
@@ -139,5 +139,4 @@ class FadeCursorAnimator(private val editor: CodeEditor) : CursorAnimator, Value
         editor.handleStyle?.setAlpha(animation.animatedValue as Int)
         editor.postInvalidateOnAnimation()
     }
-
 }

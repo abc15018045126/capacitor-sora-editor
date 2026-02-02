@@ -8,8 +8,10 @@ import io.github.abc15018045126.sora.util.IntPair
  * @author abc15018045126
  */
 class Directions(private var runs: LongArray, private var length: Int) : IDirections {
-
-    fun setData(runs: LongArray, length: Int) {
+    fun setData(
+        runs: LongArray,
+        length: Int,
+    ) {
         this.runs = runs
         this.length = length
     }

@@ -6,7 +6,6 @@ package io.github.abc15018045126.sora.text
  * @author Rose
  */
 interface Indexer {
-
     /**
      * Get the index of (line,column)
      *
@@ -14,7 +13,10 @@ interface Indexer {
      * @param column The column position of index
      * @return Calculated index
      */
-    fun getCharIndex(line: Int, column: Int): Int
+    fun getCharIndex(
+        line: Int,
+        column: Int,
+    ): Int
 
     /**
      * Get the line position of index
@@ -47,17 +49,27 @@ interface Indexer {
      * @param column The column position you want to get
      * @return The CharPosition object.
      */
-    fun getCharPosition(line: Int, column: Int): CharPosition
+    fun getCharPosition(
+        line: Int,
+        column: Int,
+    ): CharPosition
 
     /**
      * @param dest Destination of result
      * @see #getCharPosition(int)
      */
-    fun getCharPosition(index: Int, dest: CharPosition)
+    fun getCharPosition(
+        index: Int,
+        dest: CharPosition,
+    )
 
     /**
      * @param dest Destination of result
      * @see #getCharPosition(int, int)
      */
-    fun getCharPosition(line: Int, column: Int, dest: CharPosition)
+    fun getCharPosition(
+        line: Int,
+        column: Int,
+        dest: CharPosition,
+    )
 }

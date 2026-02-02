@@ -6,9 +6,8 @@ import java.util.TreeSet
 
 class CodeSnippet(
     val items: MutableList<SnippetItem>,
-    val placeholderDefinitions: MutableList<PlaceholderDefinition>
+    val placeholderDefinitions: MutableList<PlaceholderDefinition>,
 ) : Cloneable {
-
     fun checkContent(): Boolean {
         var index = 0
         for (item in items) {
@@ -37,12 +36,13 @@ class CodeSnippet(
         val defs = ArrayList<PlaceholderDefinition>(placeholderDefinitions.size)
         val map = HashMap<PlaceholderDefinition, PlaceholderDefinition>()
         for (placeholder in placeholderDefinitions) {
-            val n = PlaceholderDefinition(
-                placeholder.id,
-                placeholder.choices,
-                placeholder.elements,
-                placeholder.transform
-            )
+            val n =
+                PlaceholderDefinition(
+                    placeholder.id,
+                    placeholder.choices,
+                    placeholder.elements,
+                    placeholder.transform,
+                )
             defs.add(n)
             map[placeholder] = n
         }
@@ -86,7 +86,10 @@ class CodeSnippet(
             return addPlaceholder(id, null as String?)
         }
 
-        fun addPlaceholder(id: Int, choices: List<String>): Builder {
+        fun addPlaceholder(
+            id: Int,
+            choices: List<String>,
+        ): Builder {
             if (choices.isEmpty()) {
                 return addPlaceholder(id)
             } else if (choices.size == 1) {
@@ -104,7 +107,10 @@ class CodeSnippet(
             return this
         }
 
-        fun addPlaceholder(id: Int, transform: Transform?): Builder {
+        fun addPlaceholder(
+            id: Int,
+            transform: Transform?,
+        ): Builder {
             if (transform == null) {
                 return addPlaceholder(id)
             }
@@ -120,7 +126,10 @@ class CodeSnippet(
             return this
         }
 
-        fun addPlaceholder(id: Int, defaultValue: String?): Builder {
+        fun addPlaceholder(
+            id: Int,
+            defaultValue: String?,
+        ): Builder {
             val elements = ArrayList<PlaceHolderElement>()
             if (!TextUtils.isEmpty(defaultValue)) {
                 elements.add(PlainPlaceholderElement(defaultValue!!))
@@ -128,7 +137,10 @@ class CodeSnippet(
             return addComplexPlaceholder(id, elements)
         }
 
-        fun addComplexPlaceholder(id: Int, elements: List<PlaceHolderElement>): Builder {
+        fun addComplexPlaceholder(
+            id: Int,
+            elements: List<PlaceHolderElement>,
+        ): Builder {
             var def: PlaceholderDefinition? = null
             for (definition in definitions) {
                 if (definition.id == id) {
@@ -148,12 +160,18 @@ class CodeSnippet(
             return this
         }
 
-        fun addVariable(name: String, defaultValue: String?): Builder {
+        fun addVariable(
+            name: String,
+            defaultValue: String?,
+        ): Builder {
             items.add(VariableItem(index, name, defaultValue))
             return this
         }
 
-        fun addVariable(name: String, transform: Transform?): Builder {
+        fun addVariable(
+            name: String,
+            transform: Transform?,
+        ): Builder {
             items.add(VariableItem(index, name, null, transform))
             return this
         }

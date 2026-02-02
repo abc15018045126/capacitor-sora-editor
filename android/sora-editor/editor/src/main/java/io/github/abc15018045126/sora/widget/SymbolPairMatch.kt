@@ -11,7 +11,6 @@ import io.github.abc15018045126.sora.text.ContentLine
  * @author abc15018045126
  */
 open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
-
     private val singleCharPairMaps = mutableMapOf<Char, SymbolPair?>()
     private val multipleCharByEndPairMaps = mutableMapOf<Char, MutableList<SymbolPair?>>()
 
@@ -22,7 +21,10 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
      *
      * @see SymbolPair
      */
-    fun putPair(singleCharacter: Char, symbolPair: SymbolPair?) {
+    fun putPair(
+        singleCharacter: Char,
+        symbolPair: SymbolPair?,
+    ) {
         singleCharPairMaps[singleCharacter] = symbolPair
     }
 
@@ -33,7 +35,10 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
      *
      * @see SymbolPair
      */
-    fun putPair(charArray: CharArray, symbolPair: SymbolPair?) {
+    fun putPair(
+        charArray: CharArray,
+        symbolPair: SymbolPair?,
+    ) {
         val endChar = charArray[charArray.size - 1]
         multipleCharByEndPairMaps.getOrPut(endChar) { mutableListOf() }.add(symbolPair)
     }
@@ -45,7 +50,10 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
      *
      * @see putPair
      */
-    fun putPair(openString: String, symbolPair: SymbolPair?) {
+    fun putPair(
+        openString: String,
+        symbolPair: SymbolPair?,
+    ) {
         putPair(openString.toCharArray(), symbolPair)
     }
 
@@ -70,7 +78,7 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
         editor: CodeEditor,
         cursorPosition: CharPosition,
         inputCharArray: CharArray?,
-        endChar: Char
+        endChar: Char,
     ): SymbolPair? {
         val content = editor.text
         // do not apply single character pairs for text with length > 1
@@ -161,6 +169,7 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
     open class SymbolPair {
         @JvmField
         val open: String
+
         @JvmField
         val close: String
         private var symbolPairEx: SymbolPairEx? = null
@@ -189,7 +198,6 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
             val content = editor.text
             val currentLine = content.getLine(editor.cursor?.leftLine ?: 0)
             return ex.shouldReplace(editor, currentLine, editor.cursor?.leftColumn ?: 0)
-
         }
 
         fun shouldDoAutoSurround(content: Content): Boolean {
@@ -201,7 +209,6 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
             cursorOffset = offsetIndex + open.length
             insertOffset = offsetIndex
         }
-
 
         interface SymbolPairEx {
             /**
@@ -218,7 +225,11 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
              * @param currentLine The current line edit in the editor,quick analysis it to decide whether to replaced
              * @param leftColumn  return current cursor column
              */
-            fun shouldReplace(editor: CodeEditor, currentLine: ContentLine, leftColumn: Int): Boolean {
+            fun shouldReplace(
+                editor: CodeEditor,
+                currentLine: ContentLine,
+                leftColumn: Int,
+            ): Boolean {
                 return true
             }
 
@@ -246,16 +257,30 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
             putPair('{', SymbolPair("{", "}"))
             putPair('(', SymbolPair("(", ")"))
             putPair('[', SymbolPair("[", "]"))
-            putPair('"', SymbolPair("\"", "\"", object : SymbolPair.SymbolPairEx {
-                override fun shouldDoAutoSurround(content: Content): Boolean {
-                    return content.cursor.isSelected()
-                }
-            }))
-            putPair('\'', SymbolPair("'", "'", object : SymbolPair.SymbolPairEx {
-                override fun shouldDoAutoSurround(content: Content): Boolean {
-                    return content.cursor.isSelected()
-                }
-            }))
+            putPair(
+                '"',
+                SymbolPair(
+                    "\"",
+                    "\"",
+                    object : SymbolPair.SymbolPairEx {
+                        override fun shouldDoAutoSurround(content: Content): Boolean {
+                            return content.cursor.isSelected()
+                        }
+                    },
+                ),
+            )
+            putPair(
+                '\'',
+                SymbolPair(
+                    "'",
+                    "'",
+                    object : SymbolPair.SymbolPairEx {
+                        override fun shouldDoAutoSurround(content: Content): Boolean {
+                            return content.cursor.isSelected()
+                        }
+                    },
+                ),
+            )
         }
     }
 }

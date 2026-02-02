@@ -24,8 +24,6 @@ import io.github.abc15018045126.sora.util.IntPair
 import io.github.abc15018045126.sora.util.Numbers
 import io.github.abc15018045126.sora.widget.component.Magnifier
 import io.github.abc15018045126.sora.widget.style.SelectionHandleStyle
-import java.util.Objects
-import kotlin.jvm.functions.Function7
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -39,7 +37,7 @@ fun interface EditorMotionEventConstructor {
         span: Span?,
         spanRange: TextRange?,
         motionRegion: Int,
-        motionBound: Int
+        motionBound: Int,
     ): EditorMotionEvent
 }
 
@@ -48,31 +46,43 @@ fun interface EditorMotionEventConstructor {
  *
  * @author abc15018045126
  */
-class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
-    GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener,
-    ScaleGestureDetector.OnScaleGestureListener {
-
+class EditorTouchEventHandler(
+    @NonNull private val editor: CodeEditor,
+) :
+    GestureDetector.OnGestureListener,
+        GestureDetector.OnDoubleTapListener,
+        ScaleGestureDetector.OnScaleGestureListener {
     private val scroller: EditorScroller = EditorScroller(editor)
     private val insertHandle: SelectionHandle = SelectionHandle(BOTH)
+
     @JvmField
     internal var editorMagnifier: Magnifier = Magnifier(editor)
+
     @JvmField
     internal var selHandleType: Int = -1
+
     @JvmField
     internal var selHandleMoving: Boolean = false
+
     @JvmField
     internal var motionX: Float = 0f
+
     @JvmField
     internal var motionY: Float = 0f
+
     @JvmField
-    internal var glowTopOrBottom: Boolean = false //true for bottom
+    internal var glowTopOrBottom: Boolean = false // true for bottom
+
     @JvmField
-    internal var glowLeftOrRight: Boolean = false //true for right
+    internal var glowLeftOrRight: Boolean = false // true for right
+
     @JvmField
     @get:JvmName("isScaling")
     var isScaling: Boolean = false
+
     @JvmField
     internal var scaleMaxSize: Float
+
     @JvmField
     internal var scaleMinSize: Float
     private var textSizeStart: Float = 0f
@@ -94,14 +104,17 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
     private var lastTimeMousePrimaryClickUp: Long = 0
     private var mouseDoubleClick: Boolean = false
     internal var lastContextClickPosition: PointF? = null
+
     @JvmField
     internal var mouseClick: Boolean = false
+
     @JvmField
     internal var mouseCanMoveText: Boolean = false
+
     @JvmField
     internal var draggingSelection: CharPosition? = null
 
-    /* dragging selection fields */
+    // dragging selection fields
     private var dragSelectActive: Boolean = false
     private var dragSelectStarted: Boolean = false
     private var dragSelectInitialCharIndex: Int = -1
@@ -111,16 +124,18 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
 
     init {
         edgeFieldSize = editor.dpUnit * 18
-        scaleMaxSize = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_SP,
-            26f,
-            Resources.getSystem().displayMetrics
-        )
-        scaleMinSize = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_SP,
-            8f,
-            Resources.getSystem().displayMetrics
-        )
+        scaleMaxSize =
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_SP,
+                26f,
+                Resources.getSystem().displayMetrics,
+            )
+        scaleMinSize =
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_SP,
+                8f,
+                Resources.getSystem().displayMetrics,
+            )
         val config = ViewConfiguration.get(editor.context)
         touchSlop = config.scaledTouchSlop
     }
@@ -205,32 +220,31 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
      */
     fun notifyScrolled() {
         timeLastScroll = System.currentTimeMillis()
-        val scrollNotifier = Runnable {
-            if (System.currentTimeMillis() - timeLastScroll >= HIDE_DELAY) {
-                editor.invalidate()
+        val scrollNotifier =
+            Runnable {
+                if (System.currentTimeMillis() - timeLastScroll >= HIDE_DELAY) {
+                    editor.invalidate()
+                }
             }
-        }
         io.github.abc15018045126.sora.util.EditorHandler.postDelayed(scrollNotifier, HIDE_DELAY.toLong())
     }
-
-
 
     /**
      * Notify the editor later to hide insert handle
      */
     fun notifyLater() {
         timeLastSetSelection = System.currentTimeMillis()
-        val invalidateNotifier = Runnable {
-            if (System.currentTimeMillis() - timeLastSetSelection >= HIDE_DELAY_HANDLE) {
-                editor.invalidate()
+        val invalidateNotifier =
+            Runnable {
+                if (System.currentTimeMillis() - timeLastSetSelection >= HIDE_DELAY_HANDLE) {
+                    editor.invalidate()
+                }
             }
-        }
         io.github.abc15018045126.sora.util.EditorHandler.postDelayed({
             if (editor.isReleased) return@postDelayed
             invalidateNotifier.run()
         }, HIDE_DELAY_HANDLE.toLong())
     }
-
 
     /**
      * Called by editor
@@ -305,9 +319,11 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         editorMagnifier.dismiss()
     }
 
-    private fun beginDragSelect(line: Int, column: Int) {
+    private fun beginDragSelect(
+        line: Int,
+        column: Int,
+    ) {
         if (!editor.props!!.dragSelectAfterLongPress) {
-
             return
         }
         val text = editor.text
@@ -320,7 +336,6 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         dragSelectActive = true
         dragSelectStarted = false
     }
-
 
     fun isDragSelecting(): Boolean {
         return dragSelectActive
@@ -346,9 +361,11 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         editorMagnifier.show(x, y)
     }
 
-    private fun handleDragSelect(e: MotionEvent, fromEdgeScroll: Boolean): Boolean {
+    private fun handleDragSelect(
+        e: MotionEvent,
+        fromEdgeScroll: Boolean,
+    ): Boolean {
         if (!editor.props!!.dragSelectAfterLongPress || !dragSelectActive) {
-
             return false
         }
         val text = editor.text
@@ -361,16 +378,18 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         val currentIndex = text.getCharIndex(line, column)
         if (!dragSelectStarted) {
             if (currentIndex == dragSelectInitialCharIndex) {
-                if (!fromEdgeScroll)
+                if (!fromEdgeScroll) {
                     scrollIfThumbReachesEdge(e)
+                }
                 return true
             }
             dragSelectStarted = true
         }
         if (currentIndex == dragSelectLastDragIndex) {
             updateDragSelectMagnifier(e)
-            if (!fromEdgeScroll)
+            if (!fromEdgeScroll) {
                 scrollIfThumbReachesEdge(e)
+            }
             return true
         }
         var anchorIndex = if (currentIndex <= dragSelectInitialCharIndex) dragSelectInitialRightIndex else dragSelectInitialLeftIndex
@@ -384,12 +403,20 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         } else {
             val startPos = indexer.getCharPosition(startIndex)
             val endPos = indexer.getCharPosition(endIndex)
-            editor.setSelectionRegion(startPos.line, startPos.column, endPos.line, endPos.column, false, SelectionChangeEvent.CAUSE_SELECTION_HANDLE)
+            editor.setSelectionRegion(
+                startPos.line,
+                startPos.column,
+                endPos.line,
+                endPos.column,
+                false,
+                SelectionChangeEvent.CAUSE_SELECTION_HANDLE,
+            )
         }
         dragSelectLastDragIndex = currentIndex
         updateDragSelectMagnifier(e)
-        if (!fromEdgeScroll)
+        if (!fromEdgeScroll) {
             scrollIfThumbReachesEdge(e)
+        }
         return true
     }
 
@@ -438,7 +465,6 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                 } else {
                     val allowedDistance = editor.dpUnit * 7
                     if (shouldDrawInsertHandle() && RectUtils.almostContains(editor.insertHandleDescriptor!!.position, e.x, e.y, allowedDistance)) {
-
                         selHandleType = BOTH
                     }
                     val left = RectUtils.almostContains(editor.leftHandleDescriptor!!.position, e.x, e.y, allowedDistance)
@@ -486,8 +512,13 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                     selHandleMoving = true
                 }
                 if (selHandleMoving && handleSelectionChange(e)) {
-                    if (editorMagnifier.isShowing() || sqrt(((e.x - thumbDownX) * (e.x - thumbDownX) +
-                                (e.y - thumbDownY) * (e.y - thumbDownY)).toDouble()) >= EditorTouchEventHandler.MAGNIFIER_TOUCH_SLOP) {
+                    if (editorMagnifier.isShowing() || sqrt(
+                            (
+                                (e.x - thumbDownX) * (e.x - thumbDownX) +
+                                    (e.y - thumbDownY) * (e.y - thumbDownY)
+                            ).toDouble(),
+                        ) >= EditorTouchEventHandler.MAGNIFIER_TOUCH_SLOP
+                    ) {
                         updateMagnifier(e)
                     }
                     editor.invalidate()
@@ -505,8 +536,9 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                 finishDragSelect()
                 if (selHandleType != -1) {
                     dispatchHandleStateChange(selHandleType, false)
-                    if (selHandleType == BOTH)
+                    if (selHandleType == BOTH) {
                         notifyLater()
+                    }
                     selHandleType = -1
                 }
                 editor.invalidate()
@@ -553,13 +585,14 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                     val line = IntPair.getFirst(pos)
                     val column = IntPair.getSecond(pos)
                     val charPos = editor.text.indexer.getCharPosition(line, column)
-                    mouseCanMoveText = if (editor.isTextSelected && editor.cursorRange.isPositionInside(charPos) && editor.isScreenPointOnText(mouseDownX, mouseDownY)) {
-                        true
-                    } else {
-                        editor.setSelection(line, column, SelectionChangeEvent.CAUSE_MOUSE_INPUT)
-                        editor.requestFocus()
-                        false
-                    }
+                    mouseCanMoveText =
+                        if (editor.isTextSelected && editor.cursorRange.isPositionInside(charPos) && editor.isScreenPointOnText(mouseDownX, mouseDownY)) {
+                            true
+                        } else {
+                            editor.setSelection(line, column, SelectionChangeEvent.CAUSE_MOUSE_INPUT)
+                            editor.requestFocus()
+                            false
+                        }
                     draggingSelection = charPos
                     editor.postInvalidate()
                 }
@@ -579,7 +612,6 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                     if (!mouseClick && !mouseCanMoveText) {
                         val anchor = editor.selectionAnchor!!
                         editor.setSelectionRegion(anchor.line, anchor.column, line, column, SelectionChangeEvent.CAUSE_MOUSE_INPUT)
-
                     }
                     draggingSelection = charPos
                     editor.postInvalidate()
@@ -599,7 +631,14 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                         val curRange = editor.cursorRange
                         if (!curRange.isPositionInside(dest) && (editor.getKeyMetaStates().isCtrlPressed || curRange.end != dest)) {
                             val length = curRange.endIndex - curRange.startIndex
-                            val insIndex = if (editor.getKeyMetaStates().isCtrlPressed) dest.index else if (dest.index < curRange.startIndex) dest.index else dest.index - length
+                            val insIndex =
+                                if (editor.getKeyMetaStates().isCtrlPressed) {
+                                    dest.index
+                                } else if (dest.index < curRange.startIndex) {
+                                    dest.index
+                                } else {
+                                    dest.index - length
+                                }
                             val text = editor.text
                             val insText = text.substring(curRange.startIndex, curRange.endIndex)
                             val insPos: CharPosition
@@ -614,7 +653,13 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                                 text.endBatchEdit()
                             }
                             val endPos = text.indexer.getCharPosition(insIndex + length)
-                            editor.setSelectionRegion(insPos.line, insPos.column, endPos.line, endPos.column, SelectionChangeEvent.CAUSE_MOUSE_INPUT)
+                            editor.setSelectionRegion(
+                                insPos.line,
+                                insPos.column,
+                                endPos.line,
+                                endPos.column,
+                                SelectionChangeEvent.CAUSE_MOUSE_INPUT,
+                            )
                         }
                     }
                     if (mouseClick) {
@@ -668,7 +713,6 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         }
 
         if (editor.props!!.mouseContextMenu) {
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 editor.showContextMenu(event.x, event.y)
             } else {
@@ -682,14 +726,17 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         return lastContextClickPosition
     }
 
-    private fun dispatchHandleStateChange(type: Int, held: Boolean) {
+    private fun dispatchHandleStateChange(
+        type: Int,
+        held: Boolean,
+    ) {
         editor.dispatchEvent(HandleStateChangeEvent(editor, type, held))
     }
 
     fun dispatchEditorMotionEvent(
         constructor: EditorMotionEventConstructor,
         @Nullable pos: CharPosition?,
-        @NonNull event: MotionEvent
+        @NonNull event: MotionEvent,
     ): Int {
         val region = editor.resolveTouchRegion(event)
         return dispatchEditorMotionEvent(constructor, pos, event, IntPair.getFirst(region), IntPair.getSecond(region))
@@ -700,7 +747,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         @Nullable pos: CharPosition?,
         @NonNull event: MotionEvent,
         motionRegion: Int,
-        motionBound: Int
+        motionBound: Int,
     ): Int {
         var currentPos = pos
         if (currentPos == null) {
@@ -713,10 +760,20 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         val nextSpan = StylesUtils.getFollowingSpanForPosition(styles, currentPos)
         var range: TextRange? = null
         if (span != null) {
-            val startPos = text.indexer.getCharPosition(currentPos.line, Numbers.coerceIn(span.column, 0, text.getColumnCount(currentPos.line)))
-            val endPos = if (nextSpan != null)
-                text.indexer.getCharPosition(currentPos.line, Numbers.coerceIn(nextSpan.column, 0, text.getColumnCount(currentPos.line)))
-            else text.indexer.getCharPosition(currentPos.line, text.getColumnCount(currentPos.line))
+            val startPos =
+                text.indexer.getCharPosition(
+                    currentPos.line,
+                    Numbers.coerceIn(span.column, 0, text.getColumnCount(currentPos.line)),
+                )
+            val endPos =
+                if (nextSpan != null) {
+                    text.indexer.getCharPosition(
+                        currentPos.line,
+                        Numbers.coerceIn(nextSpan.column, 0, text.getColumnCount(currentPos.line)),
+                    )
+                } else {
+                    text.indexer.getCharPosition(currentPos.line, text.getColumnCount(currentPos.line))
+                }
             range = TextRange(startPos, endPos)
         }
         return editor.dispatchEvent(constructor.create(editor, currentPos, event, span, range, motionRegion, motionBound))
@@ -755,7 +812,10 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         }
     }
 
-    private fun computeEdgeFlags(x: Float, y: Float): Int {
+    private fun computeEdgeFlags(
+        x: Float,
+        y: Float,
+    ): Int {
         var flags = 0
         if (x < edgeFieldSize) {
             flags = flags or LEFT_EDGE
@@ -772,11 +832,17 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         return flags
     }
 
-    fun scrollIfThumbReachesEdge(@Nullable e: MotionEvent?) {
+    fun scrollIfThumbReachesEdge(
+        @Nullable e: MotionEvent?,
+    ) {
         scrollIfReachesEdge(e, 0f, 0f)
     }
 
-    fun scrollIfReachesEdge(@Nullable e: MotionEvent?, x: Float, y: Float) {
+    fun scrollIfReachesEdge(
+        @Nullable e: MotionEvent?,
+        x: Float,
+        y: Float,
+    ) {
         var currentX = x
         var currentY = y
         if (e != null) {
@@ -794,14 +860,16 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                     if (editor.isReleased) return@post
                     EdgeScrollRunnable(initialDelta).run()
                 }
-
             }
         } else {
             stopEdgeScroll()
         }
     }
 
-    private fun isSameSign(a: Float, b: Float): Boolean {
+    private fun isSameSign(
+        a: Float,
+        b: Float,
+    ): Boolean {
         if (abs(a) < 1e-5f || abs(b) < 1e-5f) {
             return false
         }
@@ -813,7 +881,11 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
     }
 
     @JvmOverloads
-    fun scrollBy(distanceX: Float, distanceY: Float, smooth: Boolean = false) {
+    fun scrollBy(
+        distanceX: Float,
+        distanceY: Float,
+        smooth: Boolean = false,
+    ) {
         var endX = scroller.getCurrX() + distanceX.toInt()
         var endY = scroller.getCurrY() + distanceY.toInt()
         endX = max(endX, 0)
@@ -822,23 +894,28 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         endX = min(endX, editor.scrollMaxX)
         editor.dispatchEvent(
             ScrollEvent(
-                editor, scroller.getCurrX(),
-                scroller.getCurrY(), endX, endY, ScrollEvent.CAUSE_USER_DRAG
-            )
+                editor,
+                scroller.getCurrX(),
+                scroller.getCurrY(),
+                endX,
+                endY,
+                ScrollEvent.CAUSE_USER_DRAG,
+            ),
         )
         if (smooth) {
             scroller.startScroll(
                 scroller.getCurrX(),
                 scroller.getCurrY(),
                 endX - scroller.getCurrX(),
-                endY - scroller.getCurrY()
+                endY - scroller.getCurrY(),
             )
         } else {
             scroller.startScroll(
                 scroller.getCurrX(),
                 scroller.getCurrY(),
                 endX - scroller.getCurrX(),
-                endY - scroller.getCurrY(), 0
+                endY - scroller.getCurrY(),
+                0,
             )
             scroller.abortAnimation()
         }
@@ -849,7 +926,9 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         return selHandleType
     }
 
-    override fun onSingleTapUp(@NonNull e: MotionEvent): Boolean {
+    override fun onSingleTapUp(
+        @NonNull e: MotionEvent,
+    ): Boolean {
         scroller.forceFinished(true)
         if (editor.isFormatting) {
             return true
@@ -896,7 +975,15 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
             }
         } else if (region == REGION_LINE_NUMBER) {
             when (lnAction) {
-                DirectAccessProps.LN_ACTION_SELECT_LINE -> editor.setSelectionRegion(line, 0, line, editor.text.getColumnCount(line), false, SelectionChangeEvent.CAUSE_TAP)
+                DirectAccessProps.LN_ACTION_SELECT_LINE ->
+                    editor.setSelectionRegion(
+                        line,
+                        0,
+                        line,
+                        editor.text.getColumnCount(line),
+                        false,
+                        SelectionChangeEvent.CAUSE_TAP,
+                    )
                 DirectAccessProps.LN_ACTION_PLACE_SELECTION_HOME -> editor.setSelection(line, column, SelectionChangeEvent.CAUSE_TAP)
                 DirectAccessProps.LN_ACTION_NOTHING -> {}
                 else -> {}
@@ -905,7 +992,9 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         return true
     }
 
-    override fun onLongPress(@NonNull e: MotionEvent) {
+    override fun onLongPress(
+        @NonNull e: MotionEvent,
+    ) {
         scroller.forceFinished(true)
         editor.releaseEdgeEffects()
         if (editor.isFormatting) {
@@ -919,7 +1008,6 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
             return
         }
         if ((!editor.props!!.reselectOnLongPress && editor.cursor.isSelected()) || e.pointerCount != 1) {
-
             return
         }
         editor.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
@@ -929,11 +1017,15 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         }
     }
 
-    override fun onScroll(e1: MotionEvent?, @NonNull e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+    override fun onScroll(
+        e1: MotionEvent?,
+        @NonNull e2: MotionEvent,
+        distanceX: Float,
+        distanceY: Float,
+    ): Boolean {
         var dx = distanceX
         var dy = distanceY
         if (editor.props!!.singleDirectionDragging) {
-
             if (abs(dx) > abs(dy)) {
                 dy = 0f
             } else {
@@ -986,7 +1078,8 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
             scroller.getCurrX(),
             scroller.getCurrY(),
             endX - scroller.getCurrX(),
-            endY - scroller.getCurrY(), 0
+            endY - scroller.getCurrY(),
+            0,
         )
         val minOverPull = 2f
         if (notifyY && scroller.getCurrY().toFloat() + dy < -minOverPull) {
@@ -1008,18 +1101,26 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         editor.invalidate()
         editor.dispatchEvent(
             ScrollEvent(
-                editor, scroller.getCurrX(),
-                scroller.getCurrY(), endX, endY, ScrollEvent.CAUSE_USER_DRAG
-            )
+                editor,
+                scroller.getCurrX(),
+                scroller.getCurrY(),
+                endX,
+                endY,
+                ScrollEvent.CAUSE_USER_DRAG,
+            ),
         )
         return true
     }
 
-    override fun onFling(e1: MotionEvent?, @NonNull e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+    override fun onFling(
+        e1: MotionEvent?,
+        @NonNull e2: MotionEvent,
+        velocityX: Float,
+        velocityY: Float,
+    ): Boolean {
         var vx = velocityX
         var vy = velocityY
         if (editor.props!!.singleDirectionFling) {
-
             if (abs(vx) > abs(vy)) {
                 vy = 0f
             } else {
@@ -1042,7 +1143,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
             0,
             editor.scrollMaxY,
             if (editor.props!!.overScrollEnabled && !editor.isWordwrap) (20 * editor.dpUnit).toInt() else 0,
-            if (editor.props!!.overScrollEnabled) (20 * editor.dpUnit).toInt() else 0
+            if (editor.props!!.overScrollEnabled) (20 * editor.dpUnit).toInt() else 0,
         )
 
         val minVe = editor.dpUnit * 2000
@@ -1052,15 +1153,21 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         editor.releaseEdgeEffects()
         editor.dispatchEvent(
             ScrollEvent(
-                editor, scroller.getCurrX(),
-                scroller.getCurrY(), scroller.getFinalX(), scroller.getFinalY(), ScrollEvent.CAUSE_USER_FLING
-            )
+                editor,
+                scroller.getCurrX(),
+                scroller.getCurrY(),
+                scroller.getFinalX(),
+                scroller.getFinalY(),
+                ScrollEvent.CAUSE_USER_FLING,
+            ),
         )
         editor.postInvalidateOnAnimation()
         return false
     }
 
-    override fun onScale(@NonNull detector: ScaleGestureDetector): Boolean {
+    override fun onScale(
+        @NonNull detector: ScaleGestureDetector,
+    ): Boolean {
         if (editor.isFormatting) {
             return true
         }
@@ -1080,9 +1187,13 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
             afterScrollY = max(0f, min(afterScrollY, editor.scrollMaxY.toFloat()))
             editor.dispatchEvent(
                 ScrollEvent(
-                    editor, scroller.getCurrX(),
-                    scroller.getCurrY(), afterScrollX.toInt(), afterScrollY.toInt(), ScrollEvent.CAUSE_SCALE_TEXT
-                )
+                    editor,
+                    scroller.getCurrX(),
+                    scroller.getCurrY(),
+                    afterScrollX.toInt(),
+                    afterScrollY.toInt(),
+                    ScrollEvent.CAUSE_SCALE_TEXT,
+                ),
             )
             scroller.startScroll(afterScrollX.toInt(), afterScrollY.toInt(), 0, 0, 0)
             scroller.abortAnimation()
@@ -1093,21 +1204,26 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         return false
     }
 
-    override fun onScaleBegin(@NonNull detector: ScaleGestureDetector): Boolean {
+    override fun onScaleBegin(
+        @NonNull detector: ScaleGestureDetector,
+    ): Boolean {
         scroller.forceFinished(true)
         textSizeStart = editor.textSizePx
         return editor.isScalable && !editor.isFormatting && !hasAnyHeldHandle()
     }
 
-
     @JvmField
     internal var memoryPosition: Long = 0
+
     @JvmField
     internal var positionNotApplied: Boolean = false
+
     @JvmField
     internal var focusY: Float = 0f
 
-    override fun onScaleEnd(@NonNull detector: ScaleGestureDetector) {
+    override fun onScaleEnd(
+        @NonNull detector: ScaleGestureDetector,
+    ) {
         isScaling = false
         if (textSizeStart == editor.textSizePx) {
             return
@@ -1130,13 +1246,19 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         return editor.isEnabled
     }
 
-    override fun onShowPress(@NonNull e: MotionEvent) {}
+    override fun onShowPress(
+        @NonNull e: MotionEvent,
+    ) {}
 
-    override fun onSingleTapConfirmed(@NonNull e: MotionEvent): Boolean {
+    override fun onSingleTapConfirmed(
+        @NonNull e: MotionEvent,
+    ): Boolean {
         return true
     }
 
-    override fun onDoubleTap(@NonNull e: MotionEvent): Boolean {
+    override fun onDoubleTap(
+        @NonNull e: MotionEvent,
+    ): Boolean {
         if (editor.isFormatting) {
             return true
         }
@@ -1154,7 +1276,9 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         return true
     }
 
-    override fun onDoubleTapEvent(@NonNull e: MotionEvent): Boolean {
+    override fun onDoubleTapEvent(
+        @NonNull e: MotionEvent,
+    ): Boolean {
         return true
     }
 
@@ -1162,10 +1286,9 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
      * This is a helper for EventHandler to control handles
      */
     inner class SelectionHandle(var type: Int) {
-
         private fun checkNoIntersection(
             one: SelectionHandleStyle.HandleDescriptor,
-            another: SelectionHandleStyle.HandleDescriptor
+            another: SelectionHandleStyle.HandleDescriptor,
         ): Boolean {
             return !RectF.intersects(one.position, another.position)
         }
@@ -1176,11 +1299,12 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
          * @param e Event sent by EventHandler
          */
         fun applyPosition(e: MotionEvent) {
-            val descriptor = when (type) {
-                LEFT -> editor.leftHandleDescriptor!!
-                RIGHT -> editor.rightHandleDescriptor!!
-                else -> editor.insertHandleDescriptor!!
-            }
+            val descriptor =
+                when (type) {
+                    LEFT -> editor.leftHandleDescriptor!!
+                    RIGHT -> editor.rightHandleDescriptor!!
+                    else -> editor.insertHandleDescriptor!!
+                }
             val anotherDesc = if (type == LEFT) editor.rightHandleDescriptor!! else editor.leftHandleDescriptor!!
 
             val targetX = scroller.getCurrX().toFloat() + e.x + (if (descriptor.alignment != SelectionHandleStyle.ALIGN_CENTER) descriptor.position.width() else 0f) * (if (descriptor.alignment == SelectionHandleStyle.ALIGN_LEFT) 1 else -1)
@@ -1195,7 +1319,6 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                 val anotherLine = if (type != RIGHT) cursor.rightLine else cursor.leftLine
                 val anotherColumn = if (type != RIGHT) cursor.rightColumn else cursor.leftColumn
 
-
                 if ((line != lastLine || column != lastColumn) && (type == BOTH || (line != anotherLine || column != anotherColumn))) {
                     when (type) {
                         BOTH -> {
@@ -1204,7 +1327,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                         }
                         RIGHT -> {
                             if (anotherLine > line || (anotherLine == line && anotherColumn > column)) {
-                                //Swap type
+                                // Swap type
                                 if (checkNoIntersection(descriptor, anotherDesc)) {
                                     dispatchHandleStateChange(this@EditorTouchEventHandler.selHandleType, false)
                                     this@EditorTouchEventHandler.selHandleType = LEFT
@@ -1214,15 +1337,29 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                                     val tmp = rightHandle
                                     rightHandle = leftHandle
                                     leftHandle = tmp
-                                    editor.setSelectionRegion(line, column, anotherLine, anotherColumn, false, SelectionChangeEvent.CAUSE_SELECTION_HANDLE)
+                                    editor.setSelectionRegion(
+                                        line,
+                                        column,
+                                        anotherLine,
+                                        anotherColumn,
+                                        false,
+                                        SelectionChangeEvent.CAUSE_SELECTION_HANDLE,
+                                    )
                                 }
                             } else {
-                                editor.setSelectionRegion(anotherLine, anotherColumn, line, column, false, SelectionChangeEvent.CAUSE_SELECTION_HANDLE)
+                                editor.setSelectionRegion(
+                                    anotherLine,
+                                    anotherColumn,
+                                    line,
+                                    column,
+                                    false,
+                                    SelectionChangeEvent.CAUSE_SELECTION_HANDLE,
+                                )
                             }
                         }
                         LEFT -> {
                             if (anotherLine < line || (anotherLine == line && anotherColumn < column)) {
-                                //Swap type
+                                // Swap type
                                 if (checkNoIntersection(descriptor, anotherDesc)) {
                                     dispatchHandleStateChange(this@EditorTouchEventHandler.selHandleType, false)
                                     this@EditorTouchEventHandler.selHandleType = RIGHT
@@ -1232,17 +1369,30 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                                     val tmp = rightHandle
                                     rightHandle = leftHandle
                                     leftHandle = tmp
-                                    editor.setSelectionRegion(anotherLine, anotherColumn, line, column, false, SelectionChangeEvent.CAUSE_SELECTION_HANDLE)
+                                    editor.setSelectionRegion(
+                                        anotherLine,
+                                        anotherColumn,
+                                        line,
+                                        column,
+                                        false,
+                                        SelectionChangeEvent.CAUSE_SELECTION_HANDLE,
+                                    )
                                 }
                             } else {
-                                editor.setSelectionRegion(line, column, anotherLine, anotherColumn, false, SelectionChangeEvent.CAUSE_SELECTION_HANDLE)
+                                editor.setSelectionRegion(
+                                    line,
+                                    column,
+                                    anotherLine,
+                                    anotherColumn,
+                                    false,
+                                    SelectionChangeEvent.CAUSE_SELECTION_HANDLE,
+                                )
                             }
                         }
                     }
                 }
             }
         }
-
     }
 
     /**
@@ -1264,11 +1414,12 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
             if (dx > 0) {
                 // Check whether there is content at right
                 val cursor = editor.cursor!!
-                val line: Int = if (selHandleType == BOTH || selHandleType == LEFT) {
-                    cursor.leftLine
-                } else {
-                    cursor.rightLine
-                }
+                val line: Int =
+                    if (selHandleType == BOTH || selHandleType == LEFT) {
+                        cursor.leftLine
+                    } else {
+                        cursor.rightLine
+                    }
 
                 val column = editor.text.getColumnCount(line)
                 // Do not scroll too far from text region of this line
@@ -1321,10 +1472,8 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                     if (editor.isReleased) return@postDelayed
                     this.run()
                 }, 10)
-
             }
         }
-
     }
 
     companion object {

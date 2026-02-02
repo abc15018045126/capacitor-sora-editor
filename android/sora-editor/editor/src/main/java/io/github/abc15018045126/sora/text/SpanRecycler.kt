@@ -6,7 +6,6 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 
 class SpanRecycler private constructor() {
-
     private val taskQueue: BlockingQueue<MutableList<Span>> = ArrayBlockingQueue(8)
     private var recycleThread: RecycleThread? = null
 
@@ -22,7 +21,6 @@ class SpanRecycler private constructor() {
     }
 
     private inner class RecycleThread internal constructor() : Thread() {
-
         init {
             isDaemon = true
             name = "SpanRecycleDaemon"

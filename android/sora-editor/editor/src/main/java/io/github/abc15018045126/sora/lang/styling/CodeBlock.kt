@@ -8,7 +8,6 @@ import java.util.Objects
  * @author Rose
  */
 class CodeBlock {
-
     /**
      * Start line of code block
      */
@@ -52,10 +51,10 @@ class CodeBlock {
         if (other == null || javaClass != other.javaClass) return false
         val codeBlock = other as CodeBlock
         return startLine == codeBlock.startLine &&
-                startColumn == codeBlock.startColumn &&
-                endLine == codeBlock.endLine &&
-                endColumn == codeBlock.endColumn &&
-                toBottomOfEndLine == codeBlock.toBottomOfEndLine
+            startColumn == codeBlock.startColumn &&
+            endLine == codeBlock.endLine &&
+            endColumn == codeBlock.endColumn &&
+            toBottomOfEndLine == codeBlock.toBottomOfEndLine
     }
 
     override fun hashCode(): Int {
@@ -64,34 +63,36 @@ class CodeBlock {
 
     override fun toString(): String {
         return "BlockLine{" +
-                "startLine=$startLine" +
-                ", startColumn=$startColumn" +
-                ", endLine=$endLine" +
-                ", endColumn=$endColumn" +
-                ", toBottomOfEndLine=$toBottomOfEndLine" +
-                '}'
+            "startLine=$startLine" +
+            ", startColumn=$startColumn" +
+            ", endLine=$endLine" +
+            ", endColumn=$endColumn" +
+            ", toBottomOfEndLine=$toBottomOfEndLine" +
+            '}'
     }
 
     companion object {
         @JvmField
-        val COMPARATOR_END = Comparator<CodeBlock> { a, b ->
-            val res = Integer.compare(a.endLine, b.endLine)
-            if (res == 0) {
-                Integer.compare(a.endColumn, b.endColumn)
-            } else {
-                res
+        val COMPARATOR_END =
+            Comparator<CodeBlock> { a, b ->
+                val res = Integer.compare(a.endLine, b.endLine)
+                if (res == 0) {
+                    Integer.compare(a.endColumn, b.endColumn)
+                } else {
+                    res
+                }
             }
-        }
 
         @JvmField
-        val COMPARATOR_START = Comparator<CodeBlock> { a, b ->
-            val res = Integer.compare(a.startLine, b.startLine)
-            if (res == 0) {
-                Integer.compare(a.startColumn, b.startColumn)
-            } else {
-                res
+        val COMPARATOR_START =
+            Comparator<CodeBlock> { a, b ->
+                val res = Integer.compare(a.startLine, b.startLine)
+                if (res == 0) {
+                    Integer.compare(a.startColumn, b.startColumn)
+                } else {
+                    res
+                }
             }
-        }
 
         /**
          * Performs a binary search to find the index of the smallest code block whose end line is
@@ -107,7 +108,10 @@ class CodeBlock {
          * specified line. If no matching code block is found, -1 is returned.
          */
         @JvmStatic
-        fun binarySearchEndBlock(line: Int, blocks: List<CodeBlock>?): Int {
+        fun binarySearchEndBlock(
+            line: Int,
+            blocks: List<CodeBlock>?,
+        ): Int {
             if (blocks == null || blocks.isEmpty()) {
                 return -1
             }

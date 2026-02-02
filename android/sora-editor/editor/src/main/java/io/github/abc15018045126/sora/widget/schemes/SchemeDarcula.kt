@@ -6,7 +6,6 @@ package io.github.abc15018045126.sora.widget.schemes
  * Thanks to liyujiang-gzu (GitHub @liyujiang-gzu)
  */
 class SchemeDarcula : EditorColorScheme(true) {
-
     override fun applyDefault() {
         super.applyDefault()
         setColor(ANNOTATION, 0xffbbb529.toInt())

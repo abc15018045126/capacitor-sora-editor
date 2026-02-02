@@ -14,23 +14,31 @@ import kotlin.math.min
  * @author abc15018045126
  */
 class ContentReference(private val content: Content) : TextReference(content) {
-
     override fun get(index: Int): Char {
         validateAccess()
         return content[index]
     }
 
-    fun charAt(line: Int, column: Int): Char {
+    fun charAt(
+        line: Int,
+        column: Int,
+    ): Char {
         validateAccess()
         return content.getLine(line)[column]
     }
 
-    fun getCharIndex(line: Int, column: Int): Int {
+    fun getCharIndex(
+        line: Int,
+        column: Int,
+    ): Int {
         validateAccess()
         return content.getCharIndex(line, column)
     }
 
-    fun getCharPosition(line: Int, column: Int): CharPosition {
+    fun getCharPosition(
+        line: Int,
+        column: Int,
+    ): CharPosition {
         validateAccess()
         return content.getIndexer().getCharPosition(line, column)
     }
@@ -76,7 +84,10 @@ class ContentReference(private val content: Content) : TextReference(content) {
     /**
      * @see Content.getLineChars
      */
-    fun getLineChars(line: Int, dest: CharArray) {
+    fun getLineChars(
+        line: Int,
+        dest: CharArray,
+    ) {
         validateAccess()
         content.getLineChars(line, dest)
     }
@@ -84,7 +95,10 @@ class ContentReference(private val content: Content) : TextReference(content) {
     /**
      * @see Content.getLine
      */
-    fun appendLineTo(sb: StringBuilder, line: Int) {
+    fun appendLineTo(
+        sb: StringBuilder,
+        line: Int,
+    ) {
         validateAccess()
         content.getLine(line).appendTo(sb)
     }
@@ -114,13 +128,16 @@ class ContentReference(private val content: Content) : TextReference(content) {
     }
 
     private inner class RefReader : Reader() {
-
         private var markedLine = 0
         private var markedColumn = 0
         private var line = 0
         private var column = 0
 
-        override fun read(chars: CharArray, offset: Int, length: Int): Int {
+        override fun read(
+            chars: CharArray,
+            offset: Int,
+            length: Int,
+        ): Int {
             if (chars.size < offset + length) {
                 throw IllegalArgumentException("size not enough")
             }

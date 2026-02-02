@@ -2,7 +2,6 @@ package io.github.abc15018045126.sora.event
 
 import io.github.abc15018045126.sora.text.CharPosition
 import io.github.abc15018045126.sora.widget.CodeEditor
-import io.github.abc15018045126.sora.widget.EditorSearcher
 
 /**
  * This event happens when text is edited by the user, or the user click the view to change the
@@ -15,9 +14,8 @@ class SelectionChangeEvent(
     editor: CodeEditor,
     val oldLeft: CharPosition?,
     val oldRight: CharPosition?,
-    val cause: Int
+    val cause: Int,
 ) : Event(editor) {
-
     val left: CharPosition = editor.text.cursor.left()
     val right: CharPosition = editor.text.cursor.right()
 

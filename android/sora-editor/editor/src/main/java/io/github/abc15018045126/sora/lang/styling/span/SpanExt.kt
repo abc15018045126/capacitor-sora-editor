@@ -31,5 +31,3 @@ import io.github.abc15018045126.sora.lang.styling.Span
  * a lazily initialized map to save memory.
  */
 interface SpanExt
-
-

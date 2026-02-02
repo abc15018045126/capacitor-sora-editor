@@ -18,17 +18,17 @@ import kotlin.math.min
  * @author abc15018045126
  */
 class TextLayoutHelper private constructor() {
-
     private val text: Editable = Editable.Factory.getInstance().newEditable("")
     private val layout: DynamicLayout
 
     init {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             @Suppress("DEPRECATION")
-            layout = DynamicLayout(
-                text, TextPaint(), Int.MAX_VALUE / 2,
-                Layout.Alignment.ALIGN_NORMAL, 0f, 0f, true
-            )
+            layout =
+                DynamicLayout(
+                    text, TextPaint(), Int.MAX_VALUE / 2,
+                    Layout.Alignment.ALIGN_NORMAL, 0f, 0f, true,
+                )
             try {
                 @SuppressLint("DiscouragedPrivateApi", "SoonBlockedPrivateApi")
                 val field = Layout::class.java.getDeclaredField("mTextDir")
@@ -38,19 +38,23 @@ class TextLayoutHelper private constructor() {
                 e.printStackTrace()
             }
         } else {
-            layout = DynamicLayout.Builder.obtain(text, TextPaint(), Int.MAX_VALUE / 2)
-                .setIncludePad(true)
-                .setLineSpacing(0f, 0f)
-                .setTextDirection(TextDirectionHeuristics.FIRSTSTRONG_LTR)
-                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-                .build()
+            layout =
+                DynamicLayout.Builder.obtain(text, TextPaint(), Int.MAX_VALUE / 2)
+                    .setIncludePad(true)
+                    .setLineSpacing(0f, 0f)
+                    .setTextDirection(TextDirectionHeuristics.FIRSTSTRONG_LTR)
+                    .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                    .build()
         }
     }
 
     /**
      * Get cursor position after moving left
      */
-    fun getCurPosLeft(offset: Int, s: CharSequence): Int {
+    fun getCurPosLeft(
+        offset: Int,
+        s: CharSequence,
+    ): Int {
         val left = max(0, offset - CHAR_FACTOR)
         var index = offset - left
         text.append(s, left, min(s.length, offset + CHAR_FACTOR + 1))
@@ -69,7 +73,10 @@ class TextLayoutHelper private constructor() {
     /**
      * Get cursor position after moving right
      */
-    fun getCurPosRight(offset: Int, s: CharSequence): Int {
+    fun getCurPosRight(
+        offset: Int,
+        s: CharSequence,
+    ): Int {
         val left = max(0, offset - CHAR_FACTOR)
         var index = offset - left
         text.append(s, left, min(s.length, offset + CHAR_FACTOR + 1))

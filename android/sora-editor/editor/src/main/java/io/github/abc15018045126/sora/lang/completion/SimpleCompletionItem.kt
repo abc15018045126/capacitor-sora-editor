@@ -16,16 +16,25 @@ import io.github.abc15018045126.sora.widget.CodeEditor
  * @see CompletionItem
  */
 open class SimpleCompletionItem : CompletionItem {
-
     var commitText: String?
 
     constructor(prefixLength: Int, commitText: String) : this(commitText, prefixLength, commitText)
 
     constructor(label: CharSequence, prefixLength: Int, commitText: String) : this(label, null, prefixLength, commitText)
 
-    constructor(label: CharSequence, desc: CharSequence?, prefixLength: Int, commitText: String) : this(label, desc, null, prefixLength, commitText)
+    constructor(label: CharSequence, desc: CharSequence?, prefixLength: Int, commitText: String) : this(
+        label,
+        desc,
+        null,
+        prefixLength,
+        commitText,
+    )
 
-    constructor(label: CharSequence, desc: CharSequence?, icon: Drawable?, prefixLength: Int, commitText: String) : super(label, desc, icon) {
+    constructor(label: CharSequence, desc: CharSequence?, icon: Drawable?, prefixLength: Int, commitText: String) : super(
+        label,
+        desc,
+        icon,
+    ) {
         this.commitText = commitText
         this.prefixLength = prefixLength
     }
@@ -57,13 +66,21 @@ open class SimpleCompletionItem : CompletionItem {
         return this
     }
 
-    fun commit(prefixLength: Int, commitText: String): SimpleCompletionItem {
+    fun commit(
+        prefixLength: Int,
+        commitText: String,
+    ): SimpleCompletionItem {
         this.prefixLength = prefixLength
         this.commitText = commitText
         return this
     }
 
-    override fun performCompletion(editor: CodeEditor, text: Content, line: Int, column: Int) {
+    override fun performCompletion(
+        editor: CodeEditor,
+        text: Content,
+        line: Int,
+        column: Int,
+    ) {
         val commit = commitText
         if (commit == null) {
             return

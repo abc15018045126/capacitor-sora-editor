@@ -11,7 +11,6 @@ import io.github.abc15018045126.sora.widget.style.SelectionHandleStyle
 import io.github.abc15018045126.sora.widget.style.SelectionHandleStyle.Companion.ALIGN_CENTER
 
 open class HandleStyleDrop(context: Context) : SelectionHandleStyle {
-
     private val drawable: Drawable = context.getDrawable(R.drawable.ic_sora_handle_drop)!!.mutate()
     private val width: Int
     private val height: Int
@@ -21,16 +20,18 @@ open class HandleStyleDrop(context: Context) : SelectionHandleStyle {
     private var scaleFactor = 1.0f
 
     init {
-        width = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            20f,
-            context.resources.displayMetrics
-        ).toInt()
-        height = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            30f,
-            context.resources.displayMetrics
-        ).toInt()
+        width =
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                20f,
+                context.resources.displayMetrics,
+            ).toInt()
+        height =
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                30f,
+                context.resources.displayMetrics,
+            ).toInt()
     }
 
     override fun draw(
@@ -40,7 +41,7 @@ open class HandleStyleDrop(context: Context) : SelectionHandleStyle {
         y: Float,
         rowHeight: Int,
         color: Int,
-        descriptor: SelectionHandleStyle.HandleDescriptor
+        descriptor: SelectionHandleStyle.HandleDescriptor,
     ) {
         if (lastColor != color) {
             lastColor = color

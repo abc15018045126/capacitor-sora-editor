@@ -24,12 +24,13 @@
 
 package io.github.abc15018045126.sora.lang.completion.snippet
 
-data class PlaceholderDefinition @JvmOverloads constructor(
-    var id: Int,
-    var choices: List<String>? = null,
-    var elements: MutableList<PlaceHolderElement> = mutableListOf(), // do not use emptyList()
-    var transform: Transform? = null
-) {
-    internal var text: String? = null
-}
-
+data class PlaceholderDefinition
+    @JvmOverloads
+    constructor(
+        var id: Int,
+        var choices: List<String>? = null,
+        var elements: MutableList<PlaceHolderElement> = mutableListOf(), // do not use emptyList()
+        var transform: Transform? = null,
+    ) {
+        internal var text: String? = null
+    }

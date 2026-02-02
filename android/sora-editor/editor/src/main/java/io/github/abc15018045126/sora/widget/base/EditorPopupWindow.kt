@@ -12,7 +12,6 @@ import kotlin.math.abs
  * Base class for all editor popup windows.
  */
 open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
-
     companion object {
         /**
          * Update the position of this window when user scrolls the editor
@@ -46,12 +45,12 @@ open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
     private var registered = false
     private var layoutChangeListenerRegistered = false
     private var parentView: View = editor
-    
+
     private var offsetX = 0f
     private var offsetY = 0f
     private var windowX = 0f
     private var windowY = 0f
-    
+
     var width = 0
         protected set
     var height = 0
@@ -59,36 +58,39 @@ open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
 
     init {
         popup.elevation = editor.dpUnit * 8
-        editorLayoutChangeListener = View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-            if (isShowing) {
-                applyWindowAttributes(false)
+        editorLayoutChangeListener =
+            View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+                if (isShowing) {
+                    applyWindowAttributes(false)
+                }
             }
-        }
-        scrollListener = EventReceiver { event, unsubscribe ->
-            if (!registerFlag) {
-                unsubscribe.unsubscribe()
-                registered = false
-                return@EventReceiver
-            }
-            when (event.cause) {
-                ScrollEvent.CAUSE_MAKE_POSITION_VISIBLE,
-                ScrollEvent.CAUSE_TEXT_SELECTING,
-                ScrollEvent.CAUSE_USER_FLING,
-                ScrollEvent.CAUSE_SCALE_TEXT -> {
-                    if (isFeatureEnabled(FEATURE_HIDE_WHEN_FAST_SCROLL) &&
-                        (abs(event.endX - event.startX) > 80 || abs(event.endY - event.startY) > 80)
-                    ) {
-                        if (isShowing) {
-                            dismiss()
-                            return@EventReceiver
+        scrollListener =
+            EventReceiver { event, unsubscribe ->
+                if (!registerFlag) {
+                    unsubscribe.unsubscribe()
+                    registered = false
+                    return@EventReceiver
+                }
+                when (event.cause) {
+                    ScrollEvent.CAUSE_MAKE_POSITION_VISIBLE,
+                    ScrollEvent.CAUSE_TEXT_SELECTING,
+                    ScrollEvent.CAUSE_USER_FLING,
+                    ScrollEvent.CAUSE_SCALE_TEXT,
+                    -> {
+                        if (isFeatureEnabled(FEATURE_HIDE_WHEN_FAST_SCROLL) &&
+                            (abs(event.endX - event.startX) > 80 || abs(event.endY - event.startY) > 80)
+                        ) {
+                            if (isShowing) {
+                                dismiss()
+                                return@EventReceiver
+                            }
                         }
                     }
                 }
+                if (isFeatureEnabled(FEATURE_SCROLL_AS_CONTENT)) {
+                    applyWindowAttributes(false)
+                }
             }
-            if (isFeatureEnabled(FEATURE_SCROLL_AS_CONTENT)) {
-                applyWindowAttributes(false)
-            }
-        }
         register()
     }
 
@@ -132,11 +134,9 @@ open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
         popup.contentView = view
     }
 
-    private fun wrapHorizontal(horizontal: Float): Float = 
-        horizontal.coerceIn(0f, editor.width.toFloat())
+    private fun wrapHorizontal(horizontal: Float): Float = horizontal.coerceIn(0f, editor.width.toFloat())
 
-    private fun wrapVertical(vertical: Float): Float = 
-        vertical.coerceIn(0f, editor.height.toFloat())
+    private fun wrapVertical(vertical: Float): Float = vertical.coerceIn(0f, editor.height.toFloat())
 
     private fun applyWindowAttributes(show: Boolean) {
         if (!show && !isShowing) {
@@ -147,13 +147,13 @@ open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
         var top = if (autoScroll) (windowY - editor.offsetY) else (windowY - offsetY)
         var right = left + width
         var bottom = top + height
-        
+
         if (!isFeatureEnabled(FEATURE_SHOW_OUTSIDE_VIEW_ALLOWED)) {
             val finalLeft = wrapHorizontal(left)
             val finalRight = wrapHorizontal(right)
             val finalTop = wrapVertical(top)
             val finalBottom = wrapVertical(bottom)
-            
+
             if (finalTop >= finalBottom || finalLeft >= finalRight) {
                 dismiss()
                 return
@@ -163,18 +163,18 @@ open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
             top = finalTop
             bottom = finalBottom
         }
-        
+
         if (isCursorObscured(left, top, right, bottom)) {
             dismiss()
             return
         }
-        
+
         editor.getLocationInWindow(locationBuffer)
         val w = (right - left).toInt()
         val h = (bottom - top).toInt()
         val finalX = (left + locationBuffer[0]).toInt()
         val finalY = (top + locationBuffer[1]).toInt()
-        
+
         if (popup.isShowing) {
             popup.update(finalX, finalY, w, h)
         } else if (show) {
@@ -184,13 +184,19 @@ open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
         }
     }
 
-    open fun setSize(width: Int, height: Int) {
+    open fun setSize(
+        width: Int,
+        height: Int,
+    ) {
         this.width = width
         this.height = height
         applyWindowAttributes(false)
     }
 
-    open fun setLocation(x: Float, y: Float) {
+    open fun setLocation(
+        x: Float,
+        y: Float,
+    ) {
         windowX = x
         windowY = y
         offsetY = editor.offsetY.toFloat()
@@ -198,11 +204,19 @@ open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
         applyWindowAttributes(false)
     }
 
-    open fun setLocationAbsolutely(x: Float, y: Float) {
+    open fun setLocationAbsolutely(
+        x: Float,
+        y: Float,
+    ) {
         setLocation(x + editor.offsetX, y + editor.offsetY)
     }
 
-    private fun isCursorObscured(left: Float, top: Float, right: Float, bottom: Float): Boolean {
+    private fun isCursorObscured(
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+    ): Boolean {
         if (!isFeatureEnabled(FEATURE_DISMISS_WHEN_OBSCURING_CURSOR)) {
             return false
         }

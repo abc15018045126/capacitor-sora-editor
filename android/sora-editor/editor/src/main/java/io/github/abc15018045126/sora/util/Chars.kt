@@ -35,12 +35,14 @@ import io.github.abc15018045126.sora.text.TextRange
  * @author Akash Yadav
  */
 object Chars {
-
     /**
      * Find the previous word and get its start position.
      */
     @JvmStatic
-    fun prevWordStart(position: CharPosition, text: Content): CharPosition {
+    fun prevWordStart(
+        position: CharPosition,
+        text: Content,
+    ): CharPosition {
         return findWord(position, text, true).start
     }
 
@@ -48,7 +50,10 @@ object Chars {
      * Find the next word and get its end position.
      */
     @JvmStatic
-    fun nextWordEnd(position: CharPosition, text: Content): CharPosition {
+    fun nextWordEnd(
+        position: CharPosition,
+        text: Content,
+    ): CharPosition {
         return findWord(position, text).end
     }
 
@@ -59,7 +64,11 @@ object Chars {
      */
     @JvmStatic
     @JvmOverloads
-    fun findWord(position: CharPosition, text: Content, reverse: Boolean = false): TextRange {
+    fun findWord(
+        position: CharPosition,
+        text: Content,
+        reverse: Boolean = false,
+    ): TextRange {
         if (reverse) {
             position.column -= 1
         }
@@ -92,7 +101,12 @@ object Chars {
      * @return The word range.
      */
     @JvmStatic
-    fun getWordRange(text: Content, line: Int, column: Int, useIcu: Boolean): TextRange {
+    fun getWordRange(
+        text: Content,
+        line: Int,
+        column: Int,
+        useIcu: Boolean,
+    ): TextRange {
         // Find word edges
         var startLine = line
         var endLine = line
@@ -120,7 +134,7 @@ object Chars {
         }
         return TextRange(
             CharPosition(startLine, startColumn, startOffset),
-            CharPosition(endLine, endColumn, endOffset)
+            CharPosition(endLine, endColumn, endOffset),
         )
     }
 
@@ -133,7 +147,11 @@ object Chars {
      */
     @JvmStatic
     @JvmOverloads
-    fun skipWs(text: CharSequence, offset: Int, reverse: Boolean = false): Int {
+    fun skipWs(
+        text: CharSequence,
+        offset: Int,
+        reverse: Boolean = false,
+    ): Int {
         var i = offset
         while (true) {
             if ((reverse && i < 0) || (!reverse && i == text.length)) {
@@ -141,8 +159,9 @@ object Chars {
             }
 
             val c = text[i]
-            if (!c.isWhitespace() || (i == 0 && reverse)) break
-            else {
+            if (!c.isWhitespace() || (i == 0 && reverse)) {
+                break
+            } else {
                 i += if (reverse) -1 else 1
             }
         }

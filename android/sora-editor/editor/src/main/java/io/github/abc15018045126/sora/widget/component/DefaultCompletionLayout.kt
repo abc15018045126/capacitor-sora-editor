@@ -17,7 +17,6 @@ import android.widget.Toast
 import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
 
 class DefaultCompletionLayout : CompletionLayout {
-
     private lateinit var listView: ListView
     private lateinit var progressBar: ProgressBar
     private lateinit var rootView: LinearLayout
@@ -35,27 +34,29 @@ class DefaultCompletionLayout : CompletionLayout {
             transition.enableTransitionType(LayoutTransition.DISAPPEARING)
             transition.enableTransitionType(LayoutTransition.CHANGE_APPEARING)
             transition.enableTransitionType(LayoutTransition.CHANGE_DISAPPEARING)
-            transition.addTransitionListener(object : LayoutTransition.TransitionListener {
-                override fun startTransition(
-                    transition: LayoutTransition,
-                    container: ViewGroup,
-                    view: View,
-                    transitionType: Int
-                ) {
-                }
-
-                override fun endTransition(
-                    transition: LayoutTransition,
-                    container: ViewGroup,
-                    view: View,
-                    transitionType: Int
-                ) {
-                    if (view !== listView) {
-                        return
+            transition.addTransitionListener(
+                object : LayoutTransition.TransitionListener {
+                    override fun startTransition(
+                        transition: LayoutTransition,
+                        container: ViewGroup,
+                        view: View,
+                        transitionType: Int,
+                    ) {
                     }
-                    view.requestLayout()
-                }
-            })
+
+                    override fun endTransition(
+                        transition: LayoutTransition,
+                        container: ViewGroup,
+                        view: View,
+                        transitionType: Int,
+                    ) {
+                        if (view !== listView) {
+                            return
+                        }
+                        view.requestLayout()
+                    }
+                },
+            )
             rootView.layoutTransition = transition
             listView.layoutTransition = transition
         } else {
@@ -81,42 +82,47 @@ class DefaultCompletionLayout : CompletionLayout {
                 TypedValue.applyDimension(
                     TypedValue.COMPLEX_UNIT_DIP,
                     20f,
-                    context.resources.displayMetrics
-                ).toInt()
-            )
+                    context.resources.displayMetrics,
+                ).toInt(),
+            ),
         )
         rootLayout.addView(listView, LinearLayout.LayoutParams(-1, -1))
 
         progressBar.isIndeterminate = true
         val progressBarLayoutParams = progressBar.layoutParams as LinearLayout.LayoutParams
 
-        progressBarLayoutParams.topMargin = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            -8f,
-            context.resources.displayMetrics
-        ).toInt()
-        progressBarLayoutParams.bottomMargin = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            -8f,
-            context.resources.displayMetrics
-        ).toInt()
-        progressBarLayoutParams.leftMargin = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            4f,
-            context.resources.displayMetrics
-        ).toInt()
-        progressBarLayoutParams.rightMargin = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            4f,
-            context.resources.displayMetrics
-        ).toInt()
+        progressBarLayoutParams.topMargin =
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                -8f,
+                context.resources.displayMetrics,
+            ).toInt()
+        progressBarLayoutParams.bottomMargin =
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                -8f,
+                context.resources.displayMetrics,
+            ).toInt()
+        progressBarLayoutParams.leftMargin =
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                4f,
+                context.resources.displayMetrics,
+            ).toInt()
+        progressBarLayoutParams.rightMargin =
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                4f,
+                context.resources.displayMetrics,
+            ).toInt()
 
         val gd = GradientDrawable()
-        gd.cornerRadius = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            8f,
-            context.resources.displayMetrics
-        )
+        gd.cornerRadius =
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                8f,
+                context.resources.displayMetrics,
+            )
 
         rootLayout.background = gd
 
@@ -134,25 +140,25 @@ class DefaultCompletionLayout : CompletionLayout {
             }
         }
 
-
         return rootLayout
     }
 
     override fun onApplyColorScheme(colorScheme: EditorColorScheme) {
         val gd = GradientDrawable()
         val context = editorAutoCompletion!!.editor.context
-        gd.cornerRadius = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            8f,
-            context.resources.displayMetrics
-        )
+        gd.cornerRadius =
+            TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                8f,
+                context.resources.displayMetrics,
+            )
         gd.setStroke(
             TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP,
                 1f,
-                context.resources.displayMetrics
+                context.resources.displayMetrics,
             ).toInt(),
-            colorScheme.getColor(EditorColorScheme.COMPLETION_WND_CORNER)
+            colorScheme.getColor(EditorColorScheme.COMPLETION_WND_CORNER),
         )
         gd.setColor(colorScheme.getColor(EditorColorScheme.COMPLETION_WND_BACKGROUND))
         rootView.background = gd
@@ -189,25 +195,32 @@ class DefaultCompletionLayout : CompletionLayout {
     }
 
     private fun setRootViewOutlineProvider(rootView: View) {
-        rootView.outlineProvider = object : ViewOutlineProvider() {
-            override fun getOutline(view: View, outline: Outline) {
-                outline.setRoundRect(
-                    0,
-                    0,
-                    view.width,
-                    view.height,
-                    TypedValue.applyDimension(
-                        TypedValue.COMPLEX_UNIT_DIP,
-                        8f,
-                        view.context.resources.displayMetrics
+        rootView.outlineProvider =
+            object : ViewOutlineProvider() {
+                override fun getOutline(
+                    view: View,
+                    outline: Outline,
+                ) {
+                    outline.setRoundRect(
+                        0,
+                        0,
+                        view.width,
+                        view.height,
+                        TypedValue.applyDimension(
+                            TypedValue.COMPLEX_UNIT_DIP,
+                            8f,
+                            view.context.resources.displayMetrics,
+                        ),
                     )
-                )
+                }
             }
-        }
         rootView.clipToOutline = true
     }
 
-    override fun ensureListPositionVisible(position: Int, increment: Int) {
+    override fun ensureListPositionVisible(
+        position: Int,
+        increment: Int,
+    ) {
         listView.post {
             // Used for reset scroll position
             if (position == 0 && increment == 0) {

@@ -19,7 +19,6 @@ import java.util.concurrent.locks.ReentrantLock
  * @author abc15018045126
  */
 abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), IncrementalAnalyzeManager<S, T> {
-
     private var thread: LooperThread? = null
 
     @Volatile
@@ -35,14 +34,25 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
         }
     }
 
-    override fun insert(start: CharPosition, end: CharPosition, insertedText: CharSequence) {
+    override fun insert(
+        start: CharPosition,
+        end: CharPosition,
+        insertedText: CharSequence,
+    ) {
         thread?.let {
             increaseRunCount()
-            it.offerMessage(MSG_MOD, TextModification(IntPair.pack(start.line, start.column), IntPair.pack(end.line, end.column), insertedText))
+            it.offerMessage(
+                MSG_MOD,
+                TextModification(IntPair.pack(start.line, start.column), IntPair.pack(end.line, end.column), insertedText),
+            )
         }
     }
 
-    override fun delete(start: CharPosition, end: CharPosition, deletedText: CharSequence) {
+    override fun delete(
+        start: CharPosition,
+        end: CharPosition,
+        deletedText: CharSequence,
+    ) {
         thread?.let {
             increaseRunCount()
             it.offerMessage(MSG_MOD, TextModification(IntPair.pack(start.line, start.column), IntPair.pack(end.line, end.column), null))
@@ -109,7 +119,11 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
         receiver?.setStyles(this, styles)
     }
 
-    private fun sendUpdate(styles: Styles, startLine: Int, endLine: Int) {
+    private fun sendUpdate(
+        styles: Styles,
+        startLine: Int,
+        endLine: Int,
+    ) {
         receiver?.updateStyles(this, styles, SequenceUpdateRange(startLine, endLine))
     }
 
@@ -118,7 +132,10 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
      *
      * @param text The text. can be safely accessed.
      */
-    abstract fun computeBlocks(text: Content, delegate: CodeBlockAnalyzeDelegate): List<CodeBlock>?
+    abstract fun computeBlocks(
+        text: Content,
+        delegate: CodeBlockAnalyzeDelegate,
+    ): List<CodeBlock>?
 
     fun getManagedStyles(): Styles {
         val currentThread = Thread.currentThread()
@@ -129,14 +146,19 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
     }
 
     private class LockedSpans : Spans {
-
         private val lock = ReentrantLock()
         private val lines = ArrayList<Line>(128)
 
-        override fun adjustOnDelete(start: CharPosition, end: CharPosition) {
+        override fun adjustOnDelete(
+            start: CharPosition,
+            end: CharPosition,
+        ) {
         }
 
-        override fun adjustOnInsert(start: CharPosition, end: CharPosition) {
+        override fun adjustOnInsert(
+            start: CharPosition,
+            end: CharPosition,
+        ) {
         }
 
         override fun getLineCount(): Int {
@@ -230,7 +252,10 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
         }
 
         private inner class ModifierImpl : Spans.Modifier {
-            override fun setSpansOnLine(line: Int, spans: List<Span>) {
+            override fun setSpansOnLine(
+                line: Int,
+                spans: List<Span>,
+            ) {
                 lock.lock()
                 try {
                     while (lines.size <= line) {
@@ -250,7 +275,10 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
                 }
             }
 
-            override fun addLineAt(line: Int, spans: List<Span>) {
+            override fun addLineAt(
+                line: Int,
+                spans: List<Span>,
+            ) {
                 lock.lock()
                 try {
                     lines.add(line, Line(spans))
@@ -308,6 +336,7 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
 
     inner class LooperThread : Thread() {
         private val messageQueue = LinkedBlockingQueue<Message>()
+
         @Volatile
         var abort: Boolean = false
         private var shadowed: Content? = null
@@ -316,9 +345,12 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
         val states = ArrayList<IncrementalAnalyzeManager.LineTokenizeResult<S, T>>()
         var styles: Styles? = null
         private var spans: LockedSpans? = null
-    val delegate = CodeBlockAnalyzeDelegate(this)
+        val delegate = CodeBlockAnalyzeDelegate(this)
 
-        fun offerMessage(what: Int, obj: Any?) {
+        fun offerMessage(
+            what: Int,
+            obj: Any?,
+        ) {
             val msg = Message.obtain()
             msg.what = what
             msg.obj = obj
@@ -375,8 +407,10 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
                             updateStart = startLine
                             if (mod.changedText == null) {
                                 currentShadowed.delete(
-                                    IntPair.getFirst(mod.start), IntPair.getSecond(mod.start),
-                                    IntPair.getFirst(mod.end), IntPair.getSecond(mod.end)
+                                    IntPair.getFirst(mod.start),
+                                    IntPair.getSecond(mod.start),
+                                    IntPair.getFirst(mod.end),
+                                    IntPair.getSecond(mod.end),
                                 )
                                 var state = if (startLine == 0) initialState else states[startLine - 1].state
                                 // Remove states

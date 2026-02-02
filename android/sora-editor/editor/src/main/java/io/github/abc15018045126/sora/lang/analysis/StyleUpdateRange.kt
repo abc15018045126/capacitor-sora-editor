@@ -30,7 +30,6 @@ package io.github.abc15018045126.sora.lang.analysis
  * @author abc15018045126
  */
 interface StyleUpdateRange {
-
     /**
      * Check whether the given [line] index is in range
      */
@@ -40,5 +39,4 @@ interface StyleUpdateRange {
      * Get a new iterator for line indices in range
      */
     fun lineIndexIterator(maxLineIndex: Int): IntIterator
-
 }

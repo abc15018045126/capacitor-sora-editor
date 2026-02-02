@@ -7,7 +7,6 @@ import java.util.Arrays
  * Get whether Identifier part/start quickly
  */
 object MyCharacter {
-
     /**
      * Compressed bit set for isJavaIdentifierStart()
      */
@@ -29,7 +28,10 @@ object MyCharacter {
      * @param bitIndex Target index
      * @return Boolean value at the index
      */
-    private fun get(values: IntArray?, bitIndex: Int): Boolean {
+    private fun get(
+        values: IntArray?,
+        bitIndex: Int,
+    ): Boolean {
         return (values!![bitIndex / 32] and (1 shl (bitIndex % 32))) != 0
     }
 
@@ -39,7 +41,10 @@ object MyCharacter {
      * @param values   Compressed bit set
      * @param bitIndex Index of bit
      */
-    private fun set(values: IntArray?, bitIndex: Int) {
+    private fun set(
+        values: IntArray?,
+        bitIndex: Int,
+    ) {
         values!![bitIndex / 32] = values[bitIndex / 32] or (1 shl (bitIndex % 32))
     }
 

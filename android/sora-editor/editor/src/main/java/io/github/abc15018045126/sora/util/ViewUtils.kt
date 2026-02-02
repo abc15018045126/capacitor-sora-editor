@@ -7,7 +7,6 @@ import android.util.Log
 import android.view.ViewConfiguration
 
 object ViewUtils {
-
     private const val LOG_TAG = "ViewUtils"
 
     const val DEFAULT_SCROLL_FACTOR: Float = 32f

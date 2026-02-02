@@ -10,13 +10,16 @@ import io.github.abc15018045126.sora.widget.component.EditorAutoCompletion
  * @author abc15018045126
  */
 object CompletionHelper {
-
     /**
      * Searches backward on the line, with the given checker to check chars.
      * Returns the longest text that matches the requirement
      */
     @JvmStatic
-    fun computePrefix(ref: ContentReference, pos: CharPosition, checker: PrefixChecker): String {
+    fun computePrefix(
+        ref: ContentReference,
+        pos: CharPosition,
+        checker: PrefixChecker,
+    ): String {
         var begin = pos.column
         val line = ref.getLine(pos.line)
         while (begin > 0) {

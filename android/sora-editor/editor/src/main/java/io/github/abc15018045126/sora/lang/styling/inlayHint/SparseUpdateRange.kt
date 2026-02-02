@@ -29,7 +29,6 @@ import io.github.abc15018045126.sora.lang.analysis.StyleUpdateRange
 import java.lang.Integer.min
 
 class SparseUpdateRange : StyleUpdateRange {
-
     val array = SparseBooleanArray()
 
     fun addLine(line: Int) {
@@ -38,15 +37,12 @@ class SparseUpdateRange : StyleUpdateRange {
 
     override fun isInRange(line: Int) = array[line]
 
+    override fun lineIndexIterator(maxLineIndex: Int) =
+        object : IntIterator() {
+            var index = 0
 
-    override fun lineIndexIterator(maxLineIndex: Int) = object : IntIterator() {
+            override fun hasNext() = index < array.size()
 
-        var index = 0
-
-        override fun hasNext() = index < array.size()
-
-        override fun nextInt() = min(maxLineIndex, array.keyAt(index++))
-
-    }
-
+            override fun nextInt() = min(maxLineIndex, array.keyAt(index++))
+        }
 }

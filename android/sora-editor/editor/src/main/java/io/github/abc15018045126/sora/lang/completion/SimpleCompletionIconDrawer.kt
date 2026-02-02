@@ -31,15 +31,16 @@ import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.drawable.Drawable
 
-
 object SimpleCompletionIconDrawer {
     @JvmStatic
     @JvmOverloads
-    fun draw(kind: CompletionItemKind, circle: Boolean = true): Drawable {
+    fun draw(
+        kind: CompletionItemKind,
+        circle: Boolean = true,
+    ): Drawable {
         return CircleDrawable(kind, circle)
     }
 }
-
 
 internal class CircleDrawable(kind: CompletionItemKind, circle: Boolean) :
     Drawable() {
@@ -49,18 +50,19 @@ internal class CircleDrawable(kind: CompletionItemKind, circle: Boolean) :
     private val mCircle: Boolean = circle
 
     init {
-        mPaint = Paint().apply {
-            isAntiAlias = true
-            color = kind.defaultDisplayBackgroundColor.toInt()
-        }
-        mTextPaint = Paint().apply {
-            color = -0x1
-            isAntiAlias = true
-            textSize = Resources.getSystem()
-                .displayMetrics.density * 14
-            textAlign = Paint.Align.CENTER
-        }
-
+        mPaint =
+            Paint().apply {
+                isAntiAlias = true
+                color = kind.defaultDisplayBackgroundColor.toInt()
+            }
+        mTextPaint =
+            Paint().apply {
+                color = -0x1
+                isAntiAlias = true
+                textSize = Resources.getSystem()
+                    .displayMetrics.density * 14
+                textAlign = Paint.Align.CENTER
+            }
     }
 
     override fun draw(canvas: Canvas) {
@@ -89,11 +91,9 @@ internal class CircleDrawable(kind: CompletionItemKind, circle: Boolean) :
 
     @Deprecated(
         "Deprecated in Java",
-        ReplaceWith("PixelFormat.OPAQUE", "android.graphics.PixelFormat")
+        ReplaceWith("PixelFormat.OPAQUE", "android.graphics.PixelFormat"),
     )
     override fun getOpacity(): Int {
         return PixelFormat.OPAQUE
     }
-
-
 }

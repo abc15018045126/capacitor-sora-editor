@@ -10,7 +10,6 @@ import io.github.abc15018045126.sora.text.ContentReference
  * @author abc15018045126
  */
 internal object LanguageHelper {
-
     @JvmStatic
     fun getQuickQuoteHandler(language: Language): QuickQuoteHandler? {
         return try {
@@ -27,7 +26,7 @@ internal object LanguageHelper {
         line: Int,
         column: Int,
         spaceCountOnLine: Int,
-        tabCountOnLine: Int
+        tabCountOnLine: Int,
     ): Int {
         return try {
             language.getIndentAdvance(content, line, column, spaceCountOnLine, tabCountOnLine)

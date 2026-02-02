@@ -7,13 +7,15 @@ import io.github.abc15018045126.sora.lang.styling.span.internal.SpanImpl
  * Factory for [Span]
  */
 object SpanFactory {
-
     /**
      * Get an available [Span] object from either cache or new instance.
      * The result object will be initialized with the given arguments.
      */
     @JvmStatic
-    fun obtain(column: Int, style: Long): Span {
+    fun obtain(
+        column: Int,
+        style: Long,
+    ): Span {
         return SpanImpl.obtain(column, style)
     }
 
@@ -23,7 +25,10 @@ object SpanFactory {
      * Note that the span can not have additional fields beside
      */
     @JvmStatic
-    fun obtainNoExt(column: Int, style: Long): Span {
+    fun obtainNoExt(
+        column: Int,
+        style: Long,
+    ): Span {
         return NoExtSpanImpl.obtain(column, style)
     }
 

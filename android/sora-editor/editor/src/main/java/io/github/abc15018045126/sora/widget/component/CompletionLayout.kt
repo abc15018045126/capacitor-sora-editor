@@ -13,7 +13,6 @@ import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
  * item in completion list when the user clicks one.
  */
 interface CompletionLayout {
-
     /**
      * Color scheme changed
      */
@@ -47,13 +46,16 @@ interface CompletionLayout {
      * @param position        Item index
      * @param incrementPixels If you scroll the layout, this is a recommended value of each scroll. [EditorCompletionAdapter.getItemHeight]
      */
-    fun ensureListPositionVisible(position: Int, incrementPixels: Int)
+    fun ensureListPositionVisible(
+        position: Int,
+        incrementPixels: Int,
+    )
 
     /**
      * Some layout may support to display more animations,
      * this method provides control over the animation of the layout.
      */
     fun setEnabledAnimation(enabledAnimation: Boolean) {
-        //ignore
+        // ignore
     }
 }

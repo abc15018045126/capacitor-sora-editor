@@ -6,7 +6,6 @@ package io.github.abc15018045126.sora.widget.style
  * @author abc15018045126, Dmitry Rubtsov
  */
 interface CursorAnimator {
-
     /**
      * Mark the current cursor position as animation start position
      */

@@ -11,16 +11,21 @@ import io.github.abc15018045126.sora.text.CharPosition
  * @author abc15018045126
  */
 class PlainTextSpans(private var lineCount: Int) : Spans {
-
     fun setLineCount(lineCount: Int) {
         this.lineCount = lineCount
     }
 
-    override fun adjustOnInsert(start: CharPosition, end: CharPosition) {
+    override fun adjustOnInsert(
+        start: CharPosition,
+        end: CharPosition,
+    ) {
         lineCount += end.line - start.line
     }
 
-    override fun adjustOnDelete(start: CharPosition, end: CharPosition) {
+    override fun adjustOnDelete(
+        start: CharPosition,
+        end: CharPosition,
+    ) {
         lineCount -= end.line - start.line
     }
 

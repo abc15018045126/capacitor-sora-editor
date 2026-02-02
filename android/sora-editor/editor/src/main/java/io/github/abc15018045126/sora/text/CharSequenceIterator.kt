@@ -8,7 +8,6 @@ import java.text.CharacterIterator
  * @author abc15018045126
  */
 class CharSequenceIterator(private val src: CharSequence) : CharacterIterator {
-
     private var index: Int = 0
 
     override fun first(): Char {

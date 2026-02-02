@@ -9,13 +9,15 @@ import io.github.abc15018045126.sora.text.Content
  * @author abc15018045126
  */
 class SimpleBracketsCollector : BracketsProvider {
-
     private val mapping = SparseIntArray()
 
     /**
      * Add new pair
      */
-    fun add(start: Int, end: Int) {
+    fun add(
+        start: Int,
+        end: Int,
+    ) {
         // add 1 to avoid zeros
         mapping.put(start + 1, end + 1)
         mapping.put(end + 1, start + 1)
@@ -43,7 +45,10 @@ class SimpleBracketsCollector : BracketsProvider {
         }
     }
 
-    override fun getPairedBracketAt(text: Content, index: Int): PairedBracket? {
+    override fun getPairedBracketAt(
+        text: Content,
+        index: Int,
+    ): PairedBracket? {
         var res = if (index - 1 >= 0) getForIndex(index - 1) else null
         if (res == null) {
             res = getForIndex(index)

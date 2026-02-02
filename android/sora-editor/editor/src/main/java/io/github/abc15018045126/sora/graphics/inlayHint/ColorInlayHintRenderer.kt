@@ -33,7 +33,6 @@ import io.github.abc15018045126.sora.lang.styling.inlayHint.InlayHint
 import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
 
 open class ColorInlayHintRenderer() : InlayHintRenderer() {
-
     companion object {
         val DefaultInstance = ColorInlayHintRenderer()
     }
@@ -41,15 +40,16 @@ open class ColorInlayHintRenderer() : InlayHintRenderer() {
     override val typeName: String
         get() = "color"
 
-    protected val localPaint = Paint().also {
-        it.isAntiAlias = true
-        it.strokeWidth = 2f
-    }
+    protected val localPaint =
+        Paint().also {
+            it.isAntiAlias = true
+            it.strokeWidth = 2f
+        }
 
     override fun onMeasure(
         inlayHint: InlayHint,
         paint: Paint,
-        params: InlayHintRenderParams
+        params: InlayHintRenderParams,
     ): Float {
         val margin = paint.spaceWidth
         return margin + params.textHeight * 0.75f
@@ -61,7 +61,7 @@ open class ColorInlayHintRenderer() : InlayHintRenderer() {
         paint: Paint,
         params: InlayHintRenderParams,
         colorScheme: EditorColorScheme,
-        measuredWidth: Float
+        measuredWidth: Float,
     ) {
         val centerX = measuredWidth / 2f
         val centerY = (params.textTop + params.textBottom) / 2f
@@ -74,7 +74,7 @@ open class ColorInlayHintRenderer() : InlayHintRenderer() {
             centerY - halfSize,
             centerX + halfSize,
             centerY + halfSize,
-            localPaint
+            localPaint,
         )
         localPaint.color = Color.WHITE
         localPaint.style = android.graphics.Paint.Style.STROKE
@@ -83,9 +83,7 @@ open class ColorInlayHintRenderer() : InlayHintRenderer() {
             centerY - halfSize,
             centerX + halfSize,
             centerY + halfSize,
-            localPaint
+            localPaint,
         )
     }
-
-
 }

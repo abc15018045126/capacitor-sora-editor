@@ -10,15 +10,15 @@ import kotlin.math.min
 class SingleCharacterWidths(private val tabWidth: Int) {
     @JvmField
     val widths: FloatArray = FloatArray(10)
-    
+
     @JvmField
     val codePointWidths: SparseArray<Float> = SparseArray()
-    
+
     @JvmField
     val buffer: CharArray = CharArray(10)
-    
+
     private val cache: FloatArray = FloatArray(65536)
-    
+
     var isHandleFunctionCharacters: Boolean = false
 
     /**
@@ -32,7 +32,10 @@ class SingleCharacterWidths(private val tabWidth: Int) {
     /**
      * Measure a single character
      */
-    fun measureChar(ch: Char, p: Paint): Float {
+    fun measureChar(
+        ch: Char,
+        p: Paint,
+    ): Float {
         var char = ch
         var rate = 1
         if (char == '\t') {
@@ -52,7 +55,10 @@ class SingleCharacterWidths(private val tabWidth: Int) {
      * Measure a single character
      * @param cp Code Point
      */
-    fun measureCodePoint(cp: Int, p: Paint): Float {
+    fun measureCodePoint(
+        cp: Int,
+        p: Paint,
+    ): Float {
         if (cp <= 65535) {
             return measureChar(cp.toChar(), p)
         }
@@ -68,18 +74,31 @@ class SingleCharacterWidths(private val tabWidth: Int) {
     /*
      * Measure text
      */
-    fun measureText(chars: CharArray, start: Int, end: Int, p: Paint): Float {
+    fun measureText(
+        chars: CharArray,
+        start: Int,
+        end: Int,
+        p: Paint,
+    ): Float {
         return measureText(CharArrayWrapper(chars, chars.size), start, end, p)
     }
 
-    fun measureText(str: CharSequence, p: Paint): Float {
+    fun measureText(
+        str: CharSequence,
+        p: Paint,
+    ): Float {
         return measureText(str, 0, str.length, p)
     }
 
     /**
      * Measure text
      */
-    fun measureText(str: CharSequence, start: Int, end: Int, p: Paint): Float {
+    fun measureText(
+        str: CharSequence,
+        start: Int,
+        end: Int,
+        p: Paint,
+    ): Float {
         var width: Long = 0
         var i = start
         while (i < end) {

@@ -5,7 +5,6 @@ import io.github.abc15018045126.sora.text.Content
 import io.github.abc15018045126.sora.text.TextRange
 
 interface QuickQuoteHandler {
-
     /**
      * Checks whether the given input matches the requirement to invoke this handler
      *
@@ -19,25 +18,25 @@ interface QuickQuoteHandler {
         candidateCharacter: String,
         text: Content,
         cursor: TextRange,
-        style: Styles?
+        style: Styles?,
     ): HandleResult
 
     class HandleResult(
         private var consumed: Boolean,
-        private var newCursorRange: TextRange?
+        private var newCursorRange: TextRange?,
     ) {
         fun isConsumed(): Boolean = consumed
-        
+
         fun setConsumed(consumed: Boolean) {
             this.consumed = consumed
         }
-        
+
         fun getNewCursorRange(): TextRange? = newCursorRange
-        
+
         fun setNewCursorRange(newCursorRange: TextRange?) {
             this.newCursorRange = newCursorRange
         }
-        
+
         companion object {
             @JvmField
             val NOT_CONSUMED = HandleResult(false, null)

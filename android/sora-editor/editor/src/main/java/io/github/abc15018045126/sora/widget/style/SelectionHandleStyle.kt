@@ -10,7 +10,6 @@ import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
  * @author abc15018045126
  */
 interface SelectionHandleStyle {
-
     /**
      * Draw a handle to the given canvas and return descriptor of handle.
      *
@@ -29,7 +28,7 @@ interface SelectionHandleStyle {
         y: Float,
         rowHeight: Int,
         color: Int,
-        descriptor: HandleDescriptor
+        descriptor: HandleDescriptor,
     )
 
     fun setAlpha(alpha: Int)
@@ -40,7 +39,6 @@ interface SelectionHandleStyle {
      * The descriptor of a drawn handle on canvas
      */
     class HandleDescriptor {
-
         /**
          * The position of handle
          */
@@ -58,7 +56,13 @@ interface SelectionHandleStyle {
         @JvmField
         var alignment = ALIGN_CENTER
 
-        fun set(left: Float, top: Float, right: Float, bottom: Float, alignment: Int) {
+        fun set(
+            left: Float,
+            top: Float,
+            right: Float,
+            bottom: Float,
+            alignment: Int,
+        ) {
             this.alignment = alignment
             position.set(left, top, right, bottom)
         }

@@ -7,18 +7,23 @@ import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
  * Spans object saves spans in editor.
  */
 interface Spans {
-
     /**
      * Adjust spans on insert.
      * Must be implemented.
      */
-    fun adjustOnInsert(start: CharPosition, end: CharPosition)
+    fun adjustOnInsert(
+        start: CharPosition,
+        end: CharPosition,
+    )
 
     /**
      * Adjust spans on delete.
      * Must be implemented.
      */
-    fun adjustOnDelete(start: CharPosition, end: CharPosition)
+    fun adjustOnDelete(
+        start: CharPosition,
+        end: CharPosition,
+    )
 
     /**
      * Read spans.
@@ -47,7 +52,6 @@ interface Spans {
      * Reader reads the spans in a [Spans] object.
      */
     interface Reader {
-
         /**
          * Start reading the spans on the given line.
          * You may prepare some data here if the actual spans are not stored by [Span] objects.
@@ -78,7 +82,6 @@ interface Spans {
      * Modifier updates the spans in a [Spans] object.
      */
     interface Modifier {
-
         /**
          * Set the line's spans to the new ones. The given [spans] list should not be stored,
          * but the content of it can be copied.
@@ -87,14 +90,20 @@ interface Spans {
          * without throwing an exception. Set spans of the filled lines to color [EditorColorScheme.TEXT_NORMAL]
          * or extends previous styles.
          */
-        fun setSpansOnLine(line: Int, spans: List<out Span>)
+        fun setSpansOnLine(
+            line: Int,
+            spans: List<out Span>,
+        )
 
         /**
          * Add a line at the given position.
          * The given [spans] list should not be stored,
          * but the content of it can be copied.
          */
-        fun addLineAt(line: Int, spans: List<out Span>)
+        fun addLineAt(
+            line: Int,
+            spans: List<out Span>,
+        )
 
         /**
          * Remove a line

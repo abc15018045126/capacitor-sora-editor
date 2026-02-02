@@ -24,7 +24,6 @@ import kotlin.math.min
  * @author Rose
  */
 class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(editor, text) {
-
     private val reuseCount = AtomicInteger(0)
     private var widthMaintainer: BlockIntList? = null
     private var inlineElementsWidths: BlockIntList? = null
@@ -38,7 +37,10 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
         measureAllLines(widthMaintainer!!, inlineElementsWidths!!)
     }
 
-    private fun measureAllLines(widthMaintainer: BlockIntList, inlineElementsWidths: BlockIntList) {
+    private fun measureAllLines(
+        widthMaintainer: BlockIntList,
+        inlineElementsWidths: BlockIntList,
+    ) {
         val text = this.text ?: return
         val editor = this.editor ?: return
         val shadowPaint = Paint(editor.isRenderFunctionCharacters)
@@ -46,71 +48,92 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
         shadowPaint.onAttributeUpdate()
         val reuseCountLocal = reuseCount.get()
         val measurerLocal = measurer
-        val monitor = TaskMonitor(1, object : TaskMonitor.Callback {
-            override fun onCompleted(results: Array<Any?>, cancelledCount: Int) {
-                val currentEditor = this@LineBreakLayout.editor
-                if (currentEditor == null || cancelledCount > 0) {
-                    return
-                }
-                io.github.abc15018045126.sora.util.EditorHandler.post {
-                    if (currentEditor.isReleased) return@post
-                    if (this@LineBreakLayout.editor !== currentEditor || reuseCountLocal != reuseCount.get()) {
-                        return@post
-                    }
-                    currentEditor.setLayoutBusy(false)
-                    val touch: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = currentEditor.touchHandler!!
-                    touch.scrollBy(0f, 0f)
-
-                }
-
-            }
-        })
-        val task = object : LayoutTask<Void?>(monitor) {
-            override fun compute(): Void? {
-                widthMaintainer.lock.lock()
-                try {
-                    text.runReadActionsOnLines(0, text.lineCount - 1, object : Content.ContentLineConsumer2 {
-                        override fun accept(index: Int, line: ContentLine, abortFlag: Content.ContentLineConsumer2.AbortFlag) {
-                            val width = measurerLocal?.measureText(line, 0, line.length, shadowPaint)?.toInt() ?: 0
-                            val inlineElementsWidth = measureInlayHints(getInlayHints(index), shadowPaint)
-                            if (shouldRun()) {
-                                widthMaintainer.add(width + inlineElementsWidth)
-                                inlineElementsWidths.add(inlineElementsWidth)
-                            } else {
-                                abortFlag.set = true
-                            }
+        val monitor =
+            TaskMonitor(
+                1,
+                object : TaskMonitor.Callback {
+                    override fun onCompleted(
+                        results: Array<Any?>,
+                        cancelledCount: Int,
+                    ) {
+                        val currentEditor = this@LineBreakLayout.editor
+                        if (currentEditor == null || cancelledCount > 0) {
+                            return
                         }
-                    })
-                } finally {
-                    widthMaintainer.lock.unlock()
+                        io.github.abc15018045126.sora.util.EditorHandler.post {
+                            if (currentEditor.isReleased) return@post
+                            if (this@LineBreakLayout.editor !== currentEditor || reuseCountLocal != reuseCount.get()) {
+                                return@post
+                            }
+                            currentEditor.setLayoutBusy(false)
+                            val touch: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = currentEditor.touchHandler!!
+                            touch.scrollBy(0f, 0f)
+                        }
+                    }
+                },
+            )
+        val task =
+            object : LayoutTask<Void?>(monitor) {
+                override fun compute(): Void? {
+                    widthMaintainer.lock.lock()
+                    try {
+                        text.runReadActionsOnLines(
+                            0,
+                            text.lineCount - 1,
+                            object : Content.ContentLineConsumer2 {
+                                override fun accept(
+                                    index: Int,
+                                    line: ContentLine,
+                                    abortFlag: Content.ContentLineConsumer2.AbortFlag,
+                                ) {
+                                    val width = measurerLocal?.measureText(line, 0, line.length, shadowPaint)?.toInt() ?: 0
+                                    val inlineElementsWidth = measureInlayHints(getInlayHints(index), shadowPaint)
+                                    if (shouldRun()) {
+                                        widthMaintainer.add(width + inlineElementsWidth)
+                                        inlineElementsWidths.add(inlineElementsWidth)
+                                    } else {
+                                        abortFlag.set = true
+                                    }
+                                }
+                            },
+                        )
+                    } finally {
+                        widthMaintainer.lock.unlock()
+                    }
+                    return null
                 }
-                return null
-            }
 
-            override fun shouldRun(): Boolean {
-                return super.shouldRun() && reuseCount.get() == reuseCountLocal
+                override fun shouldRun(): Boolean {
+                    return super.shouldRun() && reuseCount.get() == reuseCountLocal
+                }
             }
-        }
         editor.setLayoutBusy(true)
         submitTask(task)
     }
 
-    private fun measureInlayHints(inlayHints: List<InlayHint>, paint: Paint): Int {
+    private fun measureInlayHints(
+        inlayHints: List<InlayHint>,
+        paint: Paint,
+    ): Int {
         val editor = this.editor ?: return 0
         var width = 0f
         for (inlayHint in inlayHints) {
             val renderer = editor.getInlayHintRendererForType(inlayHint.type) ?: continue
-            val w = renderer.measure(
-                inlayHint,
-                paint,
-                editor.renderer.createTextRowParams().toInlayHintRenderParams()
-            )
+            val w =
+                renderer.measure(
+                    inlayHint,
+                    paint,
+                    editor.renderer.createTextRowParams().toInlayHintRenderParams(),
+                )
             width += w
         }
         return width.toInt()
     }
 
-    private fun measureLineAndUpdateInlineWidths(lineIndex: Int, useAdd: Boolean = false): Int {
+    private fun measureLineAndUpdateInlineWidths(
+        lineIndex: Int,
+        useAdd: Boolean = false,
+    ): Int {
         val text = this.text ?: return 0
         val editor = this.editor ?: return 0
         val line = text.getLine(lineIndex)
@@ -123,14 +146,21 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
         return (measurer?.measureText(line, 0, line.length, editor.textPaint)?.toInt() ?: 0) + inlayHintsWidth
     }
 
-    private fun measureTextRegion(lineIndex: Int, start: Int, end: Int): Int {
+    private fun measureTextRegion(
+        lineIndex: Int,
+        start: Int,
+        end: Int,
+    ): Int {
         val text = this.text ?: return 0
         val editor = this.editor ?: return 0
         val line = text.getLine(lineIndex)
         return measurer?.measureText(line, start, end, editor.textPaint)?.toInt() ?: 0
     }
 
-    override fun obtainRowIterator(initialRow: Int, preloadedLines: SparseArray<ContentLine>?): RowIterator {
+    override fun obtainRowIterator(
+        initialRow: Int,
+        preloadedLines: SparseArray<ContentLine>?,
+    ): RowIterator {
         return LineBreakLayoutRowItr(this, text!!, initialRow, preloadedLines)
     }
 
@@ -152,20 +182,23 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
         startColumn: Int,
         endLine: Int,
         endColumn: Int,
-        insertedContent: CharSequence
+        insertedContent: CharSequence,
     ) {
         super.afterInsert(content, startLine, startColumn, endLine, endColumn, insertedContent)
         val editor = this.editor ?: return
         val widthMaintainer = this.widthMaintainer ?: return
         val inlineElementsWidths = this.inlineElementsWidths ?: return
-        
+
         for (i in startLine..endLine) {
             if (i == startLine) {
                 if (endLine == startLine) {
                     val oldInlayWidths = inlineElementsWidths.get(i)
                     val newInlayWidths = measureInlayHints(getInlayHints(i), editor.textPaint)
                     inlineElementsWidths.set(i, newInlayWidths)
-                    widthMaintainer.set(i, widthMaintainer.get(i) + measureTextRegion(i, startColumn, endColumn) + (newInlayWidths - oldInlayWidths))
+                    widthMaintainer.set(
+                        i,
+                        widthMaintainer.get(i) + measureTextRegion(i, startColumn, endColumn) + (newInlayWidths - oldInlayWidths),
+                    )
                 } else {
                     widthMaintainer.set(i, measureLineAndUpdateInlineWidths(i))
                 }
@@ -181,7 +214,7 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
         startColumn: Int,
         endLine: Int,
         endColumn: Int,
-        deletedContent: CharSequence
+        deletedContent: CharSequence,
     ) {
         super.afterDelete(content, startLine, startColumn, endLine, endColumn, deletedContent)
         val editor = this.editor ?: return
@@ -196,9 +229,12 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
             val oldInlayWidths = inlineElementsWidths.get(startLine)
             val newInlayWidths = measureInlayHints(getInlayHints(startLine), editor.textPaint)
             inlineElementsWidths.set(startLine, newInlayWidths)
-            widthMaintainer.set(startLine, widthMaintainer.get(startLine)
-                    - (measurer?.measureText(deletedContent, 0, endColumn - startColumn, editor.textPaint)?.toInt() ?: 0)
-                    + (newInlayWidths - oldInlayWidths))
+            widthMaintainer.set(
+                startLine,
+                widthMaintainer.get(startLine) -
+                    (measurer?.measureText(deletedContent, 0, endColumn - startColumn, editor.textPaint)?.toInt() ?: 0) +
+                    (newInlayWidths - oldInlayWidths),
+            )
         } else {
             widthMaintainer.set(startLine, measureLineAndUpdateInlineWidths(startLine))
         }
@@ -254,7 +290,10 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
         return (y / rh).toInt()
     }
 
-    override fun getCharPositionForLayoutOffset(xOffset: Float, yOffset: Float): Long {
+    override fun getCharPositionForLayoutOffset(
+        xOffset: Float,
+        yOffset: Float,
+    ): Long {
         val editor = this.editor ?: return 0
         val text = this.text ?: return 0
         val lineCount = text.lineCount
@@ -264,7 +303,11 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
         return IntPair.pack(line, res)
     }
 
-    override fun getCharLayoutOffset(line: Int, column: Int, array: FloatArray?): FloatArray {
+    override fun getCharLayoutOffset(
+        line: Int,
+        column: Int,
+        array: FloatArray?,
+    ): FloatArray {
         var dest = array
         if (dest == null || dest.size < 2) {
             dest = FloatArray(2)
@@ -280,7 +323,10 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
         return 1
     }
 
-    override fun getDownPosition(line: Int, column: Int): Long {
+    override fun getDownPosition(
+        line: Int,
+        column: Int,
+    ): Long {
         val text = this.text ?: return 0
         val c_line = text.lineCount
         return if (line + 1 >= c_line) {
@@ -292,7 +338,10 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
         }
     }
 
-    override fun getUpPosition(line: Int, column: Int): Long {
+    override fun getUpPosition(
+        line: Int,
+        column: Int,
+    ): Long {
         val text = this.text ?: return 0
         if (line - 1 < 0) {
             return IntPair.pack(0, 0)
@@ -329,9 +378,8 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
         private val layout: AbstractLayout,
         private val text: Content,
         private val initRow: Int,
-        private val preloadedLines: SparseArray<ContentLine>?
+        private val preloadedLines: SparseArray<ContentLine>?,
     ) : RowIterator {
-
         private val result: Row = Row()
         private var currentRow: Int = initRow
 
@@ -364,6 +412,7 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
             currentRow = initRow
         }
     }
+
     fun findRow(line: Int): Int {
         return line
     }

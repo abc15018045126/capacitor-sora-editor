@@ -19,9 +19,8 @@ class ContentChangeEvent(
     val changeStart: CharPosition,
     val changeEnd: CharPosition,
     val changedText: CharSequence,
-    val isCausedByUndoManager: Boolean
+    val isCausedByUndoManager: Boolean,
 ) : Event(editor) {
-
     companion object {
         /**
          * Notify that {@link CodeEditor#setText(CharSequence)} is called

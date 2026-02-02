@@ -1,7 +1,6 @@
 package io.github.abc15018045126.sora.widget
 
 import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.ExtractedTextRequest
 import android.widget.OverScroller
 import androidx.annotation.FloatRange
 import androidx.annotation.IntRange
@@ -17,7 +16,6 @@ import java.io.Serializable
  * so that you can modify them easily and do not have to call so many methods.
  */
 class DirectAccessProps : Serializable {
-
     companion object {
         /**
          * Rendering behavior for [cursorLineBgOverlapBehavior].

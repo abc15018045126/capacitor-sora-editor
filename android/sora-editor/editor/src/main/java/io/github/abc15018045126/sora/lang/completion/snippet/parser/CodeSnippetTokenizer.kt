@@ -3,7 +3,6 @@ package io.github.abc15018045126.sora.lang.completion.snippet.parser
 import android.util.SparseArray
 
 class CodeSnippetTokenizer(private val value: String) {
-
     private var index: Int = 0
     private var length: Int = 0
     private var token: TokenType = TokenType.EOF
@@ -42,10 +41,12 @@ class CodeSnippetTokenizer(private val value: String) {
 
         if (isVariableChar(ch)) {
             length = 1
-            while (index + length < value.length && run {
+            while (index + length < value.length &&
+                run {
                     ch = value[index + length]
                     isVariableChar(ch) || isDigitChar(ch)
-                }) {
+                }
+            ) {
                 length++
             }
             return TokenType.VariableName
@@ -53,8 +54,9 @@ class CodeSnippetTokenizer(private val value: String) {
 
         while (index + length < value.length && !isDigitChar(ch) && !isVariableChar(ch) && staticTypes.get(ch.code) == null) {
             length++
-            if (index + length < value.length)
+            if (index + length < value.length) {
                 ch = value[index + length]
+            }
         }
         return TokenType.Format
     }
@@ -101,8 +103,8 @@ class CodeSnippetTokenizer(private val value: String) {
 
         private fun isVariableChar(ch: Char): Boolean {
             return (ch in 'a'..'z') ||
-                    (ch in 'A'..'Z') ||
-                    ch == '_'
+                (ch in 'A'..'Z') ||
+                ch == '_'
         }
     }
 }

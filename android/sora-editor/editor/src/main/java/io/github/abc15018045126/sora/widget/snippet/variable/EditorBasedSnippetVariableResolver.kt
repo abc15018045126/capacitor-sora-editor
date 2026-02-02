@@ -5,11 +5,16 @@ import io.github.abc15018045126.sora.util.IntPair
 import io.github.abc15018045126.sora.widget.CodeEditor
 
 class EditorBasedSnippetVariableResolver(private val editor: CodeEditor) : ISnippetVariableResolver {
-
     override fun getResolvableNames(): Array<String> {
         return arrayOf(
-            "TM_CURRENT_LINE", "TM_LINE_INDEX", "TM_LINE_NUMBER", "CURSOR_INDEX", "CURSOR_NUMBER",
-            "TM_CURRENT_WORD", "SELECTION", "TM_SELECTED_TEXT"
+            "TM_CURRENT_LINE",
+            "TM_LINE_INDEX",
+            "TM_LINE_NUMBER",
+            "CURSOR_INDEX",
+            "CURSOR_NUMBER",
+            "TM_CURRENT_WORD",
+            "SELECTION",
+            "TM_SELECTED_TEXT",
         )
     }
 

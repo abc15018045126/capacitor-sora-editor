@@ -8,7 +8,6 @@ import io.github.abc15018045126.sora.widget.CodeEditor
  * @param <T> Result type
  */
 abstract class ResultedEvent<T>(editor: CodeEditor) : Event(editor) {
-
     var result: T? = null
 
     fun interceptAndSetResult(result: T?) {

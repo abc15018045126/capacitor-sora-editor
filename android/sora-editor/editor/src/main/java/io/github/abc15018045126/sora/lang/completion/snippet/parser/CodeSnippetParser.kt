@@ -16,7 +16,7 @@ import java.util.regex.PatternSyntaxException
 
 class CodeSnippetParser private constructor(
     private val src: String,
-    definitions: MutableList<PlaceholderDefinition>
+    definitions: MutableList<PlaceholderDefinition>,
 ) {
     private val builder: CodeSnippet.Builder = CodeSnippet.Builder(definitions)
     private val tokenizer: CodeSnippetTokenizer = CodeSnippetTokenizer(src)
@@ -80,17 +80,17 @@ class CodeSnippetParser private constructor(
     private fun parse() {
         token = tokenizer.nextToken()
         while (parseInternal()) {
-            //empty
+            // empty
         }
     }
 
     private fun parseInternal(): Boolean {
         return parseEscaped() ||
-                parseTabStopOrVariableName() ||
-                parseComplexVariable() ||
-                parseComplexPlaceholder() ||
-                parseInterpolatedShell() ||
-                parseAnything()
+            parseTabStopOrVariableName() ||
+            parseComplexVariable() ||
+            parseComplexPlaceholder() ||
+            parseInterpolatedShell() ||
+            parseAnything()
     }
 
     private fun parseEscaped(): Boolean {
@@ -160,44 +160,44 @@ class CodeSnippetParser private constructor(
         if (accept(TokenType.Dollar) && accept(TokenType.CurlyOpen)) {
             val text = _accept(TokenType.VariableName)
             if (text != null) {
-            val variableName = text
-            var defaultValue: String? = null
-            if (accept(TokenType.Colon)) {
-                // ${name:xxx}
-                val sb = StringBuilder()
-                while (!accept(TokenType.CurlyClose)) {
-                    if (accept(TokenType.Backslash)) {
-                        val escaped = _accept(TokenType.Backslash, TokenType.Dollar, TokenType.CurlyClose)
-                        if (escaped != null) {
-                            sb.append(escaped)
+                val variableName = text
+                var defaultValue: String? = null
+                if (accept(TokenType.Colon)) {
+                    // ${name:xxx}
+                    val sb = StringBuilder()
+                    while (!accept(TokenType.CurlyClose)) {
+                        if (accept(TokenType.Backslash)) {
+                            val escaped = _accept(TokenType.Backslash, TokenType.Dollar, TokenType.CurlyClose)
+                            if (escaped != null) {
+                                sb.append(escaped)
+                            } else {
+                                sb.append('\\')
+                            }
+                        } else if (token.type == TokenType.EOF) {
+                            backTo(backup)
+                            return null
                         } else {
-                            sb.append('\\')
+                            sb.append(src, token.index, token.index + token.length)
+                            next()
                         }
-                    } else if (token.type == TokenType.EOF) {
-                        backTo(backup)
-                        return null
-                    } else {
-                        sb.append(src, token.index, token.index + token.length)
-                        next()
                     }
+                    return VariableItem(-1, variableName, sb.toString())
+                } else if (accept(TokenType.Forwardslash)) {
+                    // ${name/regexp/format/options}
+                    val transform = Transform()
+                    if (parseTransform(transform)) {
+                        return VariableItem(-1, variableName, null, transform)
+                    }
+                    backTo(backup)
+                    return null
+                } else if (accept(TokenType.CurlyClose)) {
+                    // ${name}
+                    return VariableItem(-1, variableName, "")
+                } else {
+                    // missing token
+                    backTo(backup)
+                    return null
                 }
-                return VariableItem(-1, variableName, sb.toString())
-            } else if (accept(TokenType.Forwardslash)) {
-                // ${name/regexp/format/options}
-                val transform = Transform()
-                if (parseTransform(transform)) {
-                    return VariableItem(-1, variableName, null, transform)
-                }
-                backTo(backup)
-                return null
-            } else if (accept(TokenType.CurlyClose)) {
-                // ${name}
-                return VariableItem(-1, variableName, "")
-            } else {
-                // missing token
-                backTo(backup)
-                return null
-            }
             }
         }
         backTo(backup)
@@ -209,79 +209,79 @@ class CodeSnippetParser private constructor(
         if (accept(TokenType.Dollar) && accept(TokenType.CurlyOpen)) {
             val text = _accept(TokenType.Int)
             if (text != null) {
-            val idText = text
-            if (accept(TokenType.Colon)) {
-                // ${1:xxx}
-                val elements = ArrayList<PlaceHolderElement>()
-                while (!accept(TokenType.CurlyClose)) {
-                    if (accept(TokenType.Backslash)) {
-                        val escaped = _accept(TokenType.Backslash, TokenType.Dollar, TokenType.CurlyClose)
-                        val t: String
-                        if (escaped != null) {
-                            t = escaped
+                val idText = text
+                if (accept(TokenType.Colon)) {
+                    // ${1:xxx}
+                    val elements = ArrayList<PlaceHolderElement>()
+                    while (!accept(TokenType.CurlyClose)) {
+                        if (accept(TokenType.Backslash)) {
+                            val escaped = _accept(TokenType.Backslash, TokenType.Dollar, TokenType.CurlyClose)
+                            val t: String
+                            if (escaped != null) {
+                                t = escaped
+                            } else {
+                                t = "\\"
+                            }
+                            appendPlaceholderElement(elements, t)
+                        } else if (token.type == TokenType.EOF) {
+                            backTo(backup)
+                            return false
                         } else {
-                            t = "\\"
+                            val v = parseSimpleVariableName()
+                            if (v != null) {
+                                elements.add(VariableItem(token.index, v, ""))
+                                continue
+                            }
+
+                            val vi = _parseComplexVariable()
+                            if (vi != null) {
+                                vi.setIndex(token.index)
+                                elements.add(vi)
+                                continue
+                            }
+
+                            val t = src.substring(token.index, token.index + token.length)
+                            appendPlaceholderElement(elements, t)
+                            next()
                         }
-                        appendPlaceholderElement(elements, t)
-                    } else if (token.type == TokenType.EOF) {
+                    }
+                    val id = idText.toInt()
+                    builder.addComplexPlaceholder(id, elements)
+                } else if (accept(TokenType.Pipe)) {
+                    // ${1|one,two,three|}
+                    val choices = ArrayList<String>()
+                    while (true) {
+                        if (parseChoiceElement(choices)) {
+                            if (accept(TokenType.Comma)) {
+                                continue
+                            }
+                            if (accept(TokenType.Pipe) && accept(TokenType.CurlyClose)) {
+                                builder.addPlaceholder(idText.toInt(), choices)
+                                return true
+                            }
+                        }
+
                         backTo(backup)
                         return false
-                    } else {
-                        val v = parseSimpleVariableName()
-                        if (v != null) {
-                            elements.add(VariableItem(token.index, v, ""))
-                            continue
-                        }
-
-                        val vi = _parseComplexVariable()
-                        if (vi != null) {
-                            vi.setIndex(token.index)
-                            elements.add(vi)
-                            continue
-                        }
-
-                        val t = src.substring(token.index, token.index + token.length)
-                        appendPlaceholderElement(elements, t)
-                        next()
                     }
-                }
-                val id = idText.toInt()
-                builder.addComplexPlaceholder(id, elements)
-            } else if (accept(TokenType.Pipe)) {
-                // ${1|one,two,three|}
-                val choices = ArrayList<String>()
-                while (true) {
-                    if (parseChoiceElement(choices)) {
-                        if (accept(TokenType.Comma)) {
-                            continue
-                        }
-                        if (accept(TokenType.Pipe) && accept(TokenType.CurlyClose)) {
-                            builder.addPlaceholder(idText.toInt(), choices)
-                            return true
-                        }
+                } else if (accept(TokenType.Forwardslash)) {
+                    // ${1/regexp/format/options}
+                    val transform = Transform()
+                    if (parseTransform(transform)) {
+                        builder.addPlaceholder(idText.toInt(), transform)
+                        return true
                     }
-
+                    backTo(backup)
+                    return false
+                } else if (accept(TokenType.CurlyClose)) {
+                    // ${1}
+                    builder.addPlaceholder(idText.toInt())
+                } else {
+                    // missing token
                     backTo(backup)
                     return false
                 }
-            } else if (accept(TokenType.Forwardslash)) {
-                // ${1/regexp/format/options}
-                val transform = Transform()
-                if (parseTransform(transform)) {
-                    builder.addPlaceholder(idText.toInt(), transform)
-                    return true
-                }
-                backTo(backup)
-                return false
-            } else if (accept(TokenType.CurlyClose)) {
-                // ${1}
-                builder.addPlaceholder(idText.toInt())
-            } else {
-                // missing token
-                backTo(backup)
-                return false
-            }
-            return true
+                return true
             }
         }
         backTo(backup)
@@ -517,7 +517,10 @@ class CodeSnippetParser private constructor(
     }
 
     companion object {
-        private fun appendPlaceholderElement(elements: ArrayList<PlaceHolderElement>, t: String) {
+        private fun appendPlaceholderElement(
+            elements: ArrayList<PlaceHolderElement>,
+            t: String,
+        ) {
             if (elements.isNotEmpty()) {
                 if (elements[elements.size - 1] is PlainPlaceholderElement) {
                     // merge with the last plain placeholder element
@@ -535,7 +538,10 @@ class CodeSnippetParser private constructor(
         }
 
         @JvmStatic
-        fun parse(snippet: String, definitions: MutableList<PlaceholderDefinition>): CodeSnippet {
+        fun parse(
+            snippet: String,
+            definitions: MutableList<PlaceholderDefinition>,
+        ): CodeSnippet {
             val parser = CodeSnippetParser(snippet, definitions)
             parser.parse()
             return parser.builder.build()

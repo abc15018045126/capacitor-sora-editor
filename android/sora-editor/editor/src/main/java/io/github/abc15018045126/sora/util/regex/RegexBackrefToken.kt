@@ -5,7 +5,7 @@ import java.util.regex.Matcher
 class RegexBackrefToken(
     val isReference: Boolean,
     val text: String?,
-    val group: Int
+    val group: Int,
 ) {
     fun getReplacementText(matcher: Matcher): String? {
         if (isReference) {

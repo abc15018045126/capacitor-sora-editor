@@ -13,7 +13,6 @@ import io.github.abc15018045126.sora.text.ContentLine
 import io.github.abc15018045126.sora.util.IntPair
 import io.github.abc15018045126.sora.widget.CodeEditor
 import io.github.abc15018045126.sora.widget.EditorTouchEventHandler
-import java.util.Collections
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
@@ -34,9 +33,8 @@ class WordwrapLayout(
     private val antiWordBreaking: Boolean,
     private val supportRtlRow: Boolean,
     oldLayout: WordwrapLayout?,
-    clearCache: Boolean
+    clearCache: Boolean,
 ) : AbstractLayout(editor, text) {
-
     private val width: Int
     private val miniGraphWidth: Float
     private var rowTable: MutableList<RowRegion>?
@@ -46,12 +44,13 @@ class WordwrapLayout(
         if (clearCache) {
             rowTable?.clear()
         }
-        miniGraphWidth = if ((editor.nonPrintablePaintingFlags and io.github.abc15018045126.sora.widget.CodeEditor.FLAG_DRAW_SOFT_WRAP) != 0) {
+        miniGraphWidth =
+            if ((editor.nonPrintablePaintingFlags and io.github.abc15018045126.sora.widget.CodeEditor.FLAG_DRAW_SOFT_WRAP) != 0) {
 
-            editor.renderer.miniGraphWidth
-        } else {
-            0f
-        }
+                editor.renderer.miniGraphWidth
+            } else {
+                0f
+            }
         width = (editor.width - editor.measureTextRegionOffset() - editor.extraMarginRight - miniGraphWidth * 2).toInt()
         breakAllLines()
     }
@@ -61,31 +60,36 @@ class WordwrapLayout(
         val editor = this.editor ?: return
         val taskCount = min(SUBTASK_COUNT, ceil(text.lineCount.toFloat() / MIN_LINE_COUNT_FOR_SUBTASK).toInt())
         val sizeEachTask = text.lineCount / taskCount
-        val monitor = TaskMonitor(taskCount, object : TaskMonitor.Callback {
-            override fun onCompleted(results: Array<Any?>, cancelledCount: Int) {
-                val currentEditor = this@WordwrapLayout.editor
-                if (currentEditor != null) {
-                    val r2 = results.filterIsInstance<WordwrapResult>().sorted()
-                    io.github.abc15018045126.sora.util.EditorHandler.post {
-                        if (currentEditor.isReleased) return@post
-                        if (this@WordwrapLayout.editor !== currentEditor) {
-                            return@post
+        val monitor =
+            TaskMonitor(
+                taskCount,
+                object : TaskMonitor.Callback {
+                    override fun onCompleted(
+                        results: Array<Any?>,
+                        cancelledCount: Int,
+                    ) {
+                        val currentEditor = this@WordwrapLayout.editor
+                        if (currentEditor != null) {
+                            val r2 = results.filterIsInstance<WordwrapResult>().sorted()
+                            io.github.abc15018045126.sora.util.EditorHandler.post {
+                                if (currentEditor.isReleased) return@post
+                                if (this@WordwrapLayout.editor !== currentEditor) {
+                                    return@post
+                                }
+                                val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }
+                                rt.clear()
+                                for (result in r2) {
+                                    rt.addAll(result.regions)
+                                }
+                                updateYOffsets(0)
+                                currentEditor.setLayoutBusy(false)
+                                val touch: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = currentEditor.touchHandler!!
+                                touch.scrollBy(0f, 0f)
+                            }
                         }
-                        val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }
-                        rt.clear()
-                        for (result in r2) {
-                            rt.addAll(result.regions)
-                        }
-                        updateYOffsets(0)
-                        currentEditor.setLayoutBusy(false)
-                        val touch: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = currentEditor.touchHandler!!
-                        touch.scrollBy(0f, 0f)
-
                     }
-
-                }
-            }
-        })
+                },
+            )
         editor.setLayoutBusy(true)
         for (i in 0 until taskCount) {
             val start = sizeEachTask * i
@@ -118,7 +122,10 @@ class WordwrapLayout(
         return index
     }
 
-    fun findRow(line: Int, column: Int): Int {
+    fun findRow(
+        line: Int,
+        column: Int,
+    ): Int {
         val rt = rowTable ?: return 0
         var row = findRow(line)
         while (row + 1 < rt.size && rt[row].endColumn <= column && rt[row + 1].line == line) {
@@ -127,7 +134,10 @@ class WordwrapLayout(
         return row
     }
 
-    private fun breakLines(startLine: Int, endLine: Int) {
+    private fun breakLines(
+        startLine: Int,
+        endLine: Int,
+    ) {
         val rt = rowTable ?: return
         var insertPosition = 0
         while (insertPosition < rt.size) {
@@ -166,11 +176,16 @@ class WordwrapLayout(
         }
     }
 
-    private fun breakLine(line: Int, sequence: ContentLine, paint: Paint?): List<RowRegion> {
+    private fun breakLine(
+        line: Int,
+        sequence: ContentLine,
+        paint: Paint?,
+    ): List<RowRegion> {
         val editor = this.editor ?: return emptyList()
-        val p = paint ?: Paint(editor.isRenderFunctionCharacters).apply {
-            set(editor.textPaint)
-        }
+        val p =
+            paint ?: Paint(editor.isRenderFunctionCharacters).apply {
+                set(editor.textPaint)
+            }
         val tr = TextRow()
         val directions = text?.getLineDirections(line) ?: return emptyList()
         tr.set(
@@ -182,7 +197,7 @@ class WordwrapLayout(
             directions,
             p,
             null,
-            editor.renderer.createTextRowParams()
+            editor.renderer.createTextRowParams(),
         )
 
         var isRtlBased = false
@@ -210,8 +225,8 @@ class WordwrapLayout(
                     row.inlayHints,
                     row.rowWidth,
                     isRtlBased,
-                    h
-                )
+                    h,
+                ),
             )
         }
         return results
@@ -223,7 +238,7 @@ class WordwrapLayout(
         startColumn: Int,
         endLine: Int,
         endColumn: Int,
-        insertedContent: CharSequence
+        insertedContent: CharSequence,
     ) {
         super.afterInsert(content, startLine, startColumn, endLine, endColumn, insertedContent)
         val rt = rowTable ?: return
@@ -242,7 +257,7 @@ class WordwrapLayout(
         startColumn: Int,
         endLine: Int,
         endColumn: Int,
-        deletedContent: CharSequence
+        deletedContent: CharSequence,
     ) {
         super.afterDelete(content, startLine, startColumn, endLine, endColumn, deletedContent)
         val rt = rowTable ?: return
@@ -273,13 +288,14 @@ class WordwrapLayout(
     }
 
     override fun getRowAt(rowIndex: Int): Row {
-        val rt = rowTable ?: return Row().apply {
-            lineIndex = rowIndex
-            isLeadingRow = true
-            isTrailingRow = true
-            endColumn = text?.getColumnCount(rowIndex) ?: 0
-            inlayHints = getInlayHints(rowIndex)
-        }
+        val rt =
+            rowTable ?: return Row().apply {
+                lineIndex = rowIndex
+                isLeadingRow = true
+                isTrailingRow = true
+                endColumn = text?.getColumnCount(rowIndex) ?: 0
+                inlayHints = getInlayHints(rowIndex)
+            }
         if (rt.isEmpty()) {
             return Row().apply {
                 lineIndex = rowIndex
@@ -303,7 +319,10 @@ class WordwrapLayout(
         return if (row >= rt.size) rt.last().line else rt[row].line
     }
 
-    override fun obtainRowIterator(initialRow: Int, preloadedLines: SparseArray<ContentLine>?): RowIterator {
+    override fun obtainRowIterator(
+        initialRow: Int,
+        preloadedLines: SparseArray<ContentLine>?,
+    ): RowIterator {
         val rt = rowTable
         return if (rt == null || rt.isEmpty()) {
             LineBreakLayout.LineBreakLayoutRowItr(this, text!!, initialRow, preloadedLines)
@@ -312,7 +331,10 @@ class WordwrapLayout(
         }
     }
 
-    override fun getUpPosition(line: Int, column: Int): Long {
+    override fun getUpPosition(
+        line: Int,
+        column: Int,
+    ): Long {
         val rt = rowTable
         if (rt == null || rt.isEmpty()) {
             if (line - 1 < 0) return IntPair.pack(0, 0)
@@ -329,7 +351,10 @@ class WordwrapLayout(
         return IntPair.pack(0, 0)
     }
 
-    override fun getDownPosition(line: Int, column: Int): Long {
+    override fun getDownPosition(
+        line: Int,
+        column: Int,
+    ): Long {
         val rt = rowTable
         if (rt == null || rt.isEmpty()) {
             val cLine = text?.lineCount ?: 1
@@ -425,7 +450,10 @@ class WordwrapLayout(
         }
     }
 
-    override fun getCharPositionForLayoutOffset(xOffset: Float, yOffset: Float): Long {
+    override fun getCharPositionForLayoutOffset(
+        xOffset: Float,
+        yOffset: Float,
+    ): Long {
         val editor = this.editor ?: return 0
         val rt = rowTable
         if (rt == null || rt.isEmpty()) {
@@ -447,7 +475,11 @@ class WordwrapLayout(
         return IntPair.pack(region.line, tr.getIndexForCursorOffset(x))
     }
 
-    override fun getCharLayoutOffset(line: Int, column: Int, array: FloatArray?): FloatArray {
+    override fun getCharLayoutOffset(
+        line: Int,
+        column: Int,
+        array: FloatArray?,
+    ): FloatArray {
         var dest = array ?: FloatArray(2)
         val editor = this.editor ?: return dest
         val rt = rowTable
@@ -532,11 +564,15 @@ class WordwrapLayout(
         var inlayHints: List<InlayHint>?,
         var rowWidth: Float,
         var displayFromRight: Boolean,
-        var height: Int
+        var height: Int,
     ) {
         var yOffset: Int = 0
 
-        fun toRow(isLeadingRow: Boolean, isTrailingRow: Boolean, layoutWidth: Float): Row {
+        fun toRow(
+            isLeadingRow: Boolean,
+            isTrailingRow: Boolean,
+            layoutWidth: Float,
+        ): Row {
             return Row().apply {
                 this.isLeadingRow = isLeadingRow
                 this.isTrailingRow = isTrailingRow
@@ -597,28 +633,38 @@ class WordwrapLayout(
 
     private inner class WordwrapAnalyzeTask(monitor: TaskMonitor, val id: Int, val start: Int, val end: Int) :
         LayoutTask<WordwrapResult>(monitor) {
-        private val paint: Paint = Paint(editor?.isRenderFunctionCharacters ?: false).apply {
-            set(editor?.textPaint)
-            onAttributeUpdate()
-        }
+        private val paint: Paint =
+            Paint(editor?.isRenderFunctionCharacters ?: false).apply {
+                set(editor?.textPaint)
+                onAttributeUpdate()
+            }
 
         override fun compute(): WordwrapResult {
             val list = mutableListOf<RowRegion>()
-            text?.runReadActionsOnLines(start, end, object : Content.ContentLineConsumer2 {
-                override fun accept(index: Int, line: ContentLine, abortFlag: Content.ContentLineConsumer2.AbortFlag) {
-                    list.addAll(breakLine(index, line, paint))
-                    if (!shouldRun()) {
-                        abortFlag.set = true
+            text?.runReadActionsOnLines(
+                start,
+                end,
+                object : Content.ContentLineConsumer2 {
+                    override fun accept(
+                        index: Int,
+                        line: ContentLine,
+                        abortFlag: Content.ContentLineConsumer2.AbortFlag,
+                    ) {
+                        list.addAll(breakLine(index, line, paint))
+                        if (!shouldRun()) {
+                            abortFlag.set = true
+                        }
                     }
-                }
-            })
+                },
+            )
             return WordwrapResult(id, list)
         }
     }
 
     companion object {
-        private val S_SPANS_FOR_WORDWRAP: List<Span> = listOf(
-            SpanFactory.obtainNoExt(0, TextStyle.makeStyle(0, 0, true, true, false))
-        )
+        private val S_SPANS_FOR_WORDWRAP: List<Span> =
+            listOf(
+                SpanFactory.obtainNoExt(0, TextStyle.makeStyle(0, 0, true, true, false)),
+            )
     }
 }

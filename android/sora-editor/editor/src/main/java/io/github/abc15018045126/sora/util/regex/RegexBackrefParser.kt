@@ -3,8 +3,10 @@ package io.github.abc15018045126.sora.util.regex
 import java.util.ArrayList
 
 class RegexBackrefParser(private val grammar: RegexBackrefGrammar) {
-
-    fun parse(pattern: String, groupCount: Int): List<RegexBackrefToken> {
+    fun parse(
+        pattern: String,
+        groupCount: Int,
+    ): List<RegexBackrefToken> {
         val pat = pattern + '\u0000' // add an extra char to truncate trailing backref
         val result = ArrayList<RegexBackrefToken>()
         val escapeChar = grammar.escapeChar

@@ -33,5 +33,5 @@ data class DiagnosticDetail(
     val briefMessage: CharSequence,
     val detailedMessage: CharSequence? = null,
     val quickfixes: List<Quickfix>? = null,
-    val extraData: Any? = null
+    val extraData: Any? = null,
 )

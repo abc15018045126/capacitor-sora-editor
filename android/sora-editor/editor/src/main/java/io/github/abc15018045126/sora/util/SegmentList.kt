@@ -6,7 +6,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 open class SegmentList<T>(private val segmentCapacity: Int = DEFAULT_SEGMENT_CAPACITY) : AbstractMutableList<T>() {
-
     companion object {
         const val DEFAULT_SEGMENT_CAPACITY = 8192
     }
@@ -38,9 +37,13 @@ open class SegmentList<T>(private val segmentCapacity: Int = DEFAULT_SEGMENT_CAP
     private class FindResult<T>(
         var segment: Segment<T>? = null,
         var offset: Int = 0,
-        var blockIndex: Int = 0
+        var blockIndex: Int = 0,
     ) {
-        fun set(segment: Segment<T>, offset: Int, segIndex: Int): FindResult<T> {
+        fun set(
+            segment: Segment<T>,
+            offset: Int,
+            segIndex: Int,
+        ): FindResult<T> {
             this.segment = segment
             this.offset = offset
             this.blockIndex = segIndex
@@ -50,7 +53,11 @@ open class SegmentList<T>(private val segmentCapacity: Int = DEFAULT_SEGMENT_CAP
 
     private val result = FindResult<T>()
 
-    private fun makeResult(segment: Segment<T>, offset: Int, segIndex: Int): FindResult<T> {
+    private fun makeResult(
+        segment: Segment<T>,
+        offset: Int,
+        segIndex: Int,
+    ): FindResult<T> {
         return result.set(segment, offset, segIndex)
     }
 
@@ -61,7 +68,7 @@ open class SegmentList<T>(private val segmentCapacity: Int = DEFAULT_SEGMENT_CAP
         var offset = 0
         var backBlock = segments[segments.size - 1]
         var backOffset = size - backBlock.size
-        
+
         // Iterating from both ends
         var i = 0
         var j = segments.size - 1
@@ -103,13 +110,19 @@ open class SegmentList<T>(private val segmentCapacity: Int = DEFAULT_SEGMENT_CAP
         return block
     }
 
-    override fun set(index: Int, element: T): T {
+    override fun set(
+        index: Int,
+        element: T,
+    ): T {
         checkAccessIndex(index)
         val result = getSegmentMut(index)
         return result.segment!!.set(index - result.offset, element)
     }
 
-    override fun add(index: Int, element: T) {
+    override fun add(
+        index: Int,
+        element: T,
+    ) {
         checkInsertIndex(index)
         val result = getSegmentMut(index)
         result.segment!!.add(index - result.offset, element)
@@ -141,10 +154,14 @@ open class SegmentList<T>(private val segmentCapacity: Int = DEFAULT_SEGMENT_CAP
         return result.segment!![index - result.offset]
     }
 
-    override fun removeRange(fromIndex: Int, toIndex: Int) {
+    override fun removeRange(
+        fromIndex: Int,
+        toIndex: Int,
+    ) {
         if (fromIndex > toIndex) throw IndexOutOfBoundsException("start > end")
-        if (fromIndex < 0 || toIndex > size)
+        if (fromIndex < 0 || toIndex > size) {
             throw IndexOutOfBoundsException("start = $fromIndex, end = $toIndex, length = $size")
+        }
         if (fromIndex == toIndex) return
         val res = getSegment(fromIndex)
         var offset = res.offset
@@ -165,8 +182,9 @@ open class SegmentList<T>(private val segmentCapacity: Int = DEFAULT_SEGMENT_CAP
                 index++
             }
             offset += segLength
-            if (index < segments.size)
+            if (index < segments.size) {
                 seg = segments[index]
+            }
         }
         mergeSegment(index - 1, index)
         _size -= toIndex - fromIndex
@@ -191,7 +209,10 @@ open class SegmentList<T>(private val segmentCapacity: Int = DEFAULT_SEGMENT_CAP
         return list
     }
 
-    private fun mergeSegment(seg1: Int, seg2: Int) {
+    private fun mergeSegment(
+        seg1: Int,
+        seg2: Int,
+    ) {
         var s1 = seg1
         var s2 = seg2
         if (s1 > s2) {
@@ -211,7 +232,10 @@ open class SegmentList<T>(private val segmentCapacity: Int = DEFAULT_SEGMENT_CAP
         }
     }
 
-    private fun adjustElements(segIdx: Int, mutCur: Segment<T>) {
+    private fun adjustElements(
+        segIdx: Int,
+        mutCur: Segment<T>,
+    ) {
         if (segIdx > 0) {
             val pre = segments[segIdx - 1]
             if (pre.isMutable() && pre.size <= segmentCapacity * 4 / 5 && mutCur.size > segmentCapacity * 4 / 5) {
@@ -236,7 +260,6 @@ open class SegmentList<T>(private val segmentCapacity: Int = DEFAULT_SEGMENT_CAP
     }
 
     private class Segment<T> : ArrayList<T>, ShareableData<Segment<T>> {
-
         constructor() : super()
         constructor(initialCapacity: Int) : super(initialCapacity)
 

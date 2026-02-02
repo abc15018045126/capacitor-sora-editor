@@ -11,9 +11,8 @@ import java.nio.CharBuffer
 class CharArrayWrapper(
     private val data: CharArray,
     private val offset: Int,
-    private var count: Int
+    private var count: Int,
 ) : CharSequence, GetChars {
-
     constructor(array: CharArray, dataCount: Int) : this(array, 0, dataCount)
 
     fun setDataCount(count: Int) {
@@ -27,11 +26,19 @@ class CharArrayWrapper(
         return data[offset + index]
     }
 
-    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
+    override fun subSequence(
+        startIndex: Int,
+        endIndex: Int,
+    ): CharSequence {
         return CharBuffer.wrap(data, offset + startIndex, endIndex - startIndex)
     }
 
-    override fun getChars(start: Int, end: Int, dest: CharArray, destOffset: Int) {
+    override fun getChars(
+        start: Int,
+        end: Int,
+        dest: CharArray,
+        destOffset: Int,
+    ) {
         if (end > count) {
             throw StringIndexOutOfBoundsException()
         }

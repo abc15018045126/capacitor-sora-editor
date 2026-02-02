@@ -17,7 +17,6 @@ import io.github.abc15018045126.sora.widget.CodeEditor
  * @author abc15018045126
  */
 open class EditorContextMenuCreator(val editor: CodeEditor) : EditorBuiltinComponent {
-
     val eventManager = editor.createSubEventManager()
 
     init {
@@ -26,7 +25,6 @@ open class EditorContextMenuCreator(val editor: CodeEditor) : EditorBuiltinCompo
 
     open fun onCreateContextMenu(event: CreateContextMenuEvent) {
         buildMenu(event.menu) {
-
             item {
                 titleRes = android.R.string.selectAll
                 iconRes = R.drawable.round_select_all_20
@@ -62,7 +60,6 @@ open class EditorContextMenuCreator(val editor: CodeEditor) : EditorBuiltinCompo
                     editor.pasteText()
                 }
             }
-
         }
     }
 
@@ -77,7 +74,6 @@ open class EditorContextMenuCreator(val editor: CodeEditor) : EditorBuiltinCompo
 
     @MenuDslMarker
     open class MenuBuilder(val context: Context, val menu: Menu) {
-
         private val items = mutableListOf<MenuItemBuilder>()
 
         fun item(builder: MenuItemBuilder.() -> Unit) {
@@ -93,13 +89,11 @@ open class EditorContextMenuCreator(val editor: CodeEditor) : EditorBuiltinCompo
                 it.build(menu)
             }
         }
-
     }
 
     @MenuDslMarker
     open class ContextMenuBuilder(context: Context, val contextMenu: ContextMenu) :
         MenuBuilder(context, contextMenu) {
-
         var headerTitle: CharSequence? = null
 
         var headerTitleRes: Int = 0
@@ -109,15 +103,14 @@ open class EditorContextMenuCreator(val editor: CodeEditor) : EditorBuiltinCompo
 
         override fun build() {
             super.build()
-            if (headerTitle != null)
+            if (headerTitle != null) {
                 contextMenu.setHeaderTitle(headerTitle)
+            }
         }
-
     }
 
     @MenuDslMarker
     open class SubMenuBuilder(context: Context) : MenuItemBuilder(context) {
-
         var headerTitle: CharSequence? = null
 
         var headerTitleRes: Int = 0
@@ -136,14 +129,15 @@ open class EditorContextMenuCreator(val editor: CodeEditor) : EditorBuiltinCompo
         }
 
         override fun build(menu: Menu) {
-            val subMenu = menu.addSubMenu(groupId, itemId, order, title)
-                .also {
-                    if (iconRes != 0) {
-                        it.setIcon(iconRes)
-                    } else if (icon != null) {
-                        it.setIcon(icon)
+            val subMenu =
+                menu.addSubMenu(groupId, itemId, order, title)
+                    .also {
+                        if (iconRes != 0) {
+                            it.setIcon(iconRes)
+                        } else if (icon != null) {
+                            it.setIcon(icon)
+                        }
                     }
-                }
             headerTitle?.let {
                 subMenu.setHeaderTitle(it)
             }
@@ -151,7 +145,6 @@ open class EditorContextMenuCreator(val editor: CodeEditor) : EditorBuiltinCompo
                 it.build(subMenu)
             }
         }
-
     }
 
     @MenuDslMarker
@@ -170,10 +163,11 @@ open class EditorContextMenuCreator(val editor: CodeEditor) : EditorBuiltinCompo
         var onClick: MenuItem.OnMenuItemClickListener? = null
 
         fun onClick(listener: () -> Unit) {
-            onClick = MenuItem.OnMenuItemClickListener {
-                listener()
-                true
-            }
+            onClick =
+                MenuItem.OnMenuItemClickListener {
+                    listener()
+                    true
+                }
         }
 
         internal open fun build(menu: Menu) {
@@ -189,11 +183,12 @@ open class EditorContextMenuCreator(val editor: CodeEditor) : EditorBuiltinCompo
         }
     }
 
-    fun buildMenu(menu: ContextMenu, builder: ContextMenuBuilder.() -> Unit) {
+    fun buildMenu(
+        menu: ContextMenu,
+        builder: ContextMenuBuilder.() -> Unit,
+    ) {
         ContextMenuBuilder(editor.context, menu).also {
             it.builder()
         }.build()
     }
-
 }
-

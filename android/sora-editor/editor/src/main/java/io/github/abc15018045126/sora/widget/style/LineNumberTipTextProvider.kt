@@ -33,12 +33,10 @@ import io.github.abc15018045126.sora.widget.CodeEditor
  * @author abc15018045126
  */
 interface LineNumberTipTextProvider {
-
     /**
      * Generate line number tip text for the given editor.
      * @param editor current editor instance
      * @return generated line number tip text
      */
     fun getCurrentText(editor: CodeEditor): String
-
 }

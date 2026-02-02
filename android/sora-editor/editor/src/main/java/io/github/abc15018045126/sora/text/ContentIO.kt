@@ -10,7 +10,6 @@ import java.nio.charset.Charset
  * @author abc15018045126
  */
 object ContentIO {
-
     private const val BUFFER_SIZE = 16384
 
     /**
@@ -32,7 +31,10 @@ object ContentIO {
      */
     @JvmStatic
     @Throws(IOException::class)
-    fun createFrom(stream: InputStream, charset: Charset): Content {
+    fun createFrom(
+        stream: InputStream,
+        charset: Charset,
+    ): Content {
         return createFrom(InputStreamReader(stream, charset))
     }
 
@@ -88,7 +90,11 @@ object ContentIO {
      */
     @JvmStatic
     @Throws(IOException::class)
-    fun writeTo(text: Content, stream: OutputStream, closeOnSucceed: Boolean) {
+    fun writeTo(
+        text: Content,
+        stream: OutputStream,
+        closeOnSucceed: Boolean,
+    ) {
         writeTo(text, stream, Charset.defaultCharset(), closeOnSucceed)
     }
 
@@ -102,7 +108,12 @@ object ContentIO {
      */
     @JvmStatic
     @Throws(IOException::class)
-    fun writeTo(text: Content, stream: OutputStream, charset: Charset, closeOnSucceed: Boolean) {
+    fun writeTo(
+        text: Content,
+        stream: OutputStream,
+        charset: Charset,
+        closeOnSucceed: Boolean,
+    ) {
         writeTo(text, OutputStreamWriter(stream, charset), closeOnSucceed)
     }
 
@@ -117,21 +128,29 @@ object ContentIO {
      */
     @JvmStatic
     @Throws(IOException::class)
-    fun writeTo(text: Content, writer: Writer, closeOnSucceed: Boolean) {
+    fun writeTo(
+        text: Content,
+        writer: Writer,
+        closeOnSucceed: Boolean,
+    ) {
         // Use buffered writer to avoid frequently IO when there are a lot of short lines
         val buffered = if (writer is BufferedWriter) writer else BufferedWriter(writer, BUFFER_SIZE)
         try {
-            text.runReadActionsOnLines(0, text.lineCount - 1, Content.ContentLineConsumer2 { _, line, _ ->
-                try {
-                    // Write line content
-                    buffered.write(line.backingCharArray, 0, line.length)
-                    // Write line feed (the last line has empty line feed)
-                    buffered.write(line.lineSeparatorSafe.chars)
-                } catch (e: IOException) {
-                    // To be handled by outer code
-                    throw RuntimeException(e)
-                }
-            })
+            text.runReadActionsOnLines(
+                0,
+                text.lineCount - 1,
+                Content.ContentLineConsumer2 { _, line, _ ->
+                    try {
+                        // Write line content
+                        buffered.write(line.backingCharArray, 0, line.length)
+                        // Write line feed (the last line has empty line feed)
+                        buffered.write(line.lineSeparatorSafe.chars)
+                    } catch (e: IOException) {
+                        // To be handled by outer code
+                        throw RuntimeException(e)
+                    }
+                },
+            )
         } catch (e: RuntimeException) {
             val cause = e.cause
             if (cause is IOException) {
@@ -145,5 +164,4 @@ object ContentIO {
             buffered.close()
         }
     }
-
 }

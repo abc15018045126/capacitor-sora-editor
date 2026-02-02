@@ -6,7 +6,6 @@ package io.github.abc15018045126.sora.lang.styling
  * @author abc15018045126
  */
 object TextStyle {
-
     const val COLOR_ID_BIT_COUNT = 19
     const val FOREGROUND_BITS = (1L shl COLOR_ID_BIT_COUNT) - 1
     const val BACKGROUND_BITS = FOREGROUND_BITS shl COLOR_ID_BIT_COUNT
@@ -48,7 +47,10 @@ object TextStyle {
      * @see .makeStyle
      */
     @JvmStatic
-    fun makeStyle(foregroundColorId: Int, noCompletion: Boolean): Long {
+    fun makeStyle(
+        foregroundColorId: Int,
+        noCompletion: Boolean,
+    ): Long {
         checkColorId(foregroundColorId)
         return foregroundColorId.toLong() or if (noCompletion) NO_COMPLETION_BIT else 0
     }
@@ -60,8 +62,11 @@ object TextStyle {
      */
     @JvmStatic
     fun makeStyle(
-        foregroundColorId: Int, backgroundColorId: Int, bold: Boolean,
-        italic: Boolean, strikeThrough: Boolean
+        foregroundColorId: Int,
+        backgroundColorId: Int,
+        bold: Boolean,
+        italic: Boolean,
+        strikeThrough: Boolean,
     ): Long {
         return makeStyle(foregroundColorId, backgroundColorId, bold, italic, strikeThrough, false)
     }
@@ -78,17 +83,21 @@ object TextStyle {
      */
     @JvmStatic
     fun makeStyle(
-        foregroundColorId: Int, backgroundColorId: Int, bold: Boolean,
-        italic: Boolean, strikeThrough: Boolean, noCompletion: Boolean
+        foregroundColorId: Int,
+        backgroundColorId: Int,
+        bold: Boolean,
+        italic: Boolean,
+        strikeThrough: Boolean,
+        noCompletion: Boolean,
     ): Long {
         checkColorId(foregroundColorId)
         checkColorId(backgroundColorId)
         return foregroundColorId.toLong() +
-                (backgroundColorId.toLong() shl COLOR_ID_BIT_COUNT) or
-                (if (bold) BOLD_BIT else 0) or
-                (if (italic) ITALICS_BIT else 0) or
-                (if (strikeThrough) STRIKETHROUGH_BIT else 0) or
-                (if (noCompletion) NO_COMPLETION_BIT else 0)
+            (backgroundColorId.toLong() shl COLOR_ID_BIT_COUNT) or
+            (if (bold) BOLD_BIT else 0) or
+            (if (italic) ITALICS_BIT else 0) or
+            (if (strikeThrough) STRIKETHROUGH_BIT else 0) or
+            (if (noCompletion) NO_COMPLETION_BIT else 0)
     }
 
     @JvmStatic
@@ -132,5 +141,4 @@ object TextStyle {
             throw IllegalArgumentException("color id must be positive and bit count is less than $COLOR_ID_BIT_COUNT")
         }
     }
-
 }

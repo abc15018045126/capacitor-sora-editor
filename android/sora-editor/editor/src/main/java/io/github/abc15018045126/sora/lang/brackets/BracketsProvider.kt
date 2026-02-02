@@ -8,7 +8,6 @@ import io.github.abc15018045126.sora.text.Content
  * @author abc15018045126
  */
 interface BracketsProvider {
-
     /**
      * Get left and right brackets position in text
      *
@@ -16,6 +15,8 @@ interface BracketsProvider {
      * @param index Index of cursor in text
      * @return Paired positions or null if not matched
      */
-    fun getPairedBracketAt(text: Content, index: Int): PairedBracket?
-
+    fun getPairedBracketAt(
+        text: Content,
+        index: Int,
+    ): PairedBracket?
 }

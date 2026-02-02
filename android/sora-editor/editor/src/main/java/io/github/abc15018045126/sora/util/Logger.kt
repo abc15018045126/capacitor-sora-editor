@@ -4,12 +4,14 @@ import android.util.Log
 import java.util.WeakHashMap
 
 class Logger private constructor(private val name: String) {
-
     fun d(msg: String) {
         Log.d(name, msg)
     }
 
-    fun d(msg: String, vararg format: Any) {
+    fun d(
+        msg: String,
+        vararg format: Any,
+    ) {
         Log.d(name, String.format(msg, *format))
     }
 
@@ -17,7 +19,10 @@ class Logger private constructor(private val name: String) {
         Log.i(name, msg)
     }
 
-    fun i(msg: String, vararg format: Any) {
+    fun i(
+        msg: String,
+        vararg format: Any,
+    ) {
         Log.i(name, String.format(msg, *format))
     }
 
@@ -25,7 +30,10 @@ class Logger private constructor(private val name: String) {
         Log.v(name, msg)
     }
 
-    fun v(msg: String, vararg format: Any) {
+    fun v(
+        msg: String,
+        vararg format: Any,
+    ) {
         Log.v(name, String.format(msg, *format))
     }
 
@@ -33,15 +41,25 @@ class Logger private constructor(private val name: String) {
         Log.w(name, msg)
     }
 
-    fun w(msg: String, vararg format: Any) {
+    fun w(
+        msg: String,
+        vararg format: Any,
+    ) {
         Log.w(name, String.format(msg, *format))
     }
 
-    fun w(msg: String, e: Throwable) {
+    fun w(
+        msg: String,
+        e: Throwable,
+    ) {
         Log.w(name, msg, e)
     }
 
-    fun w(msg: String, e: Throwable, vararg format: Any) {
+    fun w(
+        msg: String,
+        e: Throwable,
+        vararg format: Any,
+    ) {
         Log.w(name, String.format(msg, *format), e)
     }
 
@@ -49,15 +67,25 @@ class Logger private constructor(private val name: String) {
         Log.e(name, msg)
     }
 
-    fun e(msg: String, vararg format: Any) {
+    fun e(
+        msg: String,
+        vararg format: Any,
+    ) {
         Log.e(name, String.format(msg, *format))
     }
 
-    fun e(msg: String, e: Throwable) {
+    fun e(
+        msg: String,
+        e: Throwable,
+    ) {
         Log.e(name, msg, e)
     }
 
-    fun e(msg: String, e: Throwable, vararg format: Any) {
+    fun e(
+        msg: String,
+        e: Throwable,
+        vararg format: Any,
+    ) {
         Log.e(name, String.format(msg, *format), e)
     }
 

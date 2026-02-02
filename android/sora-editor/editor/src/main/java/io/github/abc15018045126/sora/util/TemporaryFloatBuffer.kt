@@ -1,7 +1,6 @@
 package io.github.abc15018045126.sora.util
 
 object TemporaryFloatBuffer {
-
     private val sCache = FloatArrayCache()
 
     @JvmStatic
@@ -15,7 +14,6 @@ object TemporaryFloatBuffer {
     }
 
     class FloatArrayCache {
-
         private var temp: FloatArray? = null
 
         fun obtain(len: Int): FloatArray {

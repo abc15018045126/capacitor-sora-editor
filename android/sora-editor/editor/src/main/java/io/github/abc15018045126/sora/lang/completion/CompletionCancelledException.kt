@@ -9,6 +9,8 @@ package io.github.abc15018045126.sora.lang.completion
  *
  * @author abc15018045126
  */
-class CompletionCancelledException @JvmOverloads constructor(
-    message: String? = null
-) : RuntimeException(message)
+class CompletionCancelledException
+    @JvmOverloads
+    constructor(
+        message: String? = null,
+    ) : RuntimeException(message)

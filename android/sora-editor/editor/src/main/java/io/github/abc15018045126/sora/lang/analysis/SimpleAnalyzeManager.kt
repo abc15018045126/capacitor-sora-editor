@@ -17,7 +17,6 @@ import io.github.abc15018045126.sora.text.ContentReference
  * @param <V> The shared object type that we get for auto-completion.
  */
 abstract class SimpleAnalyzeManager<V> : AnalyzeManager {
-
     private val lock = Object()
 
     override var receiver: StyleReceiver? = null
@@ -41,17 +40,28 @@ abstract class SimpleAnalyzeManager<V> : AnalyzeManager {
     var data: V? = null
         private set
 
-    override fun reset(content: ContentReference, extraArguments: Bundle) {
+    override fun reset(
+        content: ContentReference,
+        extraArguments: Bundle,
+    ) {
         this.ref = content
         this.extraArguments = extraArguments
         rerun()
     }
 
-    override fun insert(start: CharPosition, end: CharPosition, insertedContent: CharSequence) {
+    override fun insert(
+        start: CharPosition,
+        end: CharPosition,
+        insertedContent: CharSequence,
+    ) {
         rerun()
     }
 
-    override fun delete(start: CharPosition, end: CharPosition, deletedContent: CharSequence) {
+    override fun delete(
+        start: CharPosition,
+        end: CharPosition,
+        deletedContent: CharSequence,
+    ) {
         rerun()
     }
 
@@ -96,7 +106,10 @@ abstract class SimpleAnalyzeManager<V> : AnalyzeManager {
      * if [Delegate.isCancelled] returns true.
      * @return Styles created according to the text.
      */
-    protected abstract fun analyze(text: StringBuilder, delegate: Delegate<V>): Styles?
+    protected abstract fun analyze(
+        text: StringBuilder,
+        delegate: Delegate<V>,
+    ): Styles?
 
     /**
      * Analyze thread.
@@ -105,7 +118,6 @@ abstract class SimpleAnalyzeManager<V> : AnalyzeManager {
      * is called.
      */
     private inner class AnalyzeThread : Thread() {
-
         /**
          * Single instance for text storing
          */
@@ -147,7 +159,7 @@ abstract class SimpleAnalyzeManager<V> : AnalyzeManager {
                             result = analyze(textContainer, delegate)
                             newData = delegate.data
                         } while (requestId != newestRequestId)
-                        
+
                         // Send result
                         result?.let {
                             receiver?.setStyles(this@SimpleAnalyzeManager, it)

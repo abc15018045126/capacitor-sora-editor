@@ -7,7 +7,6 @@ import io.github.abc15018045126.sora.widget.style.SelectionHandleStyle
  * A handle style that draws nothing.
  */
 class HandleStyleNone : SelectionHandleStyle {
-
     override fun draw(
         canvas: Canvas,
         handleType: Int,
@@ -15,7 +14,7 @@ class HandleStyleNone : SelectionHandleStyle {
         y: Float,
         rowHeight: Int,
         color: Int,
-        descriptor: SelectionHandleStyle.HandleDescriptor
+        descriptor: SelectionHandleStyle.HandleDescriptor,
     ) {
         descriptor.setEmpty()
     }

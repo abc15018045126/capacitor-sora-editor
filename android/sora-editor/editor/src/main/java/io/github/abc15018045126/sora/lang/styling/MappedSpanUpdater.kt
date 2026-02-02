@@ -9,14 +9,13 @@ import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
  * @author abc15018045126
  */
 object MappedSpanUpdater {
-
     @JvmStatic
     fun shiftSpansOnMultiLineDelete(
         map: MutableList<MutableList<Span>>,
         startLine: Int,
         startColumn: Int,
         endLine: Int,
-        endColumn: Int
+        endColumn: Int,
     ) {
         var lineCount = endLine - startLine - 1
         // Remove unrelated lines
@@ -54,7 +53,12 @@ object MappedSpanUpdater {
     }
 
     @JvmStatic
-    fun shiftSpansOnSingleLineDelete(map: MutableList<MutableList<Span>>?, line: Int, startCol: Int, endCol: Int) {
+    fun shiftSpansOnSingleLineDelete(
+        map: MutableList<MutableList<Span>>?,
+        line: Int,
+        startCol: Int,
+        endCol: Int,
+    ) {
         if (map.isNullOrEmpty()) {
             return
         }
@@ -95,7 +99,12 @@ object MappedSpanUpdater {
     }
 
     @JvmStatic
-    fun shiftSpansOnSingleLineInsert(map: MutableList<MutableList<Span>>?, line: Int, startCol: Int, endCol: Int) {
+    fun shiftSpansOnSingleLineInsert(
+        map: MutableList<MutableList<Span>>?,
+        line: Int,
+        startCol: Int,
+        endCol: Int,
+    ) {
         if (map.isNullOrEmpty()) {
             return
         }
@@ -127,7 +136,7 @@ object MappedSpanUpdater {
         startLine: Int,
         startColumn: Int,
         endLine: Int,
-        endColumn: Int
+        endColumn: Int,
     ) {
         // Find extended span
         val startLineSpans = map[startLine]
@@ -169,7 +178,11 @@ object MappedSpanUpdater {
         }
     }
 
-    private fun findSpanIndexFor(spans: List<Span>, initialPosition: Int, targetCol: Int): Int {
+    private fun findSpanIndexFor(
+        spans: List<Span>,
+        initialPosition: Int,
+        targetCol: Int,
+    ): Int {
         for (i in initialPosition until spans.size) {
             if (spans[i].column >= targetCol) {
                 return i

@@ -15,7 +15,6 @@ import java.util.regex.Matcher
  * @author abc15018045126
  */
 object TransformApplier {
-
     /**
      * Apply the given [Transform] to the text and return transform result
      *
@@ -24,7 +23,10 @@ object TransformApplier {
      * @return the transformed text
      */
     @JvmStatic
-    fun doTransform(text: String, transform: Transform?): String {
+    fun doTransform(
+        text: String,
+        transform: Transform?,
+    ): String {
         val regexp = transform?.regexp
         val format = transform?.format
         if (transform == null || regexp == null || format == null) {
@@ -60,7 +62,10 @@ object TransformApplier {
      * @param formatStringList the format descriptors
      * @return generated(transform) text
      */
-    private fun applySingle(matcher: Matcher, formatStringList: List<FormatString>): CharSequence {
+    private fun applySingle(
+        matcher: Matcher,
+        formatStringList: List<FormatString>,
+    ): CharSequence {
         val sb = StringBuilder()
         var nextUpperCase = false
         for (formatString in formatStringList) {
@@ -93,11 +98,13 @@ object TransformApplier {
     /**
      * Convenient method for applying upper case of first character only
      */
-    private fun applyFirstUpperCase(text: String?, apply: Boolean): String? {
+    private fun applyFirstUpperCase(
+        text: String?,
+        apply: Boolean,
+    ): String? {
         if (apply && text != null && text.isNotEmpty() && isAlpha(text[0])) {
             return text[0].uppercaseChar().toString() + text.substring(1)
         }
         return text
     }
-
 }

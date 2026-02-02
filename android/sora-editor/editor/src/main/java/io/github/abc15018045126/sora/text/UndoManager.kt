@@ -11,7 +11,6 @@ import java.util.*
  * @author abc15018045126
  */
 class UndoManager : ContentListener, Parcelable {
-
     private val actionStack: MutableList<ContentAction>
     private var undoEnabled: Boolean = false
     private var maxStackSize: Int = 0
@@ -49,7 +48,10 @@ class UndoManager : ContentListener, Parcelable {
 
     override fun describeContents(): Int = 0
 
-    override fun writeToParcel(parcel: Parcel, flags: Int) {
+    override fun writeToParcel(
+        parcel: Parcel,
+        flags: Int,
+    ) {
         parcel.writeInt(maxStackSize)
         parcel.writeInt(stackPointer)
         parcel.writeInt(if (undoEnabled) 1 else 0)
@@ -175,7 +177,10 @@ class UndoManager : ContentListener, Parcelable {
      * Push a new [ContentAction] to stack
      * It will merge actions if possible
      */
-    private fun pushAction(content: Content, action: ContentAction) {
+    private fun pushAction(
+        content: Content,
+        action: ContentAction,
+    ) {
         if (!isUndoEnabled) return
         cleanBeforePush()
         if (content.isInBatchEdit) {
@@ -230,24 +235,30 @@ class UndoManager : ContentListener, Parcelable {
     }
 
     override fun afterInsert(
-        content: Content, startLine: Int, startColumn: Int, endLine: Int, endColumn: Int,
-        insertedContent: CharSequence
+        content: Content,
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+        insertedContent: CharSequence,
     ) {
         if (ignoreModification) return
-        val ins = InsertAction().apply {
-            this.startLine = startLine
-            this.startColumn = startColumn
-            this.endLine = endLine
-            this.endColumn = endColumn
-            this.text = insertedContent
-        }
+        val ins =
+            InsertAction().apply {
+                this.startLine = startLine
+                this.startColumn = startColumn
+                this.endLine = endLine
+                this.endColumn = endColumn
+                this.text = insertedContent
+            }
         insertAction = ins
         if (replaceMark && deleteAction != null) {
-            val rep = ReplaceAction().apply {
-                this.delete = deleteAction
-                this.insert = ins
-                this.cursor = memorizedCursorRange
-            }
+            val rep =
+                ReplaceAction().apply {
+                    this.delete = deleteAction
+                    this.insert = ins
+                    this.cursor = memorizedCursorRange
+                }
             pushAction(content, rep)
         } else {
             ins.cursor = memorizedCursorRange
@@ -259,18 +270,23 @@ class UndoManager : ContentListener, Parcelable {
     }
 
     override fun afterDelete(
-        content: Content, startLine: Int, startColumn: Int, endLine: Int, endColumn: Int,
-        deletedContent: CharSequence
+        content: Content,
+        startLine: Int,
+        startColumn: Int,
+        endLine: Int,
+        endColumn: Int,
+        deletedContent: CharSequence,
     ) {
         if (ignoreModification) return
-        val del = DeleteAction().apply {
-            this.endColumn = endColumn
-            this.startColumn = startColumn
-            this.endLine = endLine
-            this.startLine = startLine
-            this.text = deletedContent
-            this.cursor = memorizedCursorRange
-        }
+        val del =
+            DeleteAction().apply {
+                this.endColumn = endColumn
+                this.startColumn = startColumn
+                this.endLine = endLine
+                this.startLine = startLine
+                this.text = deletedContent
+                this.cursor = memorizedCursorRange
+            }
         deleteAction = del
         if (!replaceMark) {
             pushAction(content, del)
@@ -294,8 +310,11 @@ class UndoManager : ContentListener, Parcelable {
         var cursor: TextRange? = null
 
         abstract fun undo(content: Content)
+
         abstract fun redo(content: Content)
+
         abstract fun canMerge(action: ContentAction): Boolean
+
         abstract fun merge(action: ContentAction)
     }
 
@@ -305,15 +324,20 @@ class UndoManager : ContentListener, Parcelable {
     class InsertAction : ContentAction {
         @JvmField
         var startLine: Int = 0
+
         @JvmField
         var endLine: Int = 0
+
         @JvmField
         var startColumn: Int = 0
+
         @JvmField
         var endColumn: Int = 0
+
         @JvmField
         @Transient
         var createTime: Long = System.currentTimeMillis()
+
         @JvmField
         var text: CharSequence? = null
 
@@ -337,9 +361,11 @@ class UndoManager : ContentListener, Parcelable {
 
         override fun canMerge(action: ContentAction): Boolean {
             if (action is InsertAction) {
-                return (action.startColumn == endColumn && action.startLine == endLine
-                        && (action.text?.length ?: 0) + (text?.length ?: 0) < 10000
-                        && Math.abs(action.createTime - createTime) < sMergeTimeLimit)
+                return (
+                    action.startColumn == endColumn && action.startLine == endLine &&
+                        (action.text?.length ?: 0) + (text?.length ?: 0) < 10000 &&
+                        Math.abs(action.createTime - createTime) < sMergeTimeLimit
+                )
             }
             return false
         }
@@ -349,11 +375,12 @@ class UndoManager : ContentListener, Parcelable {
             val ac = action as InsertAction
             endColumn = ac.endColumn
             endLine = ac.endLine
-            val sb: StringBuilder = if (text is StringBuilder) {
-                text as StringBuilder
-            } else {
-                StringBuilder(text!!).also { text = it }
-            }
+            val sb: StringBuilder =
+                if (text is StringBuilder) {
+                    text as StringBuilder
+                } else {
+                    StringBuilder(text!!).also { text = it }
+                }
             sb.append(ac.text)
         }
 
@@ -363,7 +390,10 @@ class UndoManager : ContentListener, Parcelable {
 
         override fun describeContents(): Int = 0
 
-        override fun writeToParcel(parcel: Parcel, flags: Int) {
+        override fun writeToParcel(
+            parcel: Parcel,
+            flags: Int,
+        ) {
             parcel.writeInt(startLine)
             parcel.writeInt(startColumn)
             parcel.writeInt(endLine)
@@ -373,6 +403,7 @@ class UndoManager : ContentListener, Parcelable {
 
         companion object CREATOR : Parcelable.Creator<InsertAction> {
             override fun createFromParcel(parcel: Parcel): InsertAction = InsertAction(parcel)
+
             override fun newArray(size: Int): Array<InsertAction?> = arrayOfNulls(size)
         }
     }
@@ -418,10 +449,15 @@ class UndoManager : ContentListener, Parcelable {
         }
 
         override fun canMerge(action: ContentAction): Boolean = false
+
         override fun merge(action: ContentAction) = throw UnsupportedOperationException()
+
         override fun describeContents(): Int = 0
 
-        override fun writeToParcel(parcel: Parcel, flags: Int) {
+        override fun writeToParcel(
+            parcel: Parcel,
+            flags: Int,
+        ) {
             parcel.writeInt(actions.size)
             for (action in actions) {
                 parcel.writeParcelable(action, flags)
@@ -430,6 +466,7 @@ class UndoManager : ContentListener, Parcelable {
 
         companion object CREATOR : Parcelable.Creator<MultiAction> {
             override fun createFromParcel(parcel: Parcel): MultiAction = MultiAction(parcel)
+
             override fun newArray(size: Int): Array<MultiAction?> = arrayOfNulls(size)
         }
     }
@@ -440,15 +477,20 @@ class UndoManager : ContentListener, Parcelable {
     class DeleteAction : ContentAction {
         @JvmField
         var startLine: Int = 0
+
         @JvmField
         var endLine: Int = 0
+
         @JvmField
         var startColumn: Int = 0
+
         @JvmField
         var endColumn: Int = 0
+
         @JvmField
         @Transient
         var createTime: Long = System.currentTimeMillis()
+
         @JvmField
         var text: CharSequence? = null
 
@@ -472,9 +514,11 @@ class UndoManager : ContentListener, Parcelable {
 
         override fun canMerge(action: ContentAction): Boolean {
             if (action is DeleteAction) {
-                return (action.endColumn == startColumn && action.endLine == startLine
-                        && (action.text?.length ?: 0) + (text?.length ?: 0) < 10000
-                        && Math.abs(action.createTime - createTime) < sMergeTimeLimit)
+                return (
+                    action.endColumn == startColumn && action.endLine == startLine &&
+                        (action.text?.length ?: 0) + (text?.length ?: 0) < 10000 &&
+                        Math.abs(action.createTime - createTime) < sMergeTimeLimit
+                )
             }
             return false
         }
@@ -484,11 +528,12 @@ class UndoManager : ContentListener, Parcelable {
             val ac = action as DeleteAction
             startColumn = ac.startColumn
             startLine = ac.startLine
-            val sb: StringBuilder = if (text is StringBuilder) {
-                text as StringBuilder
-            } else {
-                StringBuilder(text!!).also { text = it }
-            }
+            val sb: StringBuilder =
+                if (text is StringBuilder) {
+                    text as StringBuilder
+                } else {
+                    StringBuilder(text!!).also { text = it }
+                }
             sb.insert(0, ac.text)
         }
 
@@ -498,7 +543,10 @@ class UndoManager : ContentListener, Parcelable {
 
         override fun describeContents(): Int = 0
 
-        override fun writeToParcel(parcel: Parcel, flags: Int) {
+        override fun writeToParcel(
+            parcel: Parcel,
+            flags: Int,
+        ) {
             parcel.writeInt(startLine)
             parcel.writeInt(startColumn)
             parcel.writeInt(endLine)
@@ -508,6 +556,7 @@ class UndoManager : ContentListener, Parcelable {
 
         companion object CREATOR : Parcelable.Creator<DeleteAction> {
             override fun createFromParcel(parcel: Parcel): DeleteAction = DeleteAction(parcel)
+
             override fun newArray(size: Int): Array<DeleteAction?> = arrayOfNulls(size)
         }
     }
@@ -518,6 +567,7 @@ class UndoManager : ContentListener, Parcelable {
     class ReplaceAction : ContentAction {
         @JvmField
         var insert: InsertAction? = null
+
         @JvmField
         var delete: DeleteAction? = null
 
@@ -539,19 +589,24 @@ class UndoManager : ContentListener, Parcelable {
         }
 
         override fun canMerge(action: ContentAction): Boolean = false
+
         override fun merge(action: ContentAction) = throw UnsupportedOperationException()
 
         override fun toString(): String = "ReplaceAction(insert=$insert, delete=$delete)"
 
         override fun describeContents(): Int = 0
 
-        override fun writeToParcel(parcel: Parcel, flags: Int) {
+        override fun writeToParcel(
+            parcel: Parcel,
+            flags: Int,
+        ) {
             parcel.writeParcelable(insert, flags)
             parcel.writeParcelable(delete, flags)
         }
 
         companion object CREATOR : Parcelable.Creator<ReplaceAction> {
             override fun createFromParcel(parcel: Parcel): ReplaceAction = ReplaceAction(parcel)
+
             override fun newArray(size: Int): Array<ReplaceAction?> = arrayOfNulls(size)
         }
     }
@@ -561,9 +616,11 @@ class UndoManager : ContentListener, Parcelable {
         var sMergeTimeLimit: Long = 8000L
 
         @JvmField
-        val CREATOR: Parcelable.Creator<UndoManager> = object : Parcelable.Creator<UndoManager> {
-            override fun createFromParcel(parcel: Parcel): UndoManager = UndoManager(parcel)
-            override fun newArray(size: Int): Array<UndoManager?> = arrayOfNulls(size)
-        }
+        val CREATOR: Parcelable.Creator<UndoManager> =
+            object : Parcelable.Creator<UndoManager> {
+                override fun createFromParcel(parcel: Parcel): UndoManager = UndoManager(parcel)
+
+                override fun newArray(size: Int): Array<UndoManager?> = arrayOfNulls(size)
+            }
     }
 }

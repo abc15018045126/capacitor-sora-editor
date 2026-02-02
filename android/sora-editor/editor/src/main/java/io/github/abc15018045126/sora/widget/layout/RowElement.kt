@@ -16,7 +16,7 @@ class RowElement {
     @JvmField
     var type: Int = 0
 
-    /* Fields for type TEXT */
+    // Fields for type TEXT
 
     /**
      * Start column of text
@@ -36,7 +36,7 @@ class RowElement {
     @JvmField
     var isRtlText: Boolean = false
 
-    /* Fields for type INLAY_HINT */
+    // Fields for type INLAY_HINT
 
     /**
      * The inlay hint

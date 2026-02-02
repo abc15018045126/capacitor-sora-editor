@@ -10,7 +10,6 @@ import io.github.abc15018045126.sora.lang.styling.span.SpanExt
  * @author abc15018045126
  */
 interface Span {
-
     /**
      * Set column of this span
      */
@@ -75,7 +74,10 @@ interface Span {
      * @param extType Type of extension, from [io.github.abc15018045126.sora.lang.styling.span.SpanExtAttrs]
      * @param ext     The data to set. Use null to unset.
      */
-    fun setSpanExt(extType: Int, ext: SpanExt?)
+    fun setSpanExt(
+        extType: Int,
+        ext: SpanExt?,
+    )
 
     /**
      * Check if certain extended attribute is set
@@ -123,7 +125,10 @@ interface Span {
          * The result object will be initialized with the given arguments.
          */
         @JvmStatic
-        fun obtain(column: Int, style: Long): Span {
+        fun obtain(
+            column: Int,
+            style: Long,
+        ): Span {
             return SpanFactory.obtain(column, style)
         }
 
@@ -135,5 +140,4 @@ interface Span {
             SpanFactory.recycleAll(spans)
         }
     }
-
 }

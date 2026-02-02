@@ -4,7 +4,6 @@ import android.util.TypedValue
 import android.view.ContextThemeWrapper
 
 object ThemeUtils {
-
     @JvmStatic
     fun getColorPrimary(context: ContextThemeWrapper): Int {
         val typedValue = TypedValue()

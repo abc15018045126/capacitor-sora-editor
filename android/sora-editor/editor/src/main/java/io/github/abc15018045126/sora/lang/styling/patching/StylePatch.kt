@@ -30,9 +30,8 @@ class StylePatch(
     var startLine: Int,
     var startColumn: Int,
     var endLine: Int,
-    var endColumn: Int
+    var endColumn: Int,
 ) : Comparable<StylePatch> {
-
     init {
         if (startLine < 0 || startColumn < 0 || endLine < 0 || endColumn < 0) {
             throw IllegalArgumentException("negative number")
@@ -57,4 +56,3 @@ class StylePatch(
         return endColumn.compareTo(other.endColumn)
     }
 }
-

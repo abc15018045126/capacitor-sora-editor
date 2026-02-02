@@ -1,7 +1,6 @@
 package io.github.abc15018045126.sora.text
 
 internal class InsertTextHelper {
-
     private var text: CharSequence? = null
     var index: Int = 0
         private set

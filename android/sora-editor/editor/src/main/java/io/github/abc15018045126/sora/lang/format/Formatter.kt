@@ -7,7 +7,6 @@ import io.github.abc15018045126.sora.text.TextRange
  * Format content for editor
  */
 interface Formatter {
-
     /**
      * Format the given content from [cursorRange] position
      *
@@ -16,7 +15,10 @@ interface Formatter {
      * @param text        the content to format, but not the original Content in editor
      * @param cursorRange the positions of cursor. Start and end position may be the same.
      */
-    fun format(text: Content, cursorRange: TextRange)
+    fun format(
+        text: Content,
+        cursorRange: TextRange,
+    )
 
     /**
      * Format the given content from [rangeToFormat] position
@@ -27,7 +29,11 @@ interface Formatter {
      * @param rangeToFormat the range in text to be formatted
      * @param cursorRange   the positions of cursor. Start and end position may be the same.
      */
-    fun formatRegion(text: Content, rangeToFormat: TextRange, cursorRange: TextRange)
+    fun formatRegion(
+        text: Content,
+        rangeToFormat: TextRange,
+        cursorRange: TextRange,
+    )
 
     /**
      * Set the result receiver
@@ -60,7 +66,10 @@ interface Formatter {
          * @param cursorRange  The range of cursor after formatting. You may pass null for unspecified.
          *                     Also, the start and end of the range may be the same position.
          */
-        fun onFormatSucceed(applyContent: CharSequence, cursorRange: TextRange?)
+        fun onFormatSucceed(
+            applyContent: CharSequence,
+            cursorRange: TextRange?,
+        )
 
         /**
          * Called when the formatting is failed

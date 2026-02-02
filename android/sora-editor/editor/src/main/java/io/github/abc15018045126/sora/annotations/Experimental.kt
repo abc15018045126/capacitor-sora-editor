@@ -10,7 +10,7 @@ package io.github.abc15018045126.sora.annotations
     AnnotationTarget.FIELD,
     AnnotationTarget.CONSTRUCTOR,
     AnnotationTarget.FUNCTION,
-    AnnotationTarget.CLASS
+    AnnotationTarget.CLASS,
 )
 @Retention(AnnotationRetention.SOURCE)
 annotation class Experimental

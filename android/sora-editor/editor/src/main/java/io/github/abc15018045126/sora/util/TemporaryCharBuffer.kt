@@ -1,7 +1,6 @@
 package io.github.abc15018045126.sora.util
 
 object TemporaryCharBuffer {
-
     private var sTemp: CharArray? = null
 
     @JvmStatic

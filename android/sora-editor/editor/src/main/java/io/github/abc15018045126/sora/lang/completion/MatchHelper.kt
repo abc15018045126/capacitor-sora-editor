@@ -11,7 +11,6 @@ import io.github.abc15018045126.sora.text.TextUtils
  * @author abc15018045126
  */
 class MatchHelper {
-
     /**
      * Color for matched text highlighting
      */
@@ -32,7 +31,10 @@ class MatchHelper {
     @JvmField
     var matchFirstCase: Boolean = false
 
-    fun startsWith(name: CharSequence, pattern: CharSequence): Spanned? {
+    fun startsWith(
+        name: CharSequence,
+        pattern: CharSequence,
+    ): Spanned? {
         return startsWith(name, pattern, matchFirstCase, ignoreCase)
     }
 
@@ -40,7 +42,7 @@ class MatchHelper {
         name: CharSequence,
         pattern: CharSequence,
         matchFirstCase: Boolean,
-        ignoreCase: Boolean
+        ignoreCase: Boolean,
     ): Spanned? {
         if (name.length >= pattern.length) {
             val len = pattern.length
@@ -62,11 +64,18 @@ class MatchHelper {
         return null
     }
 
-    fun contains(name: CharSequence, pattern: CharSequence): Spanned? {
+    fun contains(
+        name: CharSequence,
+        pattern: CharSequence,
+    ): Spanned? {
         return contains(name, pattern, ignoreCase)
     }
 
-    fun contains(name: CharSequence, pattern: CharSequence, ignoreCase: Boolean): Spanned? {
+    fun contains(
+        name: CharSequence,
+        pattern: CharSequence,
+        ignoreCase: Boolean,
+    ): Spanned? {
         val index = TextUtils.indexOf(name, pattern, ignoreCase, 0)
         if (index != -1) {
             val spanned = SpannableString(name)
@@ -74,7 +83,7 @@ class MatchHelper {
                 ForegroundColorSpan(highlightColor),
                 index,
                 index + pattern.length,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
             )
             return spanned
         }
@@ -84,14 +93,21 @@ class MatchHelper {
     /**
      * Common sub-sequence
      */
-    fun commonSub(name: CharSequence, pattern: CharSequence): Spanned? {
+    fun commonSub(
+        name: CharSequence,
+        pattern: CharSequence,
+    ): Spanned? {
         return commonSub(name, pattern, ignoreCase)
     }
 
     /**
      * Common sub-sequence
      */
-    fun commonSub(name: CharSequence, pattern: CharSequence, ignoreCase: Boolean): Spanned? {
+    fun commonSub(
+        name: CharSequence,
+        pattern: CharSequence,
+        ignoreCase: Boolean,
+    ): Spanned? {
         if (name.length >= pattern.length) {
             var spanned: SpannableString? = null
             val len = pattern.length
@@ -110,7 +126,7 @@ class MatchHelper {
                             ForegroundColorSpan(highlightColor),
                             j,
                             j + 1,
-                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
                         )
                     }
                     j++

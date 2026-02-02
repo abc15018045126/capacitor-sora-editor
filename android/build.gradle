@@ -60,29 +60,16 @@ android {
         main {
             java.srcDirs = [
                 'src/main/java',
-                'sora-editor/editor/src/main/java',
-                'sora-editor/language-textmate/src/main/java',
-                'sora-editor/oniguruma-native/src/main/java'
+                'sora-editor/editor/src/main/java'
             ]
             res.srcDirs = [
                 'src/main/res',
-                'sora-editor/editor/src/main/res',
-                'sora-editor/language-textmate/src/main/res',
-                'sora-editor/oniguruma-native/src/main/res'
+                'sora-editor/editor/src/main/res'
             ]
             assets.srcDirs = [
                 'src/main/assets',
-                'sora-editor/editor/src/main/assets',
-                'sora-editor/language-textmate/src/main/assets',
-                'sora-editor/oniguruma-native/src/main/assets'
+                'sora-editor/editor/src/main/assets'
             ]
-        }
-    }
-
-    externalNativeBuild {
-        cmake {
-            path = file("sora-editor/oniguruma-native/src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
         }
     }
     
@@ -109,10 +96,6 @@ dependencies {
     implementation "com.google.code.gson:gson:2.13.2"
     implementation "org.snakeyaml:snakeyaml-engine:3.0.1"
     implementation "org.eclipse.jdt:org.eclipse.jdt.annotation:2.4.100"
-    
-    // Textmate engine components
-    implementation "org.jruby.jcodings:jcodings:1.0.63"
-    implementation "org.jruby.joni:joni:2.2.6"
 
     // Compose
     def composeBom = platform('androidx.compose:compose-bom:2024.12.01')

@@ -13,7 +13,6 @@ import java.util.concurrent.locks.ReentrantLock
  * @author abc15018045126
  */
 class BinaryHeap {
-
     /**
      * Lock for multi-thread reusing
      */
@@ -175,7 +174,10 @@ class BinaryHeap {
      * @param newValue new value for this node
      * @throws IllegalArgumentException when the id is invalid
      */
-    fun update(id: Int, newValue: Int) {
+    fun update(
+        id: Int,
+        newValue: Int,
+    ) {
         val position = idToPosition.get(id, 0)
         if (position == 0) {
             throw IllegalArgumentException("trying to update with an invalid id")
@@ -201,11 +203,11 @@ class BinaryHeap {
             throw IllegalArgumentException("trying to remove with an invalid id")
         }
         idToPosition.delete(id)
-        //Replace removed node with last node
+        // Replace removed node with last node
         nodes[position] = nodes[nodeCount]
-        //Release node
+        // Release node
         nodes[nodeCount--] = 0
-        //Do not update heap if it is just the last node
+        // Do not update heap if it is just the last node
         if (position == nodeCount + 1) {
             return
         }

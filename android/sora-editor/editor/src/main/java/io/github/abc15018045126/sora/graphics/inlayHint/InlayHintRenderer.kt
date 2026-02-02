@@ -60,7 +60,6 @@ import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
  * @author abc15018045126
  */
 abstract class InlayHintRenderer() {
-
     /**
      * The type name of inlay hint
      */
@@ -69,7 +68,7 @@ abstract class InlayHintRenderer() {
     fun measure(
         inlayHint: InlayHint,
         paint: Paint,
-        params: InlayHintRenderParams
+        params: InlayHintRenderParams,
     ): Float = onMeasure(inlayHint, paint, params)
 
     fun render(
@@ -78,14 +77,14 @@ abstract class InlayHintRenderer() {
         paint: Paint,
         params: InlayHintRenderParams,
         colorScheme: EditorColorScheme,
-        measuredWidth: Float
+        measuredWidth: Float,
     ) = onRender(
         inlayHint,
         canvas,
         paint,
         params,
         colorScheme,
-        measuredWidth
+        measuredWidth,
     )
 
     /**
@@ -100,7 +99,7 @@ abstract class InlayHintRenderer() {
     abstract fun onMeasure(
         inlayHint: InlayHint,
         paint: Paint,
-        params: InlayHintRenderParams
+        params: InlayHintRenderParams,
     ): Float
 
     /**
@@ -123,7 +122,6 @@ abstract class InlayHintRenderer() {
         paint: Paint,
         params: InlayHintRenderParams,
         colorScheme: EditorColorScheme,
-        measuredWidth: Float
+        measuredWidth: Float,
     )
-
 }

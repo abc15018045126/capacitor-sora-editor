@@ -15,13 +15,12 @@ import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
  * @author Rose
  */
 class DefaultCompletionItemAdapter : EditorCompletionAdapter() {
-
     override fun getItemHeight(): Int {
         // 45 dp
         return TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
             45f,
-            getContext().resources.displayMetrics
+            getContext().resources.displayMetrics,
         ).toInt()
     }
 
@@ -29,12 +28,13 @@ class DefaultCompletionItemAdapter : EditorCompletionAdapter() {
         pos: Int,
         view: View?,
         parent: ViewGroup,
-        isCurrentCursorPosition: Boolean
+        isCurrentCursorPosition: Boolean,
     ): View {
         var convertView = view
         if (convertView == null) {
-            convertView = LayoutInflater.from(getContext())
-                .inflate(R.layout.default_completion_result_item, parent, false)
+            convertView =
+                LayoutInflater.from(getContext())
+                    .inflate(R.layout.default_completion_result_item, parent, false)
         }
         val item = getItem(pos)
 
@@ -56,5 +56,4 @@ class DefaultCompletionItemAdapter : EditorCompletionAdapter() {
         iv.setImageDrawable(item.icon)
         return convertView
     }
-
 }

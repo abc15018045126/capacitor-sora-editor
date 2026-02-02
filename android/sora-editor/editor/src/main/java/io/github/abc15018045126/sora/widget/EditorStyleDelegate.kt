@@ -12,7 +12,6 @@ import io.github.abc15018045126.sora.lang.styling.Styles
 import java.lang.ref.WeakReference
 
 class EditorStyleDelegate(editor: CodeEditor) : StyleReceiver {
-
     private val editorRef: WeakReference<CodeEditor> = WeakReference(editor)
     var foundBracketPair: PairedBracket? = null
         private set
@@ -62,15 +61,20 @@ class EditorStyleDelegate(editor: CodeEditor) : StyleReceiver {
         }
     }
 
-
-    override fun setStyles(sourceManager: AnalyzeManager, styles: Styles?) {
+    override fun setStyles(
+        sourceManager: AnalyzeManager,
+        styles: Styles?,
+    ) {
         setStyles(sourceManager, styles, null)
     }
 
-    override fun setStyles(sourceManager: AnalyzeManager, styles: Styles?, action: Runnable?) {
+    override fun setStyles(
+        sourceManager: AnalyzeManager,
+        styles: Styles?,
+        action: Runnable?,
+    ) {
         val editor = editorRef.get()
         if (editor != null && sourceManager === editor.editorLanguage?.analyzeManager) {
-
             runOnUiThread {
                 action?.run()
                 editor.setStyles(styles)
@@ -78,27 +82,34 @@ class EditorStyleDelegate(editor: CodeEditor) : StyleReceiver {
         }
     }
 
-    override fun setDiagnostics(sourceManager: AnalyzeManager, diagnostics: DiagnosticsContainer?) {
+    override fun setDiagnostics(
+        sourceManager: AnalyzeManager,
+        diagnostics: DiagnosticsContainer?,
+    ) {
         val editor = editorRef.get()
         if (editor != null && sourceManager === editor.editorLanguage?.analyzeManager) {
-
             runOnUiThread { editor.diagnostics = diagnostics }
         }
     }
 
-    override fun updateBracketProvider(sourceManager: AnalyzeManager, provider: BracketsProvider?) {
+    override fun updateBracketProvider(
+        sourceManager: AnalyzeManager,
+        provider: BracketsProvider?,
+    ) {
         val editor = editorRef.get()
         if (editor != null && sourceManager === editor.editorLanguage?.analyzeManager && bracketsProvider !== provider) {
-
             this.bracketsProvider = provider
             postUpdateBracketPair()
         }
     }
 
-    override fun updateStyles(sourceManager: AnalyzeManager, styles: Styles, range: StyleUpdateRange) {
+    override fun updateStyles(
+        sourceManager: AnalyzeManager,
+        styles: Styles,
+        range: StyleUpdateRange,
+    ) {
         val editor = editorRef.get()
         if (editor != null && sourceManager === editor.editorLanguage?.analyzeManager) {
-
             runOnUiThread { editor.updateStyles(styles, range) }
         }
     }

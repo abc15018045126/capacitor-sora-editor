@@ -1,10 +1,11 @@
 package io.github.abc15018045126.sora.widget.snippet.variable
 
 class CommentBasedSnippetVariableResolver(var commentTokens: Array<String>? = null) : ISnippetVariableResolver {
-
     override fun getResolvableNames(): Array<String> {
         return arrayOf(
-            "LINE_COMMENT", "BLOCK_COMMENT_START", "BLOCK_COMMENT_END"
+            "LINE_COMMENT",
+            "BLOCK_COMMENT_START",
+            "BLOCK_COMMENT_END",
         )
     }
 

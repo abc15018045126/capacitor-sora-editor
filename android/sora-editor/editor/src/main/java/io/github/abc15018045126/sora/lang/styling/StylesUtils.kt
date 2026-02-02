@@ -4,7 +4,6 @@ import android.util.Log
 import io.github.abc15018045126.sora.text.CharPosition
 
 object StylesUtils {
-
     private const val LOG_TAG = "StylesUtils"
 
     /**
@@ -12,7 +11,10 @@ object StylesUtils {
      * If [io.github.abc15018045126.sora.lang.styling.TextStyle.NO_COMPLETION_BIT] is set, true is returned.
      */
     @JvmStatic
-    fun checkNoCompletion(styles: Styles?, pos: CharPosition): Boolean {
+    fun checkNoCompletion(
+        styles: Styles?,
+        pos: CharPosition,
+    ): Boolean {
         val span = getSpanForPosition(styles, pos)
         return span == null || TextStyle.isNoCompletion(span.style)
     }
@@ -21,7 +23,10 @@ object StylesUtils {
      * Get [Span] for the given position.
      */
     @JvmStatic
-    fun getSpanForPosition(styles: Styles?, pos: CharPosition): Span? {
+    fun getSpanForPosition(
+        styles: Styles?,
+        pos: CharPosition,
+    ): Span? {
         return getSpanForPositionImpl(styles, pos, 0)
     }
 
@@ -29,11 +34,18 @@ object StylesUtils {
      * Get following [Span] for the given position.
      */
     @JvmStatic
-    fun getFollowingSpanForPosition(styles: Styles?, pos: CharPosition): Span? {
+    fun getFollowingSpanForPosition(
+        styles: Styles?,
+        pos: CharPosition,
+    ): Span? {
         return getSpanForPositionImpl(styles, pos, 1)
     }
 
-    private fun getSpanForPositionImpl(styles: Styles?, pos: CharPosition, spanIndexOffset: Int): Span? {
+    private fun getSpanForPositionImpl(
+        styles: Styles?,
+        pos: CharPosition,
+        spanIndexOffset: Int,
+    ): Span? {
         val line = pos.line
         val column = pos.column
         // Do not make completion without styles. The language may be empty or busy analyzing spans

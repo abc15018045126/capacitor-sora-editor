@@ -12,8 +12,10 @@ import java.util.Locale
  * @author abc15018045126
  */
 class TimeBasedSnippetVariableResolver : ISnippetVariableResolver {
-
-    private fun getDisplayName(field: Int, shortType: Boolean): String {
+    private fun getDisplayName(
+        field: Int,
+        shortType: Boolean,
+    ): String {
         val c = Calendar.getInstance()
         var result = c.getDisplayName(field, if (shortType) Calendar.SHORT else Calendar.LONG, Locale.getDefault())
         if (result == null && shortType) {
@@ -34,7 +36,7 @@ class TimeBasedSnippetVariableResolver : ISnippetVariableResolver {
             "CURRENT_YEAR", "CURRENT_YEAR_SHORT", "CURRENT_MONTH", "CURRENT_DATE",
             "CURRENT_HOUR", "CURRENT_MINUTE", "CURRENT_SECOND", "CURRENT_DAY_NAME",
             "CURRENT_DAY_NAME_SHORT", "CURRENT_MONTH_NAME", "CURRENT_MONTH_NAME_SHORT",
-            "CURRENT_SECONDS_UNIX"
+            "CURRENT_SECONDS_UNIX",
         )
     }
 

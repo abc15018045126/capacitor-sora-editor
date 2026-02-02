@@ -1,7 +1,6 @@
 package io.github.abc15018045126.sora.lang.completion
 
 import android.os.Build
-import android.os.Bundle
 import io.github.abc15018045126.sora.text.CharPosition
 import io.github.abc15018045126.sora.text.ContentReference
 import io.github.abc15018045126.sora.text.TextUtils
@@ -25,21 +24,21 @@ import java.util.concurrent.locks.ReentrantLock
  * @author abc15018045126
  */
 class IdentifierAutoComplete {
-
     companion object {
         /**
          * @deprecated Use [Comparators]
          */
         @Deprecated("")
-        private val COMPARATOR = Comparator<CompletionItem> { p1, p2 ->
-            val cmp1 = asString(p1.desc).compareTo(asString(p2.desc))
-            if (cmp1 < 0) {
-                return@Comparator 1
-            } else if (cmp1 > 0) {
-                return@Comparator -1
+        private val COMPARATOR =
+            Comparator<CompletionItem> { p1, p2 ->
+                val cmp1 = asString(p1.desc).compareTo(asString(p2.desc))
+                if (cmp1 < 0) {
+                    return@Comparator 1
+                } else if (cmp1 > 0) {
+                    return@Comparator -1
+                }
+                asString(p1.label).compareTo(asString(p2.label))
             }
-            asString(p1.label).compareTo(asString(p2.label))
-        }
 
         private fun asString(str: CharSequence?): String {
             return if (str is String) str else str.toString()
@@ -56,7 +55,10 @@ class IdentifierAutoComplete {
         setKeywords(keywords, true)
     }
 
-    fun setKeywords(keywords: Array<String>?, lowCase: Boolean) {
+    fun setKeywords(
+        keywords: Array<String>?,
+        lowCase: Boolean,
+    ) {
         this.keywords = keywords
         keywordsAreLowCase = lowCase
         val map = HashMap<String, Any>()
@@ -83,11 +85,14 @@ class IdentifierAutoComplete {
         position: CharPosition,
         prefix: String,
         publisher: CompletionPublisher,
-        userIdentifiers: Identifiers?
+        userIdentifiers: Identifiers?,
     ) {
-        val completionItemList = filterCompletionItems(
-            reference, position, createCompletionItemList(prefix, userIdentifiers)
-        )
+        val completionItemList =
+            filterCompletionItems(
+                reference,
+                position,
+                createCompletionItemList(prefix, userIdentifiers),
+            )
 
         val comparator = createCompletionItemComparator(completionItemList)
 
@@ -98,7 +103,7 @@ class IdentifierAutoComplete {
 
     fun createCompletionItemList(
         prefix: String,
-        userIdentifiers: Identifiers?
+        userIdentifiers: Identifiers?,
     ): List<CompletionItem> {
         val prefixLength = prefix.length
         if (prefixLength == 0) {
@@ -113,35 +118,45 @@ class IdentifierAutoComplete {
         if (keywordArray != null) {
             if (lowCase) {
                 for (kw in keywordArray) {
-                    val fuzzyScore = fuzzyScoreGracefulAggressive(
-                        prefix,
-                        prefix.lowercase(Locale.ROOT),
-                        0, kw, kw.lowercase(Locale.ROOT), 0, FuzzyScoreOptions.default
-                    )
+                    val fuzzyScore =
+                        fuzzyScoreGracefulAggressive(
+                            prefix,
+                            prefix.lowercase(Locale.ROOT),
+                            0,
+                            kw,
+                            kw.lowercase(Locale.ROOT),
+                            0,
+                            FuzzyScoreOptions.default,
+                        )
 
                     val score = fuzzyScore?.score ?: -100
 
                     if (kw.startsWith(match) || score >= -20) {
                         result.add(
                             SimpleCompletionItem(kw, "Keyword", prefixLength, kw)
-                                .kind(CompletionItemKind.Keyword)
+                                .kind(CompletionItemKind.Keyword),
                         )
                     }
                 }
             } else {
                 for (kw in keywordArray) {
-                    val fuzzyScore = fuzzyScoreGracefulAggressive(
-                        prefix,
-                        prefix.lowercase(Locale.ROOT),
-                        0, kw, kw.lowercase(Locale.ROOT), 0, FuzzyScoreOptions.default
-                    )
+                    val fuzzyScore =
+                        fuzzyScoreGracefulAggressive(
+                            prefix,
+                            prefix.lowercase(Locale.ROOT),
+                            0,
+                            kw,
+                            kw.lowercase(Locale.ROOT),
+                            0,
+                            FuzzyScoreOptions.default,
+                        )
 
                     val score = fuzzyScore?.score ?: -100
 
                     if (kw.lowercase(Locale.ROOT).startsWith(match) || score >= -20) {
                         result.add(
                             SimpleCompletionItem(kw, "Keyword", prefixLength, kw)
-                                .kind(CompletionItemKind.Keyword)
+                                .kind(CompletionItemKind.Keyword),
                         )
                     }
                 }
@@ -152,11 +167,12 @@ class IdentifierAutoComplete {
 
             userIdentifiers.filterIdentifiers(prefix, dest)
             for (word in dest) {
-                if (keywordMap == null || !keywordMap.containsKey(word))
+                if (keywordMap == null || !keywordMap.containsKey(word)) {
                     result.add(
                         SimpleCompletionItem(word, "Identifier", prefixLength, word)
-                            .kind(CompletionItemKind.Identifier)
+                            .kind(CompletionItemKind.Identifier),
                     )
+                }
             }
         }
         return result
@@ -172,7 +188,7 @@ class IdentifierAutoComplete {
     fun requireAutoComplete(
         prefix: String,
         publisher: CompletionPublisher,
-        userIdentifiers: Identifiers?
+        userIdentifiers: Identifiers?,
     ) {
         publisher.setComparator(COMPARATOR)
         publisher.setUpdateThreshold(0)
@@ -186,14 +202,16 @@ class IdentifierAutoComplete {
      * @see IdentifierAutoComplete.DisposableIdentifiers
      */
     interface Identifiers {
-
         /**
          * Filter identifiers with the given prefix
          *
          * @param prefix The prefix to filter
          * @param dest   Result list
          */
-        fun filterIdentifiers(prefix: String, dest: MutableList<String>)
+        fun filterIdentifiers(
+            prefix: String,
+            dest: MutableList<String>,
+        )
     }
 
     /**
@@ -206,7 +224,6 @@ class IdentifierAutoComplete {
      * @author abc15018045126
      */
     class DisposableIdentifiers : Identifiers {
-
         companion object {
             private val SIGN = Any()
         }
@@ -239,21 +256,33 @@ class IdentifierAutoComplete {
             cache = null
         }
 
-        override fun filterIdentifiers(prefix: String, dest: MutableList<String>) {
+        override fun filterIdentifiers(
+            prefix: String,
+            dest: MutableList<String>,
+        ) {
             for (identifier in identifiers) {
-                val fuzzyScore = fuzzyScoreGracefulAggressive(
-                    prefix,
-                    prefix.lowercase(Locale.ROOT),
-                    0, identifier, identifier.lowercase(Locale.ROOT), 0, FuzzyScoreOptions.default
-                )
+                val fuzzyScore =
+                    fuzzyScoreGracefulAggressive(
+                        prefix,
+                        prefix.lowercase(Locale.ROOT),
+                        0,
+                        identifier,
+                        identifier.lowercase(Locale.ROOT),
+                        0,
+                        FuzzyScoreOptions.default,
+                    )
 
                 val score = fuzzyScore?.score ?: -100
 
-                if ((TextUtils.startsWith(identifier, prefix, true) || score >= -20) && !(prefix.length == identifier.length && TextUtils.startsWith(
-                        prefix,
-                        identifier,
-                        false
-                    ))
+                if ((TextUtils.startsWith(identifier, prefix, true) || score >= -20) &&
+                    !(
+                        prefix.length == identifier.length &&
+                            TextUtils.startsWith(
+                                prefix,
+                                identifier,
+                                false,
+                            )
+                    )
                 ) {
                     dest.add(identifier)
                 }
@@ -262,7 +291,6 @@ class IdentifierAutoComplete {
     }
 
     class SyncIdentifiers : Identifiers {
-
         private val lock: Lock = ReentrantLock(true)
         private val identifierMap: MutableMap<String, MutableInt> = HashMap()
 
@@ -307,38 +335,55 @@ class IdentifierAutoComplete {
             }
         }
 
-        override fun filterIdentifiers(prefix: String, dest: MutableList<String>) {
+        override fun filterIdentifiers(
+            prefix: String,
+            dest: MutableList<String>,
+        ) {
             filterIdentifiers(prefix, dest, false)
         }
 
-        fun filterIdentifiers(prefix: String, dest: MutableList<String>, waitForLock: Boolean) {
+        fun filterIdentifiers(
+            prefix: String,
+            dest: MutableList<String>,
+            waitForLock: Boolean,
+        ) {
             val acquired: Boolean
             if (waitForLock) {
                 lock.lock()
                 acquired = true
             } else {
-                acquired = try {
-                    lock.tryLock(3, TimeUnit.MILLISECONDS)
-                } catch (e: InterruptedException) {
-                    false
-                }
+                acquired =
+                    try {
+                        lock.tryLock(3, TimeUnit.MILLISECONDS)
+                    } catch (e: InterruptedException) {
+                        false
+                    }
             }
             if (acquired) {
                 try {
                     for (s in identifierMap.keys) {
-                        val fuzzyScore = fuzzyScoreGracefulAggressive(
-                            prefix,
-                            prefix.lowercase(Locale.ROOT),
-                            0, s, s.lowercase(Locale.ROOT), 0, FuzzyScoreOptions.default
-                        )
+                        val fuzzyScore =
+                            fuzzyScoreGracefulAggressive(
+                                prefix,
+                                prefix.lowercase(Locale.ROOT),
+                                0,
+                                s,
+                                s.lowercase(Locale.ROOT),
+                                0,
+                                FuzzyScoreOptions.default,
+                            )
 
                         val score = fuzzyScore?.score ?: -100
 
-                        if ((TextUtils.startsWith(s, prefix, true) || score >= -20) && !(prefix.length == s.length && TextUtils.startsWith(
-                                prefix,
-                                s,
-                                false
-                            ))
+                        if ((TextUtils.startsWith(s, prefix, true) || score >= -20) &&
+                            !(
+                                prefix.length == s.length &&
+                                    TextUtils.startsWith(
+                                        prefix,
+                                        s,
+                                        false,
+                                    )
+                            )
                         ) {
                             dest.add(s)
                         }

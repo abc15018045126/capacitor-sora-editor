@@ -3,10 +3,8 @@ package io.github.abc15018045126.sora.widget.component
 import android.annotation.SuppressLint
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.view.View
 import android.widget.AdapterView
 import android.widget.ListAdapter
-import io.github.abc15018045126.sora.R
 import io.github.abc15018045126.sora.event.*
 import io.github.abc15018045126.sora.lang.Language
 import io.github.abc15018045126.sora.lang.completion.CompletionItem
@@ -28,7 +26,6 @@ import io.github.abc15018045126.sora.widget.snippet.SnippetController
 class EditorAutoCompletion(editor: CodeEditor) :
     EditorPopupWindow(editor, FEATURE_SCROLL_AS_CONTENT or FEATURE_SHOW_OUTSIDE_VIEW_ALLOWED),
     EditorBuiltinComponent {
-
     private val eventManager = editor.createSubEventManager()
     private var thread: CompletionThread? = null
 
@@ -136,7 +133,7 @@ class EditorAutoCompletion(editor: CodeEditor) :
             dismiss()
             return
         }
-        
+
         if (event.action == ContentChangeEvent.ACTION_DELETE) {
             if (isShowing) {
                 updateCompletions()
@@ -148,7 +145,7 @@ class EditorAutoCompletion(editor: CodeEditor) :
             requireCompletion()
             return
         }
-        
+
         if (isShowing) {
             updateCompletions()
         }
@@ -159,20 +156,20 @@ class EditorAutoCompletion(editor: CodeEditor) :
         val line = cursor.leftLine
         val col = cursor.leftColumn
         val text = editor.text
-        
-        thread?.cancel()
-        
-        val lang = editor.editorLanguage!!
-        val publisher = CompletionPublisher(editor.handler, {
-            io.github.abc15018045126.sora.util.EditorHandler.post {
-                if (editor.isReleased) return@post
-                val currentThread = thread
-                if (currentThread != null && !currentThread.isCancelled) {
-                    onCompletionsProvided(currentThread.publisher.getItems(), false)
-                }
-            }
 
-        }, lang.interruptionLevel)
+        thread?.cancel()
+
+        val lang = editor.editorLanguage!!
+        val publisher =
+            CompletionPublisher(editor.handler, {
+                io.github.abc15018045126.sora.util.EditorHandler.post {
+                    if (editor.isReleased) return@post
+                    val currentThread = thread
+                    if (currentThread != null && !currentThread.isCancelled) {
+                        onCompletionsProvided(currentThread.publisher.getItems(), false)
+                    }
+                }
+            }, lang.interruptionLevel)
 
         val t = CompletionThread(publisher, text, cursor.left(), lang)
 
@@ -181,7 +178,10 @@ class EditorAutoCompletion(editor: CodeEditor) :
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    private fun onCompletionsProvided(items: List<CompletionItem>, results: Boolean) {
+    private fun onCompletionsProvided(
+        items: List<CompletionItem>,
+        results: Boolean,
+    ) {
         if (items.isEmpty()) {
             if (results) {
                 dismiss()
@@ -191,7 +191,7 @@ class EditorAutoCompletion(editor: CodeEditor) :
         val sorted = items.highlightMatchLabel(editor.colorScheme)
         adapter?.attachValues(this, sorted)
         adapter?.notifyDataSetChanged()
-        
+
         if (!isShowing) {
             show()
         }
@@ -213,28 +213,28 @@ class EditorAutoCompletion(editor: CodeEditor) :
 
     private fun updateCompletionWindowPosition() {
         if (!isShowing) return
-        
+
         val cursor = editor.cursor
         val line = cursor.leftLine
         val col = cursor.leftColumn
-        
+
         val charX = editor.getCharOffsetX(line, col)
         val charY = editor.getCharOffsetY(line, col)
-        
+
         val dp = editor.dpUnit
         val rowHeight = editor.rowHeight
-        
+
         val panelX = charX
         var panelY = charY + rowHeight
-        
+
         val adapterCount = adapter?.count ?: 0
         val itemHeight = (dp * 40).toInt()
         val totalHeight = Math.min(maxHeight, adapterCount * itemHeight)
-        
+
         if (panelY + totalHeight > editor.height) {
             panelY = charY - totalHeight
         }
-        
+
         setSize(Math.min(editor.width, (dp * 250).toInt()), totalHeight)
         setLocationAbsolutely(panelX, panelY)
     }
@@ -242,7 +242,6 @@ class EditorAutoCompletion(editor: CodeEditor) :
     override fun show() {
         val snippetController: io.github.abc15018045126.sora.widget.snippet.SnippetController? = editor.snippetController
         if (!isEnabled || snippetController?.isInSnippet() == true || !editor.hasFocus() || editor.isInMouseMode) {
-
             return
         }
         super.show()
@@ -273,12 +272,11 @@ class EditorAutoCompletion(editor: CodeEditor) :
         dismiss()
     }
 
-
     class CompletionThread(
         val publisher: CompletionPublisher,
         val text: Content,
         val position: CharPosition,
-        val language: Language
+        val language: Language,
     ) : Thread() {
         var isCancelled: Boolean = false
             private set

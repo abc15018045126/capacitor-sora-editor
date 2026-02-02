@@ -2,9 +2,8 @@ package io.github.abc15018045126.sora.widget.style.builtin
 
 import android.animation.ValueAnimator
 import io.github.abc15018045126.sora.widget.CodeEditor
-import io.github.abc15018045126.sora.widget.style.CursorAnimator
-
 import io.github.abc15018045126.sora.widget.layout.Layout
+import io.github.abc15018045126.sora.widget.style.CursorAnimator
 
 /**
  * Scale-Up/Scale-Down cursor animation
@@ -12,7 +11,6 @@ import io.github.abc15018045126.sora.widget.layout.Layout
  * @author Dmitry Rubtsov
  */
 class ScaleCursorAnimator(private val editor: CodeEditor) : CursorAnimator, ValueAnimator.AnimatorUpdateListener {
-
     private val duration: Long = 180
 
     private var scaleAnimator: ValueAnimator = ValueAnimator()
@@ -30,14 +28,14 @@ class ScaleCursorAnimator(private val editor: CodeEditor) : CursorAnimator, Valu
         lineHeight = (layout.getRowCountForLine(line) * editor.rowHeight).toFloat()
         lineBottom = layout.getCharLayoutOffset(line, editor.text.getColumnCount(line))[0]
 
-        val pos = layout.getCharLayoutOffset(
-            editor.cursor!!.leftLine,
-            editor.cursor!!.leftColumn
-        )
+        val pos =
+            layout.getCharLayoutOffset(
+                editor.cursor!!.leftLine,
+                editor.cursor!!.leftColumn,
+            )
         startX = pos[1] + editor.measureTextRegionOffset()
         startY = pos[0]
     }
-
 
     override fun isRunning(): Boolean {
         return scaleAnimator.isRunning
@@ -64,13 +62,13 @@ class ScaleCursorAnimator(private val editor: CodeEditor) : CursorAnimator, Valu
         lineHeight = (layout.getRowCountForLine(line) * editor.rowHeight).toFloat()
         lineBottom = layout.getCharLayoutOffset(line, editor.text.getColumnCount(line))[0]
 
-        val pos = layout.getCharLayoutOffset(
-            editor.cursor!!.leftLine,
-            editor.cursor!!.leftColumn
-        )
+        val pos =
+            layout.getCharLayoutOffset(
+                editor.cursor!!.leftLine,
+                editor.cursor!!.leftColumn,
+            )
         endX = pos[1] + editor.measureTextRegionOffset()
         endY = pos[0]
-
 
         if (editor.insertHandleDescriptor?.position?.isEmpty == true) {
             scaleAnimator = ValueAnimator.ofFloat(0f, 1.0f)

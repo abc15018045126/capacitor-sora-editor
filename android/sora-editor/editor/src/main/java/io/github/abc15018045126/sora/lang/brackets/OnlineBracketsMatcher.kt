@@ -9,9 +9,8 @@ import io.github.abc15018045126.sora.text.Content
  */
 class OnlineBracketsMatcher(
     private val pairs: CharArray,
-    private val limit: Int
+    private val limit: Int,
 ) : BracketsProvider {
-
     init {
         if ((pairs.size and 1) != 0) {
             throw IllegalArgumentException("pairs must have even length")
@@ -27,7 +26,10 @@ class OnlineBracketsMatcher(
         return -1
     }
 
-    private fun tryComputePaired(text: Content, index: Int): PairedBracket? {
+    private fun tryComputePaired(
+        text: Content,
+        index: Int,
+    ): PairedBracket? {
         val a = text[index]
         val symbolIndex = findIndex(a)
         if (symbolIndex != -1) {
@@ -70,7 +72,10 @@ class OnlineBracketsMatcher(
         return null
     }
 
-    override fun getPairedBracketAt(text: Content, index: Int): PairedBracket? {
+    override fun getPairedBracketAt(
+        text: Content,
+        index: Int,
+    ): PairedBracket? {
         var pairedBracket: PairedBracket? = null
         if (index > 0) {
             pairedBracket = tryComputePaired(text, index - 1)

@@ -23,9 +23,9 @@ import io.github.abc15018045126.sora.widget.snippet.SnippetController
  * @author abc15018045126
  */
 class EditorTextActionWindow(editor: CodeEditor) :
-    EditorPopupWindow(editor, FEATURE_SHOW_OUTSIDE_VIEW_ALLOWED), View.OnClickListener,
+    EditorPopupWindow(editor, FEATURE_SHOW_OUTSIDE_VIEW_ALLOWED),
+    View.OnClickListener,
     EditorBuiltinComponent {
-
     private val selectAllBtn: ImageButton
     private val pasteBtn: ImageButton
     private val copyBtn: ImageButton
@@ -76,7 +76,10 @@ class EditorTextActionWindow(editor: CodeEditor) :
         subscribeEvents()
     }
 
-    private fun applyColorFilter(btn: ImageButton, color: Int) {
+    private fun applyColorFilter(
+        btn: ImageButton,
+        color: Int,
+    ) {
         btn.colorFilter = PorterDuffColorFilter(color, PorterDuff.Mode.SRC_ATOP)
     }
 
@@ -145,27 +148,29 @@ class EditorTextActionWindow(editor: CodeEditor) :
         if (event.isHeld) {
             postDisplay()
         }
-        if (!event.editor.cursor.isSelected()
-            && event.handleType == HandleStateChangeEvent.HANDLE_TYPE_INSERT
-            && !event.isHeld
+        if (!event.editor.cursor.isSelected() &&
+            event.handleType == HandleStateChangeEvent.HANDLE_TYPE_INSERT &&
+            !event.isHeld
         ) {
             displayWindow()
             // Also, post to hide the window on handle disappearance
             // Also, post to hide the window on handle disappearance
-            io.github.abc15018045126.sora.util.EditorHandler.postDelayed(object : Runnable {
-                override fun run() {
-                    if (editor.isReleased) return
-                    val handler: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = editor.touchHandler!!
-                    if (!handler.shouldDrawInsertHandle()
-                        && !editor.cursor.isSelected()
-                    ) {
-                        dismiss()
-                    } else if (!editor.cursor.isSelected()) {
-                        io.github.abc15018045126.sora.util.EditorHandler.postDelayed(this, CHECK_FOR_DISMISS_INTERVAL)
+            io.github.abc15018045126.sora.util.EditorHandler.postDelayed(
+                object : Runnable {
+                    override fun run() {
+                        if (editor.isReleased) return
+                        val handler: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = editor.touchHandler!!
+                        if (!handler.shouldDrawInsertHandle() &&
+                            !editor.cursor.isSelected()
+                        ) {
+                            dismiss()
+                        } else if (!editor.cursor.isSelected()) {
+                            io.github.abc15018045126.sora.util.EditorHandler.postDelayed(this, CHECK_FOR_DISMISS_INTERVAL)
+                        }
                     }
-                }
-            }, CHECK_FOR_DISMISS_INTERVAL)
-
+                },
+                CHECK_FOR_DISMISS_INTERVAL,
+            )
         }
     }
 
@@ -178,18 +183,17 @@ class EditorTextActionWindow(editor: CodeEditor) :
             return
         }
         lastCause = event.cause
-        if (event.isSelected || event.cause == SelectionChangeEvent.CAUSE_IME
-            || event.cause == SelectionChangeEvent.CAUSE_SELECTION_HANDLE
-            || event.cause == SelectionChangeEvent.CAUSE_SEARCH || event.cause == SelectionChangeEvent.CAUSE_UNKNOWN
+        if (event.isSelected || event.cause == SelectionChangeEvent.CAUSE_IME ||
+            event.cause == SelectionChangeEvent.CAUSE_SELECTION_HANDLE ||
+            event.cause == SelectionChangeEvent.CAUSE_SEARCH || event.cause == SelectionChangeEvent.CAUSE_UNKNOWN
         ) {
             // Always post show. See #193
             if (event.cause != SelectionChangeEvent.CAUSE_SEARCH) {
                 io.github.abc15018045126.sora.util.EditorHandler.post {
-                   if (editor.isReleased) return@post
-                   displayWindow()
+                    if (editor.isReleased) return@post
+                    displayWindow()
                 }
             } else {
-
                 dismiss()
             }
             lastPosition = -1
@@ -197,11 +201,10 @@ class EditorTextActionWindow(editor: CodeEditor) :
             var show = false
             if (event.cause == SelectionChangeEvent.CAUSE_TAP && event.left.index == lastPosition && !isShowing && !editor.text.isInBatchEdit && editor.isEditable) {
                 io.github.abc15018045126.sora.util.EditorHandler.post {
-                   if (editor.isReleased) return@post
-                   displayWindow()
+                    if (editor.isReleased) return@post
+                    displayWindow()
                 }
                 show = true
-
             } else {
                 dismiss()
             }
@@ -228,21 +231,22 @@ class EditorTextActionWindow(editor: CodeEditor) :
         if (!editor.cursor.isSelected()) {
             return
         }
-        io.github.abc15018045126.sora.util.EditorHandler.postDelayed(object : Runnable {
-            override fun run() {
-                if (editor.isReleased) return
-                val snippetController: io.github.abc15018045126.sora.widget.snippet.SnippetController? = editor.snippetController
-                if (!handler.hasAnyHeldHandle() && snippetController?.isInSnippet() != true && System.currentTimeMillis() - lastScroll > DELAY
-                    && editor.scroller.isFinished
-                ) {
-                    displayWindow()
-                } else {
-                    io.github.abc15018045126.sora.util.EditorHandler.postDelayed(this, DELAY)
+        io.github.abc15018045126.sora.util.EditorHandler.postDelayed(
+            object : Runnable {
+                override fun run() {
+                    if (editor.isReleased) return
+                    val snippetController: io.github.abc15018045126.sora.widget.snippet.SnippetController? = editor.snippetController
+                    if (!handler.hasAnyHeldHandle() && snippetController?.isInSnippet() != true && System.currentTimeMillis() - lastScroll > DELAY &&
+                        editor.scroller.isFinished
+                    ) {
+                        displayWindow()
+                    } else {
+                        io.github.abc15018045126.sora.util.EditorHandler.postDelayed(this, DELAY)
+                    }
                 }
-            }
-        }, DELAY)
-
-
+            },
+            DELAY,
+        )
     }
 
     private fun selectTop(rect: RectF): Int {
@@ -291,11 +295,11 @@ class EditorTextActionWindow(editor: CodeEditor) :
             if (!editor.cursor.isSelected() && editor.isEditable) View.VISIBLE else View.GONE
         rootView.measure(
             View.MeasureSpec.makeMeasureSpec(1000000, View.MeasureSpec.AT_MOST),
-            View.MeasureSpec.makeMeasureSpec(100000, View.MeasureSpec.AT_MOST)
+            View.MeasureSpec.makeMeasureSpec(100000, View.MeasureSpec.AT_MOST),
         )
         setSize(
             Math.min(rootView.measuredWidth, (editor.dpUnit * 230).toInt()),
-            height
+            height,
         )
     }
 
@@ -313,7 +317,7 @@ class EditorTextActionWindow(editor: CodeEditor) :
             editor.selectAll()
             return
         } else if (id == R.id.panel_btn_cut) {
-                editor.cutText()
+            editor.cutText()
         } else if (id == R.id.panel_btn_paste) {
             editor.pasteText()
             editor.setSelection(editor.cursor.rightLine, editor.cursor.rightColumn)
@@ -325,5 +329,4 @@ class EditorTextActionWindow(editor: CodeEditor) :
         }
         dismiss()
     }
-
 }

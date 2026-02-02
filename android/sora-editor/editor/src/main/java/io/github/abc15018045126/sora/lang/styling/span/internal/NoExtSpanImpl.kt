@@ -12,7 +12,6 @@ import java.util.*
  * @author abc15018045126
  */
 class NoExtSpanImpl : Span {
-
     override var column: Int = 0
     override var style: Long = 0L
     override var extra: Any? = null
@@ -30,7 +29,10 @@ class NoExtSpanImpl : Span {
             throw UnsupportedOperationException()
         }
 
-    override fun setSpanExt(extType: Int, ext: SpanExt?) {
+    override fun setSpanExt(
+        extType: Int,
+        ext: SpanExt?,
+    ) {
         throw UnsupportedOperationException()
     }
 
@@ -82,7 +84,10 @@ class NoExtSpanImpl : Span {
         private val pool = SpanPool { c, s -> NoExtSpanImpl(c, s) }
 
         @JvmStatic
-        fun obtain(column: Int, style: Long): NoExtSpanImpl {
+        fun obtain(
+            column: Int,
+            style: Long,
+        ): NoExtSpanImpl {
             return pool.obtain(column, style)
         }
     }

@@ -26,7 +26,6 @@ import io.github.abc15018045126.sora.widget.SymbolPairMatch
  * @author abc15018045126
  */
 interface Language {
-
     /**
      * Get [AnalyzeManager] of the language.
      * This is called from time to time by the editor. Cache your instance please.
@@ -63,9 +62,10 @@ interface Language {
     @WorkerThread
     @Throws(CompletionCancelledException::class)
     fun requireAutoComplete(
-        content: ContentReference, position: CharPosition,
+        content: ContentReference,
+        position: CharPosition,
         publisher: CompletionPublisher,
-        extraArguments: Bundle
+        extraArguments: Bundle,
     )
 
     /**
@@ -77,7 +77,11 @@ interface Language {
      * @return Delta count of indent spaces. It can be a negative/positive number or zero.
      */
     @UiThread
-    fun getIndentAdvance(content: ContentReference, line: Int, column: Int): Int
+    fun getIndentAdvance(
+        content: ContentReference,
+        line: Int,
+        column: Int,
+    ): Int
 
     /**
      * Get delta indent spaces count.
@@ -95,7 +99,7 @@ interface Language {
         line: Int,
         column: Int,
         spaceCountOnLine: Int,
-        tabCountOnLine: Int
+        tabCountOnLine: Int,
     ): Int {
         return getIndentAdvance(content, line, column)
     }
@@ -105,7 +109,6 @@ interface Language {
      */
     @UiThread
     fun useTab(): Boolean
-
 
     /**
      * Get the code formatter for the current language.
@@ -184,5 +187,4 @@ interface Language {
          */
         const val INTERRUPTION_LEVEL_NONE = 2
     }
-
 }

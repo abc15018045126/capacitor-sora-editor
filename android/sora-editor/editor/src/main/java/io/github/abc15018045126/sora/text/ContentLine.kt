@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicInteger
  * It provides efficient text manipulation methods and supports RTL/Bidi content.
  */
 class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableData<ContentLine> {
-
     internal var value: CharArray
     override var length: Int = 0
         internal set
@@ -24,7 +23,7 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
         set(value) {
             _lineSeparator = value
         }
-    
+
     val lineSeparatorSafe: LineSeparator
         get() = _lineSeparator ?: LineSeparator.NONE
 
@@ -73,12 +72,20 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
         }
     }
 
-    fun insert(dstOffset: Int, s: CharSequence?): ContentLine {
+    fun insert(
+        dstOffset: Int,
+        s: CharSequence?,
+    ): ContentLine {
         val str = s ?: "null"
         return this.insert(dstOffset, str, 0, str.length)
     }
 
-    fun insert(dstOffset: Int, s: CharSequence?, start: Int, end: Int): ContentLine {
+    fun insert(
+        dstOffset: Int,
+        s: CharSequence?,
+        start: Int,
+        end: Int,
+    ): ContentLine {
         val str = s ?: "null"
         if (dstOffset < 0 || dstOffset > this.length) {
             throw IndexOutOfBoundsException("dstOffset $dstOffset")
@@ -101,7 +108,10 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
         return this
     }
 
-    fun insert(offset: Int, c: Char): ContentLine {
+    fun insert(
+        offset: Int,
+        c: Char,
+    ): ContentLine {
         ensureCapacity(length + 1)
         if (offset < length) {
             System.arraycopy(value, offset, value, offset + 1, length - offset)
@@ -114,7 +124,10 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
         return this
     }
 
-    fun delete(start: Int, end: Int): ContentLine {
+    fun delete(
+        start: Int,
+        end: Int,
+    ): ContentLine {
         var e = end
         if (start < 0) {
             throw StringIndexOutOfBoundsException(start)
@@ -159,7 +172,10 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
         return value[index]
     }
 
-    override fun subSequence(startIndex: Int, endIndex: Int): ContentLine {
+    override fun subSequence(
+        startIndex: Int,
+        endIndex: Int,
+    ): ContentLine {
         checkIndex(startIndex)
         checkIndex(endIndex)
         if (endIndex < startIndex) {
@@ -201,7 +217,12 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
     val backingCharArray: CharArray
         get() = value
 
-    override fun getChars(srcBegin: Int, srcEnd: Int, dst: CharArray, dstBegin: Int) {
+    override fun getChars(
+        srcBegin: Int,
+        srcEnd: Int,
+        dst: CharArray,
+        dstBegin: Int,
+    ) {
         if (srcBegin < 0) {
             throw StringIndexOutOfBoundsException(srcBegin)
         }

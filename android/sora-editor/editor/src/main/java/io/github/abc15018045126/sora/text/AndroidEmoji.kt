@@ -24,7 +24,6 @@ import androidx.annotation.RequiresApi
  * Taken from {@link android.text.Emoji}
  */
 object AndroidEmoji {
-
     const val COMBINING_ENCLOSING_KEYCAP: Int = 0x20E3
 
     const val ZERO_WIDTH_JOINER: Int = 0x200D

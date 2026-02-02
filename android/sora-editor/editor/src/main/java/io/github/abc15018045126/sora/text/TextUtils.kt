@@ -8,7 +8,6 @@ import kotlin.math.min
  * Utility class for texts
  */
 object TextUtils {
-
     /**
      * Counts the number of whitespaces at the start of the given {@link CharSequence}.
      *
@@ -44,7 +43,10 @@ object TextUtils {
      * @param tabWidth Tab is considered in {@code tabWidth} spaces
      */
     @JvmStatic
-    fun countLeadingSpaceCount(text: CharSequence, tabWidth: Int): Int {
+    fun countLeadingSpaceCount(
+        text: CharSequence,
+        tabWidth: Int,
+    ): Int {
         val result = countLeadingSpacesAndTabs(text)
         return IntPair.getFirst(result) + tabWidth * IntPair.getSecond(result)
     }
@@ -55,7 +57,11 @@ object TextUtils {
      * @return Generated space string
      */
     @JvmStatic
-    fun createIndent(indentSize: Int, tabWidth: Int, useTab: Boolean): String {
+    fun createIndent(
+        indentSize: Int,
+        tabWidth: Int,
+        useTab: Boolean,
+    ): String {
         val size = max(0, indentSize)
         val tab: Int
         val space: Int
@@ -77,7 +83,12 @@ object TextUtils {
     }
 
     @JvmStatic
-    fun indexOf(text: CharSequence, pattern: CharSequence, ignoreCase: Boolean, fromIndex: Int): Int {
+    fun indexOf(
+        text: CharSequence,
+        pattern: CharSequence,
+        ignoreCase: Boolean,
+        fromIndex: Int,
+    ): Int {
         val max = text.length - pattern.length
         val len = pattern.length
         label@ for (i in fromIndex..max) {
@@ -95,7 +106,12 @@ object TextUtils {
     }
 
     @JvmStatic
-    fun lastIndexOf(text: CharSequence, pattern: CharSequence, ignoreCase: Boolean, fromIndex: Int): Int {
+    fun lastIndexOf(
+        text: CharSequence,
+        pattern: CharSequence,
+        ignoreCase: Boolean,
+        fromIndex: Int,
+    ): Int {
         val len = pattern.length
         val startIndex = min(fromIndex, text.length - len)
         label@ for (i in startIndex downTo 0) {
@@ -113,7 +129,11 @@ object TextUtils {
     }
 
     @JvmStatic
-    fun startsWith(text: CharSequence, pattern: CharSequence, ignoreCase: Boolean): Boolean {
+    fun startsWith(
+        text: CharSequence,
+        pattern: CharSequence,
+        ignoreCase: Boolean,
+    ): Boolean {
         if (text.length < pattern.length) {
             return false
         }
@@ -133,7 +153,11 @@ object TextUtils {
     }
 
     @JvmStatic
-    fun padStart(src: String, padChar: Char, length: Int): String {
+    fun padStart(
+        src: String,
+        padChar: Char,
+        length: Int,
+    ): String {
         if (src.length >= length) {
             return src
         }
@@ -163,7 +187,11 @@ object TextUtils {
      * @param end   Range end (exclusive)
      */
     @JvmStatic
-    fun findLeadingAndTrailingWhitespacePos(line: ContentLine, start: Int, end: Int): Long {
+    fun findLeadingAndTrailingWhitespacePos(
+        line: ContentLine,
+        start: Int,
+        end: Int,
+    ): Long {
         val buffer = line.backingCharArray
         var leading = start
         var trailing = end

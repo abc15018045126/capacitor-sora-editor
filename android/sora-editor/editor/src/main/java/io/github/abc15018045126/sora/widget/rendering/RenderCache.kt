@@ -25,8 +25,6 @@
 package io.github.abc15018045126.sora.widget.rendering
 
 import androidx.collection.MutableIntList
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 /**
  * Cache for editor rendering, including line-based data and measure
@@ -60,14 +58,19 @@ class RenderCache {
             }
         }
 
-
     fun getStyleHash(line: Int) = lines[line]
 
-    fun setStyleHash(line: Int, hash: Int) {
+    fun setStyleHash(
+        line: Int,
+        hash: Int,
+    ) {
         lines[line] = hash
     }
 
-    fun updateForInsertion(startLine: Int, endLine: Int) {
+    fun updateForInsertion(
+        startLine: Int,
+        endLine: Int,
+    ) {
         if (startLine != endLine) {
             if (endLine - startLine == 1) {
                 lines.add(startLine, 0)
@@ -82,7 +85,10 @@ class RenderCache {
         }
     }
 
-    fun updateForDeletion(startLine: Int, endLine: Int) {
+    fun updateForDeletion(
+        startLine: Int,
+        endLine: Int,
+    ) {
         if (startLine != endLine) {
             lines.removeRange(startLine, endLine)
             cache.removeAll { it.line in startLine..endLine }
@@ -105,5 +111,4 @@ class RenderCache {
         lines.indices.forEach { lines[it] = 0 }
         cache.clear()
     }
-
 }

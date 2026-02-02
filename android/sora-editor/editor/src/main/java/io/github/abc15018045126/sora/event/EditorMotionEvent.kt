@@ -12,8 +12,6 @@ import io.github.abc15018045126.sora.widget.REGION_LINE_NUMBER
 import io.github.abc15018045126.sora.widget.REGION_OUTBOUND
 import io.github.abc15018045126.sora.widget.REGION_SIDE_ICON
 import io.github.abc15018045126.sora.widget.REGION_TEXT
-import io.github.abc15018045126.sora.widget.IN_BOUND as WIDGET_IN_BOUND
-import io.github.abc15018045126.sora.widget.OUT_BOUND as WIDGET_OUT_BOUND
 
 /**
  * Base class for click events
@@ -32,9 +30,8 @@ abstract class EditorMotionEvent(
     val span: Span?,
     val spanRange: TextRange?,
     val motionRegion: Int,
-    val motionBound: Int
+    val motionBound: Int,
 ) : Event(editor) {
-
     companion object {
         /**
          * Motion occurred outside of editor.

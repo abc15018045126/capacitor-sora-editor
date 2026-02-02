@@ -54,7 +54,6 @@ import io.github.abc15018045126.sora.widget.resolveTouchRegion
  * @author abc15018045126
  */
 open class EditorSpanInteractionHandler(val editor: CodeEditor) {
-
     val eventManager = editor.createSubEventManager()
 
     init {
@@ -64,7 +63,7 @@ open class EditorSpanInteractionHandler(val editor: CodeEditor) {
                     event,
                     SpanInteractionInfo::isClickable,
                     ::handleSpanClick,
-                    !event.isFromMouse
+                    !event.isFromMouse,
                 )
             }
         }
@@ -73,7 +72,7 @@ open class EditorSpanInteractionHandler(val editor: CodeEditor) {
                 event,
                 SpanInteractionInfo::isDoubleClickable,
                 ::handleSpanDoubleClick,
-                !event.isFromMouse
+                !event.isFromMouse,
             )
         }
         eventManager.subscribeAlways<LongPressEvent> { event ->
@@ -81,7 +80,7 @@ open class EditorSpanInteractionHandler(val editor: CodeEditor) {
                 event,
                 SpanInteractionInfo::isLongClickable,
                 ::handleSpanLongClick,
-                !event.isFromMouse
+                !event.isFromMouse,
             )
         }
     }
@@ -90,7 +89,7 @@ open class EditorSpanInteractionHandler(val editor: CodeEditor) {
         event: EditorMotionEvent,
         predicate: (interactionInfo: SpanInteractionInfo) -> Boolean,
         handler: (Span, SpanInteractionInfo, TextRange) -> Boolean,
-        checkCursorRange: Boolean = true
+        checkCursorRange: Boolean = true,
     ) {
         val regionInfo = editor.resolveTouchRegion(event.causingEvent)
         val span = event.span
@@ -114,7 +113,7 @@ open class EditorSpanInteractionHandler(val editor: CodeEditor) {
     open fun handleSpanClick(
         span: Span,
         interactionInfo: SpanInteractionInfo,
-        spanRange: TextRange
+        spanRange: TextRange,
     ): Boolean {
         return false
     }
@@ -122,7 +121,7 @@ open class EditorSpanInteractionHandler(val editor: CodeEditor) {
     open fun handleSpanDoubleClick(
         span: Span,
         interactionInfo: SpanInteractionInfo,
-        spanRange: TextRange
+        spanRange: TextRange,
     ): Boolean {
         when (interactionInfo) {
             is SpanClickableUrl -> {
@@ -142,7 +141,7 @@ open class EditorSpanInteractionHandler(val editor: CodeEditor) {
     open fun handleSpanLongClick(
         span: Span,
         interactionInfo: SpanInteractionInfo,
-        spanRange: TextRange
+        spanRange: TextRange,
     ): Boolean {
         return false
     }
@@ -152,6 +151,4 @@ open class EditorSpanInteractionHandler(val editor: CodeEditor) {
     fun setEnabled(enabled: Boolean) {
         eventManager.isEnabled = enabled
     }
-
-
 }

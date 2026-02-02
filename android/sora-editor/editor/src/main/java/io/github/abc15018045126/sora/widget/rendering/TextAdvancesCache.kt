@@ -9,22 +9,28 @@ import kotlin.math.min
  *
  * @author abc15018045126
  */
-class TextAdvancesCache(@IntRange(from = 0) val size: Int) {
+class TextAdvancesCache(
+    @IntRange(from = 0) val size: Int,
+) {
     private val cache: Array<FloatArray>
 
     init {
         require(size >= 0) { "invalid size: $size" }
         val count = (size + BLOCK_SIZE - 1) / BLOCK_SIZE
-        cache = Array(count) { i ->
-            val elementCount = if (i == count - 1) size - BLOCK_SIZE * (count - 1) else BLOCK_SIZE
-            FloatArray(elementCount + 1)
-        }
+        cache =
+            Array(count) { i ->
+                val elementCount = if (i == count - 1) size - BLOCK_SIZE * (count - 1) else BLOCK_SIZE
+                FloatArray(elementCount + 1)
+            }
     }
 
     /**
      * Set advance at the given index
      */
-    fun setAdvanceAt(index: Int, advance: Float) {
+    fun setAdvanceAt(
+        index: Int,
+        advance: Float,
+    ) {
         val i = index / BLOCK_SIZE
         val j = index % BLOCK_SIZE
         cache[i][j] = advance
@@ -60,7 +66,10 @@ class TextAdvancesCache(@IntRange(from = 0) val size: Int) {
      * @param start inclusive start
      * @param end   exclusive end
      */
-    fun getAdvancesSum(start: Int, end: Int): Float {
+    fun getAdvancesSum(
+        start: Int,
+        end: Int,
+    ): Float {
         if (cache.size == 1) {
             // Normal case
             return cache[0][end] - cache[0][start]

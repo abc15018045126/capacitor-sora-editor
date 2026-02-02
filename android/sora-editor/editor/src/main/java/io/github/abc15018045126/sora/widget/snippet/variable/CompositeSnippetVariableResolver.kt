@@ -1,7 +1,6 @@
 package io.github.abc15018045126.sora.widget.snippet.variable
 
 class CompositeSnippetVariableResolver : ISnippetVariableResolver {
-
     private val resolverMap = HashMap<String, ISnippetVariableResolver>()
 
     fun addResolver(resolver: ISnippetVariableResolver) {

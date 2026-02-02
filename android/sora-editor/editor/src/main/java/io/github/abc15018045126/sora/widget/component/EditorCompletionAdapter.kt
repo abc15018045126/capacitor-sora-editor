@@ -14,14 +14,16 @@ import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
  * @see EditorCompletionAdapter.getView
  */
 abstract class EditorCompletionAdapter : BaseAdapter() {
-
     protected var window: EditorAutoCompletion? = null
     var items: List<CompletionItem>? = null
 
     /**
      * Called by [EditorAutoCompletion] to attach some arguments
      */
-    fun attachValues(window: EditorAutoCompletion, items: List<CompletionItem>) {
+    fun attachValues(
+        window: EditorAutoCompletion,
+        items: List<CompletionItem>,
+    ) {
         this.window = window
         this.items = items
     }
@@ -38,7 +40,11 @@ abstract class EditorCompletionAdapter : BaseAdapter() {
         return items?.size ?: 0
     }
 
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+    override fun getView(
+        position: Int,
+        convertView: View?,
+        parent: ViewGroup,
+    ): View {
         return getView(position, convertView, parent, position == window?.currentPosition)
     }
 
@@ -81,7 +87,6 @@ abstract class EditorCompletionAdapter : BaseAdapter() {
         position: Int,
         convertView: View?,
         parent: ViewGroup,
-        isCurrentCursorPosition: Boolean
+        isCurrentCursorPosition: Boolean,
     ): View
-
 }
