@@ -1531,7 +1531,7 @@ open class CodeEditor @JvmOverloads constructor(
             text.getCharIndex(line, 0)
         val lineRight =
             lineLeft + text.getColumnCount(line)
-        for (i in kotlin.math.max(0, positions.lowerBoundByFirst(lineLeft) - 1)..<res.size()) {
+        for (i in kotlin.math.max(0, res.lowerBoundByFirst(lineLeft) - 1)..<res.size()) {
             val region = res.get(i)
             val start =
                 IntPair.getFirst(region)

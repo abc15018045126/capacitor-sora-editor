@@ -123,7 +123,13 @@ class EditorControl {
             } else {
                 io.github.abc15018045126.sora.widget.EditorSearcher.SearchOptions.TYPE_NORMAL
             }
-            editor?.searcher?.search(text, io.github.abc15018045126.sora.widget.EditorSearcher.SearchOptions(type, !matchCase))
+            // 清理输入文本：移除换行符和其他控制字符
+            val cleanedText = text.replace("\\r", "").replace("\\n", "").trim()
+            if (cleanedText.isEmpty()) {
+                stopSearch()
+                return
+            }
+            editor?.searcher?.search(cleanedText, io.github.abc15018045126.sora.widget.EditorSearcher.SearchOptions(type, !matchCase))
         } catch (e: Exception) {
             e.printStackTrace()
         }
