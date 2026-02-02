@@ -76,7 +76,12 @@ data class EditorUiState(
     val isLineNumberPinned: Boolean = false,
     val lineNumberColor: String = "#FF000000",
     val lineDividerColor: String = "#A0888888",
-    val editorTextColor: String = "auto"
+    val editorTextColor: String = "auto",
+    val floatMenuBackgroundColor: String = "#FFFFFFFF",
+    val floatMenuOrder: String = "select_all,cut,copy,paste",
+    val floatMenuVisible: String = "select_all,cut,copy,paste",
+    val floatMenuTriggerDoubleTap: Boolean = true,
+    val floatMenuTriggerLongPress: Boolean = true
 )
 
 class EditorViewModel : ViewModel() {
@@ -504,6 +509,31 @@ class EditorViewModel : ViewModel() {
         _uiState.update { it.copy(lineDividerColor = color) }
         saveSettings(context)
     }
+    
+    fun setFloatMenuBackgroundColor(context: Context, color: String) {
+        _uiState.update { it.copy(floatMenuBackgroundColor = color) }
+        saveSettings(context)
+    }
+
+    fun setFloatMenuOrder(context: Context, order: String) {
+        _uiState.update { it.copy(floatMenuOrder = order) }
+        saveSettings(context)
+    }
+
+    fun setFloatMenuVisible(context: Context, visible: String) {
+        _uiState.update { it.copy(floatMenuVisible = visible) }
+        saveSettings(context)
+    }
+
+    fun setFloatMenuTriggerDoubleTap(context: Context, enabled: Boolean) {
+        _uiState.update { it.copy(floatMenuTriggerDoubleTap = enabled) }
+        saveSettings(context)
+    }
+
+    fun setFloatMenuTriggerLongPress(context: Context, enabled: Boolean) {
+        _uiState.update { it.copy(floatMenuTriggerLongPress = enabled) }
+        saveSettings(context)
+    }
 
     fun renameFile(newName: String): Boolean {
         val currentFile = File(_uiState.value.filePath)
@@ -593,7 +623,10 @@ class EditorViewModel : ViewModel() {
             isLineNumberPinned = false,
             lineNumberColor = "#FF000000",
             lineDividerColor = "#A0888888",
-            editorTextColor = "auto"
+            editorTextColor = "auto",
+            floatMenuBackgroundColor = "#FFFFFFFF",
+            floatMenuOrder = "select_all,cut,copy,paste,long_select",
+            floatMenuVisible = "select_all,cut,copy,paste,long_select"
         ) }
         saveSettings(context)
     }
@@ -653,6 +686,9 @@ class EditorViewModel : ViewModel() {
             put("lineNumberColor", _uiState.value.lineNumberColor)
             put("lineDividerColor", _uiState.value.lineDividerColor)
             put("editorTextColor", _uiState.value.editorTextColor)
+            put("floatMenuBackgroundColor", _uiState.value.floatMenuBackgroundColor)
+            put("floatMenuOrder", _uiState.value.floatMenuOrder)
+            put("floatMenuVisible", _uiState.value.floatMenuVisible)
         }
         prefs.edit().putString("settings_json", json.toString()).apply()
     }
@@ -704,7 +740,12 @@ class EditorViewModel : ViewModel() {
             isLineNumberPinned = json.optBoolean("isLineNumberPinned", false),
             lineNumberColor = json.optString("lineNumberColor", "#FF000000"),
             lineDividerColor = json.optString("lineDividerColor", "#A0888888"),
-            editorTextColor = json.optString("editorTextColor", "auto")
+            editorTextColor = json.optString("editorTextColor", "auto"),
+            floatMenuBackgroundColor = json.optString("floatMenuBackgroundColor", "#FFFFFFFF"),
+            floatMenuOrder = json.optString("floatMenuOrder", "select_all,cut,copy,paste").split(",").filter { it != "long_select" }.joinToString(","),
+            floatMenuVisible = json.optString("floatMenuVisible", "select_all,cut,copy,paste").split(",").filter { it != "long_select" }.joinToString(","),
+            floatMenuTriggerDoubleTap = json.optBoolean("floatMenuTriggerDoubleTap", true),
+            floatMenuTriggerLongPress = json.optBoolean("floatMenuTriggerLongPress", true)
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -756,7 +797,12 @@ class EditorViewModel : ViewModel() {
                 isLineNumberPinned = json.optBoolean("isLineNumberPinned", _uiState.value.isLineNumberPinned),
                 lineNumberColor = json.optString("lineNumberColor", _uiState.value.lineNumberColor),
                 lineDividerColor = json.optString("lineDividerColor", _uiState.value.lineDividerColor),
-                editorTextColor = json.optString("editorTextColor", _uiState.value.editorTextColor)
+                editorTextColor = json.optString("editorTextColor", _uiState.value.editorTextColor),
+                floatMenuBackgroundColor = json.optString("floatMenuBackgroundColor", _uiState.value.floatMenuBackgroundColor),
+                floatMenuOrder = json.optString("floatMenuOrder", _uiState.value.floatMenuOrder),
+                floatMenuVisible = json.optString("floatMenuVisible", _uiState.value.floatMenuVisible),
+                floatMenuTriggerDoubleTap = json.optBoolean("floatMenuTriggerDoubleTap", _uiState.value.floatMenuTriggerDoubleTap),
+                floatMenuTriggerLongPress = json.optBoolean("floatMenuTriggerLongPress", _uiState.value.floatMenuTriggerLongPress)
             )
             saveSettings(context)
             true

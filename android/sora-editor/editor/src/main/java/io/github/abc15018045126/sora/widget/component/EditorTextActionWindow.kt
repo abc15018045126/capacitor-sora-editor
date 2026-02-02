@@ -30,7 +30,6 @@ class EditorTextActionWindow(editor: CodeEditor) :
     private val pasteBtn: ImageButton
     private val copyBtn: ImageButton
     private val cutBtn: ImageButton
-    private val longSelectBtn: ImageButton
     private val rootView: View
     private val handler: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = editor.touchHandler!!
 
@@ -38,6 +37,7 @@ class EditorTextActionWindow(editor: CodeEditor) :
     private var lastScroll: Long = 0
     private var lastPosition: Int = -1
     private var lastCause: Int = 0
+    private var lastActionTime: Long = 0
     override var isEnabled = true
         set(value) {
             field = value
@@ -59,14 +59,12 @@ class EditorTextActionWindow(editor: CodeEditor) :
         selectAllBtn = root.findViewById(R.id.panel_btn_select_all)
         cutBtn = root.findViewById(R.id.panel_btn_cut)
         copyBtn = root.findViewById(R.id.panel_btn_copy)
-        longSelectBtn = root.findViewById(R.id.panel_btn_long_select)
         pasteBtn = root.findViewById(R.id.panel_btn_paste)
 
         selectAllBtn.setOnClickListener(this)
         cutBtn.setOnClickListener(this)
         copyBtn.setOnClickListener(this)
         pasteBtn.setOnClickListener(this)
-        longSelectBtn.setOnClickListener(this)
 
         applyColorScheme()
         setContentView(root)
@@ -80,24 +78,27 @@ class EditorTextActionWindow(editor: CodeEditor) :
         btn.colorFilter = PorterDuffColorFilter(color, PorterDuff.Mode.SRC_ATOP)
     }
 
-    private fun applyColorScheme() {
+    fun applyColorScheme() {
         val gd = GradientDrawable()
         gd.cornerRadius = 5 * editor.dpUnit
-        gd.setColor(editor.colorScheme.getColor(EditorColorScheme.TEXT_ACTION_WINDOW_BACKGROUND))
+        try {
+            gd.setColor(android.graphics.Color.parseColor(editor.floatMenuBackgroundColor))
+        } catch (e: Exception) {
+            gd.setColor(editor.colorScheme.getColor(EditorColorScheme.TEXT_ACTION_WINDOW_BACKGROUND))
+        }
         rootView.background = gd
         val color = editor.colorScheme.getColor(EditorColorScheme.TEXT_ACTION_WINDOW_ICON_COLOR)
         applyColorFilter(selectAllBtn, color)
         applyColorFilter(cutBtn, color)
         applyColorFilter(copyBtn, color)
         applyColorFilter(pasteBtn, color)
-        applyColorFilter(longSelectBtn, color)
     }
 
     private fun subscribeEvents() {
         eventManager.subscribeAlways(SelectionChangeEvent::class.java, this::onSelectionChange)
         eventManager.subscribeAlways(ScrollEvent::class.java, this::onEditorScroll)
         eventManager.subscribeAlways(HandleStateChangeEvent::class.java, this::onHandleStateChange)
-        eventManager.subscribeAlways(LongPressEvent::class.java, this::onEditorLongPress)
+        eventManager.subscribeAlways(EditorKeyEvent::class.java, this::onEditorKey)
         eventManager.subscribeAlways(EditorFocusChangeEvent::class.java, this::onEditorFocusChange)
         eventManager.subscribeAlways(EditorReleaseEvent::class.java, this::onEditorRelease)
         eventManager.subscribeAlways(ColorSchemeUpdateEvent::class.java, this::onEditorColorChange)
@@ -108,9 +109,11 @@ class EditorTextActionWindow(editor: CodeEditor) :
         applyColorScheme()
     }
 
-    private fun onEditorFocusChange(event: EditorFocusChangeEvent) {
-        if (!event.isGainFocus) {
-            dismiss()
+    private fun onEditorKey(event: EditorKeyEvent) {
+        if (event.keyCode == android.view.KeyEvent.KEYCODE_BACK && event.eventType == EditorKeyEvent.Type.DOWN) {
+            if (editor.cursor.isSelected() || editor.isInLongSelect) {
+                lastActionTime = System.currentTimeMillis()
+            }
         }
     }
 
@@ -122,14 +125,9 @@ class EditorTextActionWindow(editor: CodeEditor) :
         isEnabled = false
     }
 
-    private fun onEditorLongPress(event: LongPressEvent) {
-        if (editor.cursor.isSelected() && lastCause == SelectionChangeEvent.CAUSE_SEARCH) {
-            val idx = event.index
-            if (idx >= editor.cursor.left && idx <= editor.cursor.right) {
-                lastCause = 0
-                displayWindow()
-            }
-            event.intercept(InterceptTarget.TARGET_EDITOR)
+    private fun onEditorFocusChange(event: EditorFocusChangeEvent) {
+        if (!event.isGainFocus) {
+            dismiss()
         }
     }
 
@@ -149,6 +147,9 @@ class EditorTextActionWindow(editor: CodeEditor) :
             && event.handleType == HandleStateChangeEvent.HANDLE_TYPE_INSERT
             && !event.isHeld
         ) {
+            if (System.currentTimeMillis() - lastActionTime < 300) {
+                return
+            }
             displayWindow()
             // Also, post to hide the window on handle disappearance
             // Also, post to hide the window on handle disappearance
@@ -170,6 +171,12 @@ class EditorTextActionWindow(editor: CodeEditor) :
     }
 
     private fun onSelectionChange(event: SelectionChangeEvent) {
+        if (System.currentTimeMillis() - lastActionTime < 300) {
+            if (!event.isSelected) {
+                dismiss()
+                return
+            }
+        }
         if (handler.hasAnyHeldHandle() || event.cause == SelectionChangeEvent.CAUSE_DEAD_KEYS) {
             return
         }
@@ -183,13 +190,19 @@ class EditorTextActionWindow(editor: CodeEditor) :
             || event.cause == SelectionChangeEvent.CAUSE_SEARCH || event.cause == SelectionChangeEvent.CAUSE_UNKNOWN
         ) {
             // Always post show. See #193
-            if (event.cause != SelectionChangeEvent.CAUSE_SEARCH) {
+            val shouldShow = when (event.cause) {
+                SelectionChangeEvent.CAUSE_SEARCH -> false
+                SelectionChangeEvent.CAUSE_LONG_PRESS -> editor.floatMenuTriggerLongPress
+                SelectionChangeEvent.CAUSE_DOUBLE_TAP -> editor.floatMenuTriggerDoubleTap
+                else -> true
+            }
+
+            if (shouldShow) {
                 io.github.abc15018045126.sora.util.EditorHandler.post {
-                   if (editor.isReleased) return@post
-                   displayWindow()
+                    if (editor.isReleased) return@post
+                    displayWindow()
                 }
             } else {
-
                 dismiss()
             }
             lastPosition = -1
@@ -279,16 +292,57 @@ class EditorTextActionWindow(editor: CodeEditor) :
     }
 
     /**
-     * Update the state of paste button
+     * Update buttons and ordering
      */
     private fun updateBtnState() {
+        val visibleList = editor.floatMenuVisible.split(",")
+        val orderList = editor.floatMenuOrder.split(",")
+        
+        val btnMap = mapOf(
+            "select_all" to selectAllBtn,
+            "cut" to cutBtn,
+            "copy" to copyBtn,
+            "paste" to pasteBtn
+        )
+
+        // Visibility and basic state
         pasteBtn.isEnabled = editor.hasClip()
-        copyBtn.visibility = if (editor.cursor.isSelected()) View.VISIBLE else View.GONE
-        pasteBtn.visibility = if (editor.isEditable) View.VISIBLE else View.GONE
-        cutBtn.visibility =
-            if (editor.cursor.isSelected() && editor.isEditable) View.VISIBLE else View.GONE
-        longSelectBtn.visibility =
-            if (!editor.cursor.isSelected() && editor.isEditable) View.VISIBLE else View.GONE
+        
+        btnMap.forEach { (key, btn) ->
+            val isUserVisible = visibleList.contains(key)
+            val isContextVisible = when(key) {
+                "copy" -> editor.cursor.isSelected()
+                "paste" -> editor.isEditable
+                "cut" -> editor.cursor.isSelected() && editor.isEditable
+                "select_all" -> true
+                else -> true
+            }
+            btn.visibility = if (isUserVisible && isContextVisible) View.VISIBLE else View.GONE
+        }
+
+        // Ordering Logic (Assuming rootView is a ViewGroup)
+        if (rootView is ViewGroup) {
+            val rootGroup = rootView as ViewGroup
+            // Collect all views currently in the group
+            val currentViews = mutableListOf<View>()
+            for (i in 0 until rootGroup.childCount) {
+                currentViews.add(rootGroup.getChildAt(i))
+            }
+            
+            // Re-add them in order
+            rootGroup.removeAllViews()
+            orderList.forEach { key ->
+                btnMap[key]?.let { btn ->
+                    if (currentViews.contains(btn)) {
+                        rootGroup.addView(btn)
+                        currentViews.remove(btn)
+                    }
+                }
+            }
+            // Add any remaining views (that might not be in our btnMap)
+            currentViews.forEach { rootGroup.addView(it) }
+        }
+
         rootView.measure(
             View.MeasureSpec.makeMeasureSpec(1000000, View.MeasureSpec.AT_MOST),
             View.MeasureSpec.makeMeasureSpec(100000, View.MeasureSpec.AT_MOST)
@@ -312,7 +366,9 @@ class EditorTextActionWindow(editor: CodeEditor) :
         if (id == R.id.panel_btn_select_all) {
             editor.selectAll()
             return
-        } else if (id == R.id.panel_btn_cut) {
+        }
+        lastActionTime = System.currentTimeMillis()
+        if (id == R.id.panel_btn_cut) {
                 editor.cutText()
         } else if (id == R.id.panel_btn_paste) {
             editor.pasteText()
@@ -320,8 +376,6 @@ class EditorTextActionWindow(editor: CodeEditor) :
         } else if (id == R.id.panel_btn_copy) {
             editor.copyText()
             editor.setSelection(editor.cursor.rightLine, editor.cursor.rightColumn)
-        } else if (id == R.id.panel_btn_long_select) {
-            editor.beginLongSelect()
         }
         dismiss()
     }

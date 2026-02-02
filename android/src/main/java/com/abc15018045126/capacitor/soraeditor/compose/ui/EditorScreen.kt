@@ -230,7 +230,12 @@ fun SoraEditorView(
     isLineNumberPinned: Boolean = false,
     lineNumberColor: String = "#FF000000",
     lineDividerColor: String = "#A0888888",
-    editorTextColor: String = "auto"
+    editorTextColor: String = "auto",
+    floatMenuBackgroundColor: String = "#FFFFFFFF",
+    floatMenuOrder: String = "select_all,cut,copy,paste",
+    floatMenuVisible: String = "select_all,cut,copy,paste",
+    floatMenuTriggerDoubleTap: Boolean = true,
+    floatMenuTriggerLongPress: Boolean = true
 ) {
     var editorInstance by remember { mutableStateOf<CodeEditor?>(null) }
     
@@ -252,6 +257,12 @@ fun SoraEditorView(
     var lastAppliedIsLineNumberPinned by remember { mutableStateOf<Boolean?>(null) }
     var lastAppliedLineNumberColor by remember { mutableStateOf("") }
     var lastAppliedLineDividerColor by remember { mutableStateOf("") }
+    var lastAppliedEditorTextColor by remember { mutableStateOf("") }
+    var lastAppliedFloatMenuBackgroundColor by remember { mutableStateOf("") }
+    var lastAppliedFloatMenuOrder by remember { mutableStateOf("") }
+    var lastAppliedFloatMenuVisible by remember { mutableStateOf("") }
+    var lastAppliedFloatMenuTriggerDoubleTap by remember { mutableStateOf<Boolean?>(null) }
+    var lastAppliedFloatMenuTriggerLongPress by remember { mutableStateOf<Boolean?>(null) }
 
     // Ensure we always have the latest callbacks even if factory is not re-run
     val currentOnTap by rememberUpdatedState(onTap)
@@ -541,6 +552,27 @@ fun SoraEditorView(
                     view.colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, android.graphics.Color.parseColor(editorTextColor))
                 }
             } catch (e: Exception) {}
+
+            if (lastAppliedFloatMenuBackgroundColor != floatMenuBackgroundColor) {
+                view.floatMenuBackgroundColor = floatMenuBackgroundColor
+                lastAppliedFloatMenuBackgroundColor = floatMenuBackgroundColor
+            }
+            if (lastAppliedFloatMenuOrder != floatMenuOrder) {
+                view.floatMenuOrder = floatMenuOrder
+                lastAppliedFloatMenuOrder = floatMenuOrder
+            }
+            if (lastAppliedFloatMenuVisible != floatMenuVisible) {
+                view.floatMenuVisible = floatMenuVisible
+                lastAppliedFloatMenuVisible = floatMenuVisible
+            }
+            if (lastAppliedFloatMenuTriggerDoubleTap != floatMenuTriggerDoubleTap) {
+                view.floatMenuTriggerDoubleTap = floatMenuTriggerDoubleTap
+                lastAppliedFloatMenuTriggerDoubleTap = floatMenuTriggerDoubleTap
+            }
+            if (lastAppliedFloatMenuTriggerLongPress != floatMenuTriggerLongPress) {
+                view.floatMenuTriggerLongPress = floatMenuTriggerLongPress
+                lastAppliedFloatMenuTriggerLongPress = floatMenuTriggerLongPress
+            }
             
             // Update font family
             if (lastAppliedFontFamily != fontFamily) {
@@ -868,7 +900,12 @@ fun EditorScreen(
                         isLineNumberRightOfDivider = uiState.isLineNumberRightOfDivider,
                         lineNumberColor = uiState.lineNumberColor,
                         lineDividerColor = uiState.lineDividerColor,
-                        editorTextColor = uiState.editorTextColor
+                        editorTextColor = uiState.editorTextColor,
+                        floatMenuBackgroundColor = uiState.floatMenuBackgroundColor,
+                        floatMenuOrder = uiState.floatMenuOrder,
+                        floatMenuVisible = uiState.floatMenuVisible,
+                        floatMenuTriggerDoubleTap = uiState.floatMenuTriggerDoubleTap,
+                        floatMenuTriggerLongPress = uiState.floatMenuTriggerLongPress
                     )
                 }
                 
@@ -1323,6 +1360,71 @@ fun EditorSettingsScreen(
                     SettingsSwitchItem("正则表达式", "默认启用正则匹配", uiState.searchAsRegExp) { viewModel.setSearchAsRegExp(localContext, it) }
                     SettingsSwitchItem("全词匹配", "默认启用全词匹配", uiState.searchWholeWord) { viewModel.setSearchWholeWord(localContext, it) }
                     SettingsSwitchItem("区分大小写", "默认区分大小写", uiState.searchMatchCase) { viewModel.setSearchMatchCase(localContext, it) }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("浮动菜单配置", style = MaterialTheme.typography.titleMedium)
+                    
+                    SettingsSwitchItem("双击弹出", "双击文本选择词语并弹出菜单", uiState.floatMenuTriggerDoubleTap) { viewModel.setFloatMenuTriggerDoubleTap(localContext, it) }
+                    SettingsSwitchItem("长按弹出", "长按文本选择词语并弹出菜单", uiState.floatMenuTriggerLongPress) { viewModel.setFloatMenuTriggerLongPress(localContext, it) }
+
+                    val itemsMap = mapOf(
+                        "select_all" to "全选",
+                        "cut" to "剪切",
+                        "copy" to "复制",
+                        "paste" to "粘贴"
+                    )
+                    
+                    val orderList = uiState.floatMenuOrder.split(",").filter { itemsMap.containsKey(it) }.toMutableList()
+                    val visibleList = uiState.floatMenuVisible.split(",")
+                    
+                    orderList.forEachIndexed { index, key ->
+                        val label = itemsMap[key] ?: key
+                        val isVisible = visibleList.contains(key)
+                        
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                            // Visibility
+                            androidx.compose.material3.Checkbox(
+                                checked = isVisible,
+                                onCheckedChange = { checked ->
+                                    val newList = visibleList.toMutableList()
+                                    if (checked) newList.add(key) else newList.remove(key)
+                                    viewModel.setFloatMenuVisible(localContext, newList.joinToString(","))
+                                }
+                            )
+                            Text(label, modifier = Modifier.weight(1f))
+                            
+                            // Ordering
+                            IconButton(
+                                onClick = {
+                                    if (index > 0) {
+                                        val newList = orderList.toMutableList()
+                                        val temp = newList[index]
+                                        newList[index] = newList[index - 1]
+                                        newList[index - 1] = temp
+                                        viewModel.setFloatMenuOrder(localContext, newList.joinToString(","))
+                                    }
+                                },
+                                enabled = index > 0
+                            ) {
+                                Icon(Icons.Default.KeyboardArrowUp, null)
+                            }
+                            IconButton(
+                                onClick = {
+                                    if (index < orderList.size - 1) {
+                                        val newList = orderList.toMutableList()
+                                        val temp = newList[index]
+                                        newList[index] = newList[index + 1]
+                                        newList[index + 1] = temp
+                                        viewModel.setFloatMenuOrder(localContext, newList.joinToString(","))
+                                    }
+                                },
+                                enabled = index < orderList.size - 1
+                            ) {
+                                Icon(Icons.Default.KeyboardArrowDown, null)
+                            }
+                        }
+                    }
                 }
 
                 EditorColorSettings(uiState, viewModel, localContext)

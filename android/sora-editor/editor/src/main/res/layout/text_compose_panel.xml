@@ -66,13 +66,6 @@
 				android:src="@drawable/round_content_paste_20"
 				android:background="?android:attr/selectableItemBackground" />
 
-			<ImageButton
-				android:id="@+id/panel_btn_long_select"
-				android:layout_width="45dp"
-				android:layout_height="45dp"
-				android:contentDescription="@string/sora_editor_long_select"
-				android:src="@drawable/editor_text_select_start"
-				android:background="?android:attr/selectableItemBackground" />
 
 			<ImageButton
 				android:id="@+id/panel_btn_cut"

@@ -410,6 +410,20 @@ open class CodeEditor @JvmOverloads constructor(
     var isLineNumberPinned: Boolean = false
         private set
 
+    var floatMenuBackgroundColor: String = "#FFFFFFFF"
+        set(color) {
+            field = color
+            textActionWindow?.applyColorScheme()
+        }
+    var floatMenuOrder: String = "select_all,cut,copy,paste"
+    var floatMenuVisible: String = "select_all,cut,copy,paste"
+        set(visible) {
+            field = visible
+            textActionWindow?.displayWindow()
+        }
+    var floatMenuTriggerDoubleTap: Boolean = true
+    var floatMenuTriggerLongPress: Boolean = true
+
     private var _wordwrap = false
     var isWordwrap: Boolean
         get() = _wordwrap
@@ -4027,10 +4041,14 @@ open class CodeEditor @JvmOverloads constructor(
      * @param column The column.
      */
     fun selectWord(line: Int, column: Int) {
+        selectWord(line, column, SelectionChangeEvent.CAUSE_LONG_PRESS)
+    }
+
+    fun selectWord(line: Int, column: Int, cause: Int) {
         val range: TextRange = getWordRange(line, column)
         val start: CharPosition? = range.getStart()
         val end: CharPosition? = range.getEnd()
-        setSelectionRegion(start!!.line, start.column, end!!.line, end.column, SelectionChangeEvent.CAUSE_LONG_PRESS)
+        setSelectionRegion(start!!.line, start.column, end!!.line, end.column, cause)
     }
 
     /**

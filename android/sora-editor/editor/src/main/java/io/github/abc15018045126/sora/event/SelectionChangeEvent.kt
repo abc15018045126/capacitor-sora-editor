@@ -77,5 +77,10 @@ class SelectionChangeEvent(
          * Caused by a dead key press
          */
         const val CAUSE_DEAD_KEYS = 9
+
+        /**
+         * Double tap
+         */
+        const val CAUSE_DOUBLE_TAP = 10
     }
 }
