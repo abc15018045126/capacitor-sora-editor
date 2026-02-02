@@ -53,12 +53,47 @@ class WordwrapLayout(
             0f
         }
         width = (editor.width - editor.measureTextRegionOffset() - editor.extraMarginRight - miniGraphWidth * 2).toInt()
+        
+        // Fix initial wrap flicker: break first few lines synchronously if width is known
+        if (width > 0 && text != null && text.lineCount > 0 && (rowTable?.isEmpty() ?: true)) {
+            val previewLines = min(text.lineCount, 20)
+            val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }
+            for (i in 0 until previewLines) {
+                text.getLine(i)?.let { line ->
+                    rt.addAll(breakLine(i, line, null))
+                }
+            }
+            updateYOffsets(0)
+        }
+        
         breakAllLines()
     }
 
     private fun breakAllLines() {
         val text = this.text ?: return
         val editor = this.editor ?: return
+        
+        if (width <= 0) {
+            editor.setLayoutBusy(false)
+            return
+        }
+
+        // For small files, do all work synchronously to avoid any flicker
+        if (text.lineCount <= 200) {
+            val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }
+            rt.clear()
+            for (i in 0 until text.lineCount) {
+                text.getLine(i)?.let { line ->
+                    rt.addAll(breakLine(i, line, null))
+                }
+            }
+            updateYOffsets(0)
+            editor.setLayoutBusy(false)
+            val touch: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = editor.touchHandler!!
+            touch.scrollBy(0f, 0f)
+            return
+        }
+
         val taskCount = min(SUBTASK_COUNT, ceil(text.lineCount.toFloat() / MIN_LINE_COUNT_FOR_SUBTASK).toInt())
         val sizeEachTask = text.lineCount / taskCount
         val monitor = TaskMonitor(taskCount, object : TaskMonitor.Callback {
@@ -353,11 +388,23 @@ class WordwrapLayout(
     override val layoutHeight: Int
         get() {
             val rt = rowTable
+            val lineCount = text?.lineCount ?: 0
+            if (lineCount == 0) return 0
+            
             if (rt == null || rt.isEmpty()) {
-                return (editor?.logicalRowHeight ?: 0) * (text?.lineCount ?: 0)
+                return (editor?.logicalRowHeight ?: 0) * lineCount
             }
-            val last = rt.last()
-            return last.yOffset + last.height
+            
+            val lastRegion = rt.last()
+            if (lastRegion.line < lineCount - 1) {
+                // Calculation in progress, estimate total height to "adapt" scrollbar
+                val processedLines = lastRegion.line + 1
+                val currentHeight = lastRegion.yOffset + lastRegion.height
+                val avgLineHeight = if (processedLines > 0) currentHeight.toDouble() / processedLines else editor?.logicalRowHeight?.toDouble() ?: 0.0
+                return (currentHeight + (lineCount - processedLines) * avgLineHeight).toInt()
+            }
+            
+            return lastRegion.yOffset + lastRegion.height
         }
 
     override fun getRowTop(row: Int): Int {

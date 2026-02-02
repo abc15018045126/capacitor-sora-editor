@@ -2640,9 +2640,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         verticalScrollBarRect.setEmpty()
         horizontalScrollBarRect.setEmpty()
         val handler: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = editor.touchHandler!!
-        if (!handler
-                .shouldDrawScrollBarForTouch() && !(editor.isInMouseMode && editor.props!!.mouseModeAlwaysShowScrollbars)
-        ) {
+        if (!handler.shouldDrawScrollBarForTouch() && !(editor.isInMouseMode && editor.props!!.mouseModeAlwaysShowScrollbars)) {
             return
         }
         var percentage =

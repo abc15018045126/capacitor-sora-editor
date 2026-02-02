@@ -287,7 +287,12 @@ open class CodeEditor @JvmOverloads constructor(
     private var lastAnchorIsSelLeft = false
 
     @Volatile
-    private var layoutBusy = false
+    internal var layoutBusy = false
+
+    /**
+     * Check if the editor is currently calculating layout (e.g. word wrap)
+     */
+    fun isLayoutBusy(): Boolean = layoutBusy
 
     /**
      * @return Enabled / disabled
