@@ -401,6 +401,8 @@ open class CodeEditor @JvmOverloads constructor(
     override fun isHorizontalScrollBarEnabled(): Boolean = super.isHorizontalScrollBarEnabled()
     override fun setHorizontalScrollBarEnabled(enabled: Boolean) = super.setHorizontalScrollBarEnabled(enabled)
     private var cursorAnimation = false
+    private var initialPreviewLines = 20
+    private var isLineNumberRightOfDivider = false
 
     /**
      * @see CodeEditor.setPinLineNumber
@@ -1305,6 +1307,35 @@ open class CodeEditor @JvmOverloads constructor(
             }
             cursorAnimation = enabled
         }
+
+    /**
+     * Get the number of lines to be broken synchronously when editor is initialized or layout is changed.
+     */
+    fun getInitialPreviewLines(): Int = initialPreviewLines
+
+    /**
+     * Set the number of lines to be broken synchronously when editor is initialized or layout is changed.
+     */
+    fun setInitialPreviewLines(lines: Int) {
+        this.initialPreviewLines = lines
+    }
+
+    /**
+     * Set whether the line number is displayed on the right side of the divider.
+     */
+    fun setLineNumberRightOfDivider(isRight: Boolean) {
+        if (this.isLineNumberRightOfDivider != isRight) {
+            this.isLineNumberRightOfDivider = isRight
+            invalidate()
+        }
+    }
+
+    /**
+     * Check if the line number is displayed on the right side of the divider.
+     */
+    fun isLineNumberRightOfDivider(): Boolean {
+        return isLineNumberRightOfDivider
+    }
 
     /**
      * @see .setCursorAnimator

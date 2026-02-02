@@ -551,11 +551,25 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
             drawSideIcons(canvas, offsetX + lineNumberWidth)
             canvas.restore()
 
+            val isRightOfDivider = editor.isLineNumberRightOfDivider()
+            
+            // Draw Divider
+            val dividerX = if (isRightOfDivider) 
+                offsetX 
+            else 
+                offsetX + lineNumberWidth + sideIconWidth + editor.dividerMarginLeft
+            
             drawDivider(
                 canvas,
-                offsetX + lineNumberWidth + sideIconWidth + editor.dividerMarginLeft,
+                dividerX,
                 color.getColor(EditorColorScheme.LINE_DIVIDER)
             )
+
+            // Draw Line Numbers
+            val numberX = if (isRightOfDivider) 
+                offsetX + editor.dividerWidth + editor.dividerMarginRight + sideIconWidth
+            else 
+                offsetX
 
             canvas.save()
             canvas.clipRect(0f, stuckLineBottom, editor.width.toFloat(), editor.height.toFloat())
@@ -571,16 +585,16 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     y =
                         (editor.getRowBottom(row - 1) + editor.getRowTop(row - 1)) / 2f - (metricsLineNumber.descent - metricsLineNumber.ascent) / 2f - metricsLineNumber.ascent - editor.offsetY.toFloat()
                 }
-                paintOther.textAlign = AndroidPaint.Align.LEFT
+                paintOther.textAlign = editor.getLineNumberAlign()
                 paintOther.color = if (firstLn.value == currentLineNumber) color.getColor(EditorColorScheme.LINE_NUMBER_CURRENT) else lineNumberColor
                 val text =
                     (firstLn.value + 1).toString()
-                when (editor.lineNumberAlign) {
-                    AndroidPaint.Align.LEFT -> canvas.drawText(text, offsetX, y, paintOther)
-                    AndroidPaint.Align.RIGHT -> canvas.drawText(text, offsetX + lineNumberWidth, y, paintOther)
+                when (editor.getLineNumberAlign()) {
+                    AndroidPaint.Align.LEFT -> canvas.drawText(text, numberX, y, paintOther)
+                    AndroidPaint.Align.RIGHT -> canvas.drawText(text, numberX + lineNumberWidth, y, paintOther)
                     AndroidPaint.Align.CENTER -> canvas.drawText(
                         text,
-                        offsetX + (lineNumberWidth + editor.dividerMarginLeft) / 2f,
+                        numberX + (lineNumberWidth + editor.dividerMarginLeft) / 2f,
                         y,
                         paintOther
                     )
@@ -593,7 +607,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     canvas,
                     IntPair.getFirst(packed),
                     IntPair.getSecond(packed),
-                    offsetX,
+                    numberX,
                     lineNumberWidth,
                     if (IntPair.getFirst(packed) == currentLineNumber) color.getColor(EditorColorScheme.LINE_NUMBER_CURRENT) else lineNumberColor
                 )
