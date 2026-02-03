@@ -37,7 +37,11 @@ class WordwrapLayout(
         miniGraphWidth = if ((editor.nonPrintablePaintingFlags and CodeEditor.FLAG_DRAW_SOFT_WRAP) != 0) editor.renderer.miniGraphW else 0f
         width = (editor.width - editor.measureTextRegionOffset() - editor.extraMarginRight - miniGraphWidth * 2).toInt()
         if (width > 0 && text != null && text.lineCount > 0 && (rowTable?.isEmpty() ?: true)) {
-            val previewLines = if (editor.forceSyncBreakLines || oldLayout == null) min(text.lineCount, editor.getInitialPreviewLines()) else 0; val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }; val tr = TextRow(); val params = editor.renderer.createTextRowParams()
+            val limit = editor.getInitialPreviewLines()
+            val linesToMeasure = if (limit <= 0) {
+                val h = editor.height; val rh = editor.rowHeight; if (h > 0 && rh > 0) ceil(h.toFloat() / rh).toInt() + 10 else 50
+            } else limit
+            val previewLines = min(text.lineCount, linesToMeasure); val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }; val tr = TextRow(); val params = editor.renderer.createTextRowParams()
             repeat(previewLines) { text.getLine(it)?.let { line -> rt.addAll(breakLine(it, line, null, tr, params)) } }; updateYOffsets(0); editor.forceSyncBreakLines = false
         }
         breakAllLines()
@@ -45,7 +49,7 @@ class WordwrapLayout(
 
     private fun breakAllLines() {
         val text = text ?: return; val editor = editor ?: return; if (width <= 0) { editor.setLayoutBusy(false); return }
-        if (text.lineCount <= 200) {
+        if (text.lineCount <= 200 && editor.getInitialPreviewLines() > 0) {
             val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }; rt.clear(); val tr = TextRow(); val params = editor.renderer.createTextRowParams()
             repeat(text.lineCount) { text.getLine(it)?.let { ln -> rt.addAll(breakLine(it, ln, null, tr, params)) } }; updateYOffsets(0); editor.setLayoutBusy(false); editor.touchHandler!!.scrollBy(0f, 0f); return
         }
