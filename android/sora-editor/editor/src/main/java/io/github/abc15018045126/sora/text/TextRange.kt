@@ -1,42 +1,17 @@
 package io.github.abc15018045126.sora.text
 
-
 class TextRange(
     @JvmField var start: CharPosition,
     @JvmField var end: CharPosition
 ) {
+    fun getStart() = start
+    fun setStart(s: CharPosition) { start = s }
+    fun getEnd() = end
+    fun setEnd(e: CharPosition) { end = e }
 
-    fun getStart(): CharPosition {
-        return start
-    }
+    val startIndex get() = start.index
+    val endIndex get() = end.index
 
-    fun setStart(start: CharPosition) {
-        this.start = start
-    }
-
-    fun getEnd(): CharPosition {
-        return end
-    }
-
-    fun setEnd(end: CharPosition) {
-        this.end = end
-    }
-
-    val startIndex: Int
-        get() = start.index
-
-    val endIndex: Int
-        get() = end.index
-
-
-    fun isPositionInside(pos: CharPosition): Boolean {
-        return pos.index >= start.index && pos.index < end.index
-    }
-
-    override fun toString(): String {
-        return "TextRange{" +
-                "start=" + start +
-                ", end=" + end +
-                '}'
-    }
+    fun isPositionInside(pos: CharPosition) = pos.index in start.index until end.index
+    override fun toString() = "TextRange{start=$start, end=$end}"
 }
