@@ -11,29 +11,24 @@ import android.text.TextPaint
 import kotlin.math.max
 import kotlin.math.min
 
-
 class TextLayoutHelper private constructor() {
-
-    private val text: Editable = Editable.Factory.getInstance().newEditable("")
+    private val text = Editable.Factory.getInstance().newEditable("")
     private val layout: DynamicLayout
 
     init {
+        val paint = TextPaint()
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             @Suppress("DEPRECATION")
-            layout = DynamicLayout(
-                text, TextPaint(), Int.MAX_VALUE / 2,
-                Layout.Alignment.ALIGN_NORMAL, 0f, 0f, true
-            )
+            layout = DynamicLayout(text, paint, Int.MAX_VALUE / 2, Layout.Alignment.ALIGN_NORMAL, 0f, 0f, true)
             try {
                 @SuppressLint("DiscouragedPrivateApi", "SoonBlockedPrivateApi")
-                val field = Layout::class.java.getDeclaredField("mTextDir")
-                field.isAccessible = true
-                field.set(layout, TextDirectionHeuristics.FIRSTSTRONG_LTR)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+                Layout::class.java.getDeclaredField("mTextDir").apply {
+                    isAccessible = true
+                    set(layout, TextDirectionHeuristics.FIRSTSTRONG_LTR)
+                }
+            } catch (e: Exception) {}
         } else {
-            layout = DynamicLayout.Builder.obtain(text, TextPaint(), Int.MAX_VALUE / 2)
+            layout = DynamicLayout.Builder.obtain(text, paint, Int.MAX_VALUE / 2)
                 .setIncludePad(true)
                 .setLineSpacing(0f, 0f)
                 .setTextDirection(TextDirectionHeuristics.FIRSTSTRONG_LTR)
@@ -42,53 +37,28 @@ class TextLayoutHelper private constructor() {
         }
     }
 
+    fun getCurPosLeft(offset: Int, s: CharSequence): Int = calculatePos(offset, s) { Selection.moveLeft(text, layout) }
 
-    fun getCurPosLeft(offset: Int, s: CharSequence): Int {
+    fun getCurPosRight(offset: Int, s: CharSequence): Int = calculatePos(offset, s) { Selection.moveRight(text, layout) }
+
+    private inline fun calculatePos(offset: Int, s: CharSequence, moveAction: () -> Unit): Int {
         val left = max(0, offset - CHAR_FACTOR)
-        var index = offset - left
         text.append(s, left, min(s.length, offset + CHAR_FACTOR + 1))
-        index = min(index, text.length)
-        Selection.setSelection(text, index)
+        Selection.setSelection(text, min(offset - left, text.length))
         try {
-            Selection.moveLeft(text, layout)
-            index = Selection.getSelectionStart(text)
+            moveAction()
+            return left + Selection.getSelectionStart(text)
         } finally {
             text.clear()
             Selection.removeSelection(text)
         }
-        return left + index
-    }
-
-
-    fun getCurPosRight(offset: Int, s: CharSequence): Int {
-        val left = max(0, offset - CHAR_FACTOR)
-        var index = offset - left
-        text.append(s, left, min(s.length, offset + CHAR_FACTOR + 1))
-        index = min(index, text.length)
-        Selection.setSelection(text, index)
-        try {
-            Selection.moveRight(text, layout)
-            index = Selection.getSelectionStart(text)
-        } finally {
-            text.clear()
-            Selection.removeSelection(text)
-        }
-        return left + index
     }
 
     companion object {
         private val sLocal = ThreadLocal<TextLayoutHelper>()
         private const val CHAR_FACTOR = 64
 
-
         @JvmStatic
-        fun get(): TextLayoutHelper {
-            var v = sLocal.get()
-            if (v == null) {
-                v = TextLayoutHelper()
-                sLocal.set(v)
-            }
-            return v!!
-        }
+        fun get(): TextLayoutHelper = sLocal.get() ?: TextLayoutHelper().also { sLocal.set(it) }
     }
 }
