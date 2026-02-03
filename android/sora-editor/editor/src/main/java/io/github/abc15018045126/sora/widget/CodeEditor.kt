@@ -1470,6 +1470,10 @@ open class CodeEditor @JvmOverloads constructor(
 
         val oldTextSize = this.textSizePx
         renderer.setTextSizePxDirect(size)
+        val layout = _layout
+        if (layout is io.github.abc15018045126.sora.widget.layout.WordwrapLayout) {
+            layout.refreshHeights()
+        }
         dispatchEvent(TextSizeChangeEvent(this, oldTextSize, size))
     }
 

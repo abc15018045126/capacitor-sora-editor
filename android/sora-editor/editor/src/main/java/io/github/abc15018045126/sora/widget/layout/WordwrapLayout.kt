@@ -202,6 +202,23 @@ class WordwrapLayout(
         }
     }
 
+    /**
+     * Refresh cached heights and y-offsets of all rows.
+     * Use this when font size is changed during scaling to avoid overlapping text.
+     */
+    fun refreshHeights() {
+        val rt = rowTable ?: return
+        val editor = this.editor ?: return
+        val lh = editor.logicalRowHeight
+        val wh = editor.wrapRowHeight
+        for (i in rt.indices) {
+            val region = rt[i]
+            val isTrailing = i == rt.size - 1 || rt[i + 1].line != region.line
+            region.height = if (isTrailing) lh else wh
+        }
+        updateYOffsets(0)
+    }
+
     private fun breakLine(line: Int, sequence: ContentLine, paint: Paint?): List<RowRegion> {
         val editor = this.editor ?: return emptyList()
         val p = paint ?: Paint(editor.isRenderFunctionCharacters).apply {
