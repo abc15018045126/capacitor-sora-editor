@@ -40,7 +40,7 @@ internal class CursorBlink(val editor: CodeEditor, p: Int) : Runnable, EventRece
                 if (c != null) {
                     val left = c.left()
                     buffer = editor.layout?.getCharLayoutOffset(left.line, left.column, buffer)
-                    if (!c.isSelected && isSelectionVisible()) editor.postInvalidate()
+                    if (!c.isSelected() && isSelectionVisible()) editor.postInvalidate()
                 }
             } else visibility = true
             editor.postDelayedInLifecycle(this, period.toLong())
