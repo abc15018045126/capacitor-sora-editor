@@ -13,11 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
-/**
- * Asynchronous base implementation of [IncrementalAnalyzeManager]
- *
- * @author abc15018045126
- */
+
 abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), IncrementalAnalyzeManager<S, T> {
 
     private var thread: LooperThread? = null
@@ -25,9 +21,7 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
     @Volatile
     private var runCount: Long = 0
 
-    /**
-     * Run the given code block only when the receiver is currently non-null
-     */
+
     protected fun withReceiver(consumer: (StyleReceiver) -> Unit) {
         val r = receiver
         if (r != null) {
@@ -113,11 +107,7 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
         receiver?.updateStyles(this, styles, SequenceUpdateRange(startLine, endLine))
     }
 
-    /**
-     * Compute code blocks
-     *
-     * @param text The text. can be safely accessed.
-     */
+
     abstract fun computeBlocks(text: Content, delegate: CodeBlockAnalyzeDelegate): List<CodeBlock>?
 
     fun getManagedStyles(): Styles {
@@ -282,9 +272,7 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
 
     private class TextModification(val start: Long, val end: Long, val changedText: CharSequence?)
 
-    /**
-     * Helper class for analyzing code block
-     */
+
     inner class CodeBlockAnalyzeDelegate internal constructor(private val thread: LooperThread) {
         @JvmField
         var suppressSwitch: Int = 0
@@ -379,7 +367,7 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
                                     IntPair.getFirst(mod.end), IntPair.getSecond(mod.end)
                                 )
                                 var state = if (startLine == 0) initialState else states[startLine - 1].state
-                                // Remove states
+
                                 if (endLine >= startLine + 1) {
                                     val subList = states.subList(startLine + 1, endLine + 1)
                                     for (stLineTokenizeResult in subList) {
@@ -415,7 +403,7 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
                                 var line = startLine
                                 val mdf = spans?.modify()
                                 mdf?.let {
-                                    // Add Lines
+
                                     while (line <= endLine) {
                                         val res = tokenizeLine(currentShadowed.getLine(line), state, line)
                                         if (line == startLine) {
@@ -432,7 +420,7 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
                                         state = res.state
                                         line++
                                     }
-                                    // line = end.line + 1, check whether the state equals
+
                                     var flag = true
                                     while (line < currentShadowed.lineCount && flag) {
                                         val res = tokenizeLine(currentShadowed.getLine(line), state, line)
@@ -452,7 +440,7 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
                                 }
                             }
                         }
-                        // Do not update incomplete code blocks
+
                         val currentShadowed = shadowed!!
                         val blocks = computeBlocks(currentShadowed, delegate)
                         styles?.let {
@@ -484,7 +472,7 @@ abstract class AsyncIncrementalAnalyzeManager<S, T> : BaseAnalyzeManager(), Incr
                     msg.recycle()
                 }
             } catch (e: InterruptedException) {
-                // ignored
+
             }
         }
     }

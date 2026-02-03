@@ -11,30 +11,26 @@ import kotlin.math.min
 class SingleCharacterWidths(private val tabWidth: Int) {
     @JvmField
     val widths: FloatArray = FloatArray(10)
-    
+
     @JvmField
     val codePointWidths: SparseArray<Float> = SparseArray()
-    
+
     @JvmField
     val buffer: CharArray = CharArray(10)
-    
+
     private val cache: FloatArray = FloatArray(65536)
     private val cacheScaled: LongArray = LongArray(65536)
-    
+
     var isHandleFunctionCharacters: Boolean = false
 
-    /**
-     * Clear caches of font
-     */
+
     fun clearCache() {
         Arrays.fill(cache, 0f)
         Arrays.fill(cacheScaled, 0L)
         codePointWidths.clear()
     }
 
-    /**
-     * Measure a single character
-     */
+
     fun measureChar(ch: Char, p: Paint): Float {
         var char = ch
         var rate = 1
@@ -53,8 +49,8 @@ class SingleCharacterWidths(private val tabWidth: Int) {
 
     private fun getScaledWidth(ch: Char, p: Paint): Long {
         val code = ch.code
-        if (code >= 65536) return 0 // Should be handled by emoji/surrogate logic
-        
+        if (code >= 65536) return 0
+
         var width = cacheScaled[code]
         if (width == 0L) {
             val w = measureChar(ch, p)
@@ -64,10 +60,7 @@ class SingleCharacterWidths(private val tabWidth: Int) {
         return width
     }
 
-    /**
-     * Measure a single character
-     * @param cp Code Point
-     */
+
     fun measureCodePoint(cp: Int, p: Paint): Float {
         if (cp <= 65535) {
             return measureChar(cp.toChar(), p)
@@ -81,9 +74,7 @@ class SingleCharacterWidths(private val tabWidth: Int) {
         return width!!
     }
 
-    /*
-     * Measure text
-     */
+
     fun measureText(chars: CharArray, start: Int, end: Int, p: Paint): Float {
         return measureText(CharArrayWrapper(chars, chars.size), start, end, p)
     }
@@ -92,9 +83,7 @@ class SingleCharacterWidths(private val tabWidth: Int) {
         return measureText(str, 0, str.length, p)
     }
 
-    /**
-     * Measure text
-     */
+
     fun measureText(str: CharSequence, start: Int, end: Int, p: Paint): Float {
         if (str is ContentLine) {
             return measureText(str.backingCharArray, start, end, p)
@@ -139,12 +128,7 @@ class SingleCharacterWidths(private val tabWidth: Int) {
     }
 
     companion object {
-        /**
-         * Floating-point precision steps.
-         *
-         *
-         * Introduced to avoid accumulated floating-point errors.
-         */
+
         private const val PRECISION = 1000L
 
         @JvmStatic

@@ -65,7 +65,7 @@ class CodeSnippet(
 
         fun addPlainText(text: String): Builder {
             if (items.isNotEmpty() && items[items.size - 1] is PlainTextItem) {
-                // Merge plain texts
+
                 val item = items[items.size - 1] as PlainTextItem
                 item.text = item.text + text
                 item.setIndex(item.startIndex, item.endIndex + text.length)

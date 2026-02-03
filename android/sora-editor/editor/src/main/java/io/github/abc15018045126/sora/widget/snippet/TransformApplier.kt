@@ -9,20 +9,10 @@ import io.github.abc15018045126.sora.util.MyCharacter.isAlpha
 import java.util.Locale
 import java.util.regex.Matcher
 
-/**
- * Utility class for applying [Transform] objects
- *
- * @author abc15018045126
- */
+
 object TransformApplier {
 
-    /**
-     * Apply the given [Transform] to the text and return transform result
-     *
-     * @param text      the text to be transformed. must not be null
-     * @param transform the [Transform] object describing how to transform the text, maybe null
-     * @return the transformed text
-     */
+
     @JvmStatic
     fun doTransform(text: String, transform: Transform?): String {
         val regexp = transform?.regexp
@@ -53,13 +43,7 @@ object TransformApplier {
         return sb.toString()
     }
 
-    /**
-     * Generate text for the given region in Matcher.
-     *
-     * @param matcher          the Matcher at the requested region
-     * @param formatStringList the format descriptors
-     * @return generated(transform) text
-     */
+
     private fun applySingle(matcher: Matcher, formatStringList: List<FormatString>): CharSequence {
         val sb = StringBuilder()
         var nextUpperCase = false
@@ -90,9 +74,7 @@ object TransformApplier {
         return sb
     }
 
-    /**
-     * Convenient method for applying upper case of first character only
-     */
+
     private fun applyFirstUpperCase(text: String?, apply: Boolean): String? {
         if (apply && text != null && text.isNotEmpty() && isAlpha(text[0])) {
             return text[0].uppercaseChar().toString() + text.substring(1)

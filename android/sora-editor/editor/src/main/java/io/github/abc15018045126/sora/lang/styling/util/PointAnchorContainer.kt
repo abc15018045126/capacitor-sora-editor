@@ -1,36 +1,8 @@
-/*******************************************************************************
- *    sora-editor - the awesome code editor for Android
- *    https://github.com/abc15018045126/sora-editor
- *    Copyright (C) 2020-2025  abc15018045126
- *
- *     This library is free software; you can redistribute it and/or
- *     modify it under the terms of the GNU Lesser General Public
- *     License as published by the Free Software Foundation; either
- *     version 2.1 of the License, or (at your option) any later version.
- *
- *     This library is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *     Lesser General Public License for more details.
- *
- *     You should have received a copy of the GNU Lesser General Public
- *     License along with this library; if not, write to the Free Software
- *     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
- *     USA
- *
- *     Please contact abc15018045126 by email 2073412493@qq.com if you need
- *     additional information or have any questions
- ******************************************************************************/
+
 
 package io.github.abc15018045126.sora.lang.styling.util
 
-/**
- * Container text position based objects. The total amount of objects held by the container
- * is expected to be not very large.
- *
- * @see PointAnchoredObject
- * @author abc15018045126
- */
+
 open class PointAnchoredContainer<T : PointAnchoredObject> {
     companion object {
         val comparator = object : Comparator<PointAnchoredObject> {
@@ -141,7 +113,7 @@ open class PointAnchoredContainer<T : PointAnchoredObject> {
             if (e.line < endLine || (e.line == endLine && e.column < endColumn)) {
                 deleteEnd = index
             } else if (e.line == endLine) {
-                /* e.column >= endColumn */
+
                 val columnDelta = if (startLine == endLine) (endColumn - startColumn) else endColumn
                 e.column -= columnDelta
             } else {

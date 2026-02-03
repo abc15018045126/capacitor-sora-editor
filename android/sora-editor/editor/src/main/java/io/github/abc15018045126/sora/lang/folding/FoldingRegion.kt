@@ -2,9 +2,7 @@ package io.github.abc15018045126.sora.lang.folding
 
 import io.github.abc15018045126.sora.util.IntPair
 
-/**
- * Indicates a folding region
- */
+
 class FoldingRegion internal constructor(
     private var start: Long,
     private var end: Long

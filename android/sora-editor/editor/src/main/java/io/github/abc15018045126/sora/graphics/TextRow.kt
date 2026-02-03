@@ -35,9 +35,7 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * [TextRow] is a helper class for a single text row to shape, measure and draw.
- */
+
 class TextRow {
     private val tmpRect: RectF = RectF()
     private val tmpIndices = IntArray(4)
@@ -376,7 +374,7 @@ class TextRow {
             }
 
             fun handleText(e: RowElement) {
-                val advances = TemporaryFloatBuffer.obtain(e.endColumn - e.startColumn) // FloatArray
+                val advances = TemporaryFloatBuffer.obtain(e.endColumn - e.startColumn)
                 val runWidth = getSingleRunRunAdvancesForBreaking(
                     e.startColumn,
                     e.endColumn,
@@ -624,7 +622,7 @@ class TextRow {
             paintEnd - paintStart,
             contextStart,
             contextEnd - contextStart,
-            isRtl, // isRtl
+            isRtl,
             offset,
             width,
             params,
@@ -716,7 +714,7 @@ class TextRow {
         tmpIndices[1] = paintEnd
         tmpIndices[2] = selectionStartLocal
         tmpIndices[3] = selectionEndLocal
-        // Manual sort of 4 elements (optimized for typical selection order)
+
         var a = tmpIndices[0]
         var b = tmpIndices[1]
         var c = tmpIndices[2]
@@ -1085,7 +1083,7 @@ class TextRow {
                     break
                 }
                 if (index != terminalIndex) {
-                    // tab
+
                     if (index == ctx.targetCharOffset || (index + 1 == ctx.targetCharOffset && index + 1 == textEnd)) {
                         val advance = if (index == ctx.targetCharOffset) 0f else tabWidth
                         if (isRtl) {
@@ -1178,7 +1176,7 @@ class TextRow {
         canvas: Canvas?, offset: Float, ctx: IteratingContext
     ): Float {
         if (e == null) return 0f
-        // ReversedListView for ArrayList
+
         val visualElements = if (isRtl) ReversedListView(e) else e
         var localOffset = 0f
         for (element in visualElements) {
@@ -1200,7 +1198,7 @@ class TextRow {
         val ctx = IteratingContext()
         ctx.minOffset = minHorizontalOffset
         ctx.maxOffset = maxHorizontalOffset
-        
+
         class DrawHandler : RunElementsConsumer {
             var horizontalOffset = 0f
             var isExhausted = true

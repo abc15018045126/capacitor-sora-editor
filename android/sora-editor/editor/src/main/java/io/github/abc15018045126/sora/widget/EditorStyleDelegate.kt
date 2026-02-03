@@ -27,9 +27,9 @@ class EditorStyleDelegate(editor: CodeEditor) : StyleReceiver {
     }
 
     fun onTextChange() {
-        // Should we do this?
-        // bracketsProvider = null
-        // foundBracketPair = null
+
+
+
     }
 
     fun postUpdateBracketPair() {

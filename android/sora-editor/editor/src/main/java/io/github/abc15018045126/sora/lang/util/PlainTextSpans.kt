@@ -4,12 +4,7 @@ import io.github.abc15018045126.sora.lang.styling.EmptyReader
 import io.github.abc15018045126.sora.lang.styling.Spans
 import io.github.abc15018045126.sora.text.CharPosition
 
-/**
- * [Spans] implementation that always returns [EmptyReader] for reading spans.
- * Line count is automatically adjusted as content changes.
- *
- * @author abc15018045126
- */
+
 class PlainTextSpans(private var lineCount: Int) : Spans {
 
     fun setLineCount(lineCount: Int) {

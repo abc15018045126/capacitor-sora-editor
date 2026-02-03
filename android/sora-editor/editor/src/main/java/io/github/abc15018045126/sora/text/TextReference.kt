@@ -2,16 +2,7 @@ package io.github.abc15018045126.sora.text
 
 import java.util.Objects
 
-/**
- * Reference of a {@link CharSequence} object, which allows
- * to access the original sequence in read-only mode, and attach a
- * {@link Validator} to validate access to check whether reject the
- * read access.
- * This can be useful when reading text in multiple threads, with the ability
- * to interrupt that thread when the actual text changes.
- *
- * @author abc15018045126
- */
+
 open class TextReference(
     ref: CharSequence,
     private val start: Int,
@@ -35,9 +26,7 @@ open class TextReference(
         }
     }
 
-    /**
-     * Get original text of the reference
-     */
+
     open val reference: CharSequence
         get() = ref
 
@@ -66,7 +55,7 @@ open class TextReference(
         if (endIndex < 0 || endIndex > length) {
              throw StringIndexOutOfBoundsException(endIndex)
         }
-        
+
         validateAccess()
         return TextReference(ref, this.start + startIndex, this.start + endIndex).setValidator(validator)
     }

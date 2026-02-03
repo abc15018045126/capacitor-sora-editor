@@ -61,8 +61,8 @@ open class SegmentList<T>(private val segmentCapacity: Int = DEFAULT_SEGMENT_CAP
         var offset = 0
         var backBlock = segments[segments.size - 1]
         var backOffset = size - backBlock.size
-        
-        // Iterating from both ends
+
+
         var i = 0
         var j = segments.size - 1
         while (i <= j) {
@@ -154,7 +154,7 @@ open class SegmentList<T>(private val segmentCapacity: Int = DEFAULT_SEGMENT_CAP
         while (toIndex - offset > 0 && index < segments.size) {
             val segLength = seg.size
             if (fromIndex <= offset && toIndex >= offset + segLength) {
-                // Remove the segment
+
                 segments.removeAt(index)
                 seg.release()
             } else {

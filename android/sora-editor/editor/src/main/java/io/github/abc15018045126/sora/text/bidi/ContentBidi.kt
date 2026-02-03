@@ -6,11 +6,7 @@ import io.github.abc15018045126.sora.text.ContentListener
 import io.github.abc15018045126.sora.util.IntPair
 import java.util.Arrays
 
-/**
- * Companion for [Content] to manage line directions
- *
- * @author abc15018045126
- */
+
 class ContentBidi(content: Content) : ContentListener {
 
     private val entries = arrayOfNulls<DirectionsEntry>(MAX_BIDI_CACHE_ENTRY_COUNT)

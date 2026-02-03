@@ -3,9 +3,7 @@ package io.github.abc15018045126.sora.util
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * From Java java.lang.Integer
- */
+
 object Numbers {
 
     val DigitTens: CharArray = charArrayOf(
@@ -63,7 +61,7 @@ object Numbers {
             ii = -ii
         }
 
-        // Generate two digits per iteration
+
         while (ii <= -100) {
             q = ii / 100
             r = (q * 100) - ii
@@ -72,7 +70,7 @@ object Numbers {
             buf[--charPos] = DigitTens[r]
         }
 
-        // We know there are at most two digits left at this point.
+
         buf[--charPos] = DigitOnes[-ii]
         if (ii < -9) {
             buf[--charPos] = DigitTens[-ii]
@@ -83,14 +81,7 @@ object Numbers {
         }
     }
 
-    /**
-     * Clear flag in flags
-     * The flag must be power of two
-     *
-     * @param flags Flags to filter
-     * @param flag  The flag to clear
-     * @return Cleared flags
-     */
+
     @JvmStatic
     fun clearBit(flags: Int, flag: Int): Int {
         return if ((flags and flag) != 0) flags xor flag else flags

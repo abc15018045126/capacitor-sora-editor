@@ -5,16 +5,10 @@ import java.text.Bidi
 import io.github.abc15018045126.sora.util.IntPair
 import io.github.abc15018045126.sora.util.TemporaryCharBuffer
 
-/**
- * Text bidirectional utils. Some codes are from AOSP
- *
- * @author abc15018045126
- */
+
 object TextBidi {
 
-    /**
-     * Compute text directions for the given text
-     */
+
     @JvmStatic
     fun getDirections(text: CharSequence): Directions {
         val len = text.length
@@ -35,22 +29,17 @@ object TextBidi {
     @JvmStatic
     fun couldAffectRtl(c: Char): Boolean {
         val i = c.code
-        return (i in 0x0590..0x08FF) ||  // RTL scripts
-                i == 0x200E ||  // Bidi format character
-                i == 0x200F ||  // Bidi format character
-                (i in 0x202A..0x202E) ||  // Bidi format characters
-                (i in 0x2066..0x2069) ||  // Bidi format characters
-                (i in 0xD800..0xDFFF) ||  // Surrogate pairs
-                (i in 0xFB1D..0xFDFF) ||  // Hebrew and Arabic presentation forms
-                (i in 0xFE70..0xFEFE)    // Arabic presentation forms
+        return (i in 0x0590..0x08FF) ||
+                i == 0x200E ||
+                i == 0x200F ||
+                (i in 0x202A..0x202E) ||
+                (i in 0x2066..0x2069) ||
+                (i in 0xD800..0xDFFF) ||
+                (i in 0xFB1D..0xFDFF) ||
+                (i in 0xFE70..0xFEFE)
     }
 
-    /**
-     * Returns true if there is no character present that may potentially affect RTL layout.
-     * Since this calls couldAffectRtl() above, it's also quite conservative, in the way that
-     * it may return 'false' (needs bidi) although careful consideration may tell us it should
-     * return 'true' (does not need bidi).
-     */
+
     @JvmStatic
     fun doesNotNeedBidi(text: CharSequence): Boolean {
         if (text is BidiRequirementChecker) {

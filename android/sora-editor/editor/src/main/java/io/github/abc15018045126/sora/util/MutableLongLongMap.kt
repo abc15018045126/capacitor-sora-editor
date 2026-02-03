@@ -16,7 +16,7 @@ class MutableLongLongMap {
     fun clear() {
         data.clear()
     }
-    
+
     fun containsKey(key: Long): Boolean {
         return data.containsKey(key)
     }

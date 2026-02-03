@@ -11,7 +11,7 @@ class BufferedDrawPoints {
     private var offsetY: Float = 0f
 
     fun drawPoint(cx: Float, cy: Float) {
-        // Check buffer size and grow
+
         if (points.size < (pointCount + 1) * 2) {
             val newBuffer = FloatArray(points.size shl 1)
             System.arraycopy(points, 0, newBuffer, 0, pointCount * 2)

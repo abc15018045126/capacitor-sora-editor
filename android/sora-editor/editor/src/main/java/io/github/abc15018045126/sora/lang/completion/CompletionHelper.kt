@@ -4,17 +4,10 @@ import io.github.abc15018045126.sora.text.CharPosition
 import io.github.abc15018045126.sora.text.ContentReference
 import io.github.abc15018045126.sora.widget.component.EditorAutoCompletion
 
-/**
- * Helper class for completion
- *
- * @author abc15018045126
- */
+
 object CompletionHelper {
 
-    /**
-     * Searches backward on the line, with the given checker to check chars.
-     * Returns the longest text that matches the requirement
-     */
+
     @JvmStatic
     fun computePrefix(ref: ContentReference, pos: CharPosition, checker: PrefixChecker): String {
         var begin = pos.column
@@ -28,10 +21,7 @@ object CompletionHelper {
         return line.substring(begin, pos.column)
     }
 
-    /**
-     * Check whether the thread is abandoned by editor.
-     * Return true if it is cancelled by editor.
-     */
+
     @JvmStatic
     fun checkCancelled(): Boolean {
         val thread = Thread.currentThread()

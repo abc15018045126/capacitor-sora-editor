@@ -12,21 +12,19 @@ import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-/**
- * Base class for formatting code in another thread.
- */
+
 abstract class AsyncFormatter : Formatter {
 
     private val lock = ReentrantLock()
     private val condition: Condition = lock.newCondition()
     private var receiver: WeakReference<Formatter.FormatResultReceiver>? = null
-    
+
     @Volatile
     private var text: Content? = null
-    
+
     @Volatile
     private var range: TextRange? = null
-    
+
     @Volatile
     private var cursorRange: TextRange? = null
 
@@ -38,7 +36,7 @@ abstract class AsyncFormatter : Formatter {
 
     private fun run() {
         if (thread == null || thread?.isAlive == false) {
-            // Create new thread
+
             Log.v(LOG_TAG, "Starting a new thread for formatting")
             thread = FormattingThread().apply {
                 isDaemon = true
@@ -46,7 +44,7 @@ abstract class AsyncFormatter : Formatter {
                 start()
             }
         } else {
-            // Wake up thread
+
             Log.v(LOG_TAG, "Waking up thread for formatting")
             lock.withLock {
                 condition.signal()
@@ -72,24 +70,12 @@ abstract class AsyncFormatter : Formatter {
         run()
     }
 
-    /**
-     * like [Formatter.format], but run in background thread.
-     *
-     * Implementation of this method can edit text directly to generate formatted code.
-     *
-     * @return the new cursor range to be applied to the text
-     */
+
     @WorkerThread
     @Nullable
     abstract fun formatAsync(@NonNull text: Content, @NonNull cursorRange: TextRange): TextRange?
 
-    /**
-     * like [Formatter.formatRegion], but run in background thread
-     *
-     * Implementation of this method can edit text directly to generate formatted code.
-     *
-     * @return the new cursor range to be applied to the text
-     */
+
     @WorkerThread
     @Nullable
     abstract fun formatRegionAsync(@NonNull text: Content, @NonNull rangeToFormat: TextRange, @NonNull cursorRange: TextRange): TextRange?
@@ -146,10 +132,10 @@ abstract class AsyncFormatter : Formatter {
                         newRange = formatRegionAsync(currentText, currentRange, currentCursorRange)
                     }
                     sendUpdate(currentText, newRange)
-                    // un-refer immediately
+
                     text = null
                     range = null
-                    // Wait for next time
+
                     try {
                         condition.await()
                     } finally {

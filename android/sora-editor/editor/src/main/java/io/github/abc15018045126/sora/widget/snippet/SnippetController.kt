@@ -1,26 +1,4 @@
-/*******************************************************************************
- *    sora-editor - the awesome code editor for Android
- *    https://github.com/abc15018045126/sora-editor
- *    Copyright (C) 2020-2024  abc15018045126
- *
- *     This library is free software; you can redistribute it and/or
- *     modify it under the terms of the GNU Lesser General Public
- *     License as published by the Free Software Foundation; either
- *     version 2.1 of the License, or (at your option) any later version.
- *
- *     This library is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *     Lesser General Public License for more details.
- *
- *     You should have received a copy of the GNU Lesser General Public
- *     License along with this library; if not, write to the Free Software
- *     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
- *     USA
- *
- *     Please contact abc15018045126 by email 2073412493@qq.com if you need
- *     additional information or have any questions
- ******************************************************************************/
+
 
 package io.github.abc15018045126.sora.widget.snippet
 
@@ -50,21 +28,13 @@ import io.github.abc15018045126.sora.widget.snippet.variable.TimeBasedSnippetVar
 import io.github.abc15018045126.sora.widget.snippet.variable.WorkspaceBasedSnippetVariableResolver
 import io.github.abc15018045126.sora.widget.subscribeEvent
 
-/**
- * Manage snippet editing in editor
- *
- * @author abc15018045126
- */
+
 class SnippetController(private val editor: CodeEditor) {
 
-    /**
-     * Language based variable resolver. User should set valid values when change language.
-     */
+
     val commentVariableResolver = CommentBasedSnippetVariableResolver(null)
 
-    /**
-     * File based variable resolver. User should implement this class and set it when opening a new file in editor
-     */
+
     var fileVariableResolver: FileBasedSnippetVariableResolver? = null
         set(value) {
             val old = field
@@ -77,9 +47,7 @@ class SnippetController(private val editor: CodeEditor) {
             }
         }
 
-    /**
-     * Workspace based variable resolver. User should implement this class and set it when workspace is updated
-     */
+
     var workspaceVariableResolver: WorkspaceBasedSnippetVariableResolver? = null
         set(value) {
             val old = field
@@ -127,7 +95,7 @@ class SnippetController(private val editor: CodeEditor) {
                         } else {
                             event.changedText.length
                         }
-                        // Shift current text
+
                         val editing = getEditingTabStop()!!
                         editing.setIndex(editing.startIndex, editing.endIndex + addedTextLength)
                         var metEditing = false
@@ -219,17 +187,12 @@ class SnippetController(private val editor: CodeEditor) {
         return index >= editing.startIndex && index <= editing.endIndex
     }
 
-    /**
-     * Start a new snippet editing. The given [CodeSnippet] must pass the checks in [CodeSnippet.checkContent].
-     * Otherwise, the snippet editing will not be started.
-     * No matter whether a new snippet editing is started, the existing snippet editing will get cancelled after
-     *  calling this method.
-     */
+
     fun startSnippet(index: Int, snippet: CodeSnippet, selectedText: String = "") {
         if (snippetIndex != -1) {
             stopSnippet()
         }
-        // Stage 1: verify the snippet structure
+
         if (!snippet.checkContent() || snippet.items.size == 0) {
             Log.e("SnippetController", "invalid code snippet")
             return
@@ -238,7 +201,7 @@ class SnippetController(private val editor: CodeEditor) {
         currentSnippet = clonedSnippet
         currentTabStopIndex = -1
         snippetIndex = index
-        // Stage 2: resolve the variables and execute shell codes
+
         val elements = clonedSnippet.items!!
         val variableItemMapping = mutableMapOf<String, PlaceholderDefinition>()
         var maxTabStop = 0;
@@ -257,7 +220,7 @@ class SnippetController(private val editor: CodeEditor) {
                     else -> null
                 }
                 if (value != null) {
-                    // Resolved variable value
+
                     value = TransformApplier.doTransform(value, item.transform)
                     val deltaIndex = value.length - (item.endIndex - item.startIndex)
                     elements[i] = PlainTextItem(
@@ -267,7 +230,7 @@ class SnippetController(private val editor: CodeEditor) {
                     )
                     shiftItemsFrom(i + 1, deltaIndex)
                 } else {
-                    // Convert to placeholder
+
                     val def = if (variableItemMapping.contains(item.name)) {
                         variableItemMapping[item.name]!!
                     } else {
@@ -311,7 +274,7 @@ class SnippetController(private val editor: CodeEditor) {
                 shiftItemsFrom(i + 1, deltaIndex)
             }
         }
-        // Stage 3: clean useless items and shift all items to editor index
+
         val itr = clonedSnippet.items.iterator()
         while (itr.hasNext()) {
             val item = itr.next()
@@ -320,7 +283,7 @@ class SnippetController(private val editor: CodeEditor) {
             }
         }
         shiftItemsFrom(0, index)
-        // Stage 4: make correct indentation
+
         val text = editor.text
         val pos = text.indexer.getCharPosition(index)
         val line = text.getLine(pos.line)
@@ -392,7 +355,7 @@ class SnippetController(private val editor: CodeEditor) {
                 shiftItemsFrom(i + 1, deltaIndex)
             }
         }
-        // Stage 5: collect tab stops and placeholders
+
         val tabStops = mutableListOf<PlaceholderItem>()
         clonedSnippet.items.forEach { item ->
             if (item is PlaceholderItem) {
@@ -414,7 +377,7 @@ class SnippetController(private val editor: CodeEditor) {
         }
         tabStops.add(end)
         this.tabStops = tabStops
-        // Stage 6: insert the text
+
         val sb = StringBuilder()
         clonedSnippet.items.forEach {
             if (it is PlainTextItem) {
@@ -427,7 +390,7 @@ class SnippetController(private val editor: CodeEditor) {
             }
         }
         text.insert(pos.line, pos.column, sb)
-        // Stage 7: shift to the first tab stop
+
         if ((editor.dispatchEvent(
                 SnippetEvent(
                     editor,
@@ -443,9 +406,7 @@ class SnippetController(private val editor: CodeEditor) {
         shiftToTabStop(0)
     }
 
-    /**
-     * Check whether the editor in snippet editing
-     */
+
     fun isInSnippet() = snippetIndex != -1 && currentTabStopIndex != -1
 
     fun getEditingTabStop() = if (snippetIndex == -1) null else tabStops!![currentTabStopIndex]
@@ -495,7 +456,7 @@ class SnippetController(private val editor: CodeEditor) {
             return
         }
         if (index != currentTabStopIndex && currentTabStopIndex != -1) {
-            // apply transform
+
             val tabStop = tabStops!![currentTabStopIndex]
             if (tabStop.definition.transform != null) {
                 editor.text.replace(
@@ -539,9 +500,7 @@ class SnippetController(private val editor: CodeEditor) {
         }
     }
 
-    /**
-     * Stop snippet editing
-     */
+
     fun stopSnippet() {
         if (!isInSnippet()) {
             return

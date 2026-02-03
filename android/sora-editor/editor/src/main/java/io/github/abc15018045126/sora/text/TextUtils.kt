@@ -4,19 +4,10 @@ import io.github.abc15018045126.sora.util.IntPair
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * Utility class for texts
- */
+
 object TextUtils {
 
-    /**
-     * Counts the number of whitespaces at the start of the given {@link CharSequence}.
-     *
-     * @param text     The text to count the spaces in.
-     * @return A long packed with the number of spaces and tabs at the start of the line.
-     * Use {@link IntPair#getFirst(long)} to get the number of spaces and {@link IntPair#getSecond(long)}
-     * for the number of tabs.
-     */
+
     @JvmStatic
     fun countLeadingSpacesAndTabs(text: CharSequence): Long {
         var p = 0
@@ -38,22 +29,14 @@ object TextUtils {
         return IntPair.pack(spaces, tabs)
     }
 
-    /**
-     * Compute leading space count
-     *
-     * @param tabWidth Tab is considered in {@code tabWidth} spaces
-     */
+
     @JvmStatic
     fun countLeadingSpaceCount(text: CharSequence, tabWidth: Int): Int {
         val result = countLeadingSpacesAndTabs(text)
         return IntPair.getFirst(result) + tabWidth * IntPair.getSecond(result)
     }
 
-    /**
-     * Create indent space
-     *
-     * @return Generated space string
-     */
+
     @JvmStatic
     fun createIndent(indentSize: Int, tabWidth: Int, useTab: Boolean): String {
         val size = max(0, indentSize)
@@ -81,7 +64,7 @@ object TextUtils {
         val max = text.length - pattern.length
         val len = pattern.length
         label@ for (i in fromIndex..max) {
-            // Compare
+
             for (j in 0 until len) {
                 val s = text[i + j]
                 val p = pattern[j]
@@ -99,7 +82,7 @@ object TextUtils {
         val len = pattern.length
         val startIndex = min(fromIndex, text.length - len)
         label@ for (i in startIndex downTo 0) {
-            // Compare
+
             for (j in 0 until len) {
                 val s = text[i + j]
                 val p = pattern[j]
@@ -145,23 +128,13 @@ object TextUtils {
         return sb.toString()
     }
 
-    /**
-     * Find where leading spaces end and trailing spaces start
-     *
-     * @param line The line to search
-     */
+
     @JvmStatic
     fun findLeadingAndTrailingWhitespacePos(line: ContentLine): Long {
         return findLeadingAndTrailingWhitespacePos(line, 0, line.length)
     }
 
-    /**
-     * Find where leading spaces end and trailing spaces start
-     *
-     * @param line  The line to search
-     * @param start Range start (inclusive)
-     * @param end   Range end (exclusive)
-     */
+
     @JvmStatic
     fun findLeadingAndTrailingWhitespacePos(line: ContentLine, start: Int, end: Int): Long {
         val buffer = line.backingCharArray
@@ -170,7 +143,7 @@ object TextUtils {
         while (leading < end && isWhitespace(buffer[leading])) {
             leading++
         }
-        // Skip for space-filled line
+
         if (leading != end) {
             while (trailing > 0 && isWhitespace(buffer[trailing - 1])) {
                 trailing--

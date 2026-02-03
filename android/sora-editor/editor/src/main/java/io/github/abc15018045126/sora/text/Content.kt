@@ -7,13 +7,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-/**
- * This class saves the text content for editor and maintains line widths.
- * It is thread-safe by default. Use [Content(CharSequence, Boolean)] constructor to
- * create a non thread-safe one.
- *
- * @author abc15018045126
- */
+
 open class Content : CharSequence {
 
     internal val lines: MutableList<ContentLine>
@@ -27,23 +21,13 @@ open class Content : CharSequence {
     internal var undoManager: UndoManager
     private var _cursor: Cursor? = null
 
-    /**
-     * This constructor will create a Content object with no text
-     */
+
     constructor() : this(null)
 
-    /**
-     * This constructor will create a Content object with the given source.
-     * If you give us null, it will just create an empty Content object
-     *
-     * @param src The source of Content
-     */
+
     constructor(src: CharSequence?) : this(src, true)
 
-    /**
-     * Create a Content object with the given content text. Specify whether thread-safe access
-     * to single instance is enabled.
-     */
+
     constructor(src: CharSequence?, threadSafe: Boolean) {
         val finalSrc = src ?: ""
         lock = if (threadSafe) ReentrantReadWriteLock() else null
@@ -89,13 +73,7 @@ open class Content : CharSequence {
         }
     }
 
-    /**
-     * Get the character at the given position
-     *
-     * @param line   The line position of character
-     * @param column The column position of character
-     * @return The character at the given position
-     */
+
     fun charAt(line: Int, column: Int): Char {
         lock(false)
         return try {
@@ -137,10 +115,7 @@ open class Content : CharSequence {
         }
     }
 
-    /**
-     * Get raw data of line.
-     * The result should not be modified by code out of editor framework.
-     */
+
     fun getLine(line: Int): ContentLine {
         lock(false)
         return try {
@@ -154,22 +129,16 @@ open class Content : CharSequence {
         return lines[line]
     }
 
-    /**
-     * Get how many lines there are
-     */
+
     val lineCount: Int
         get() = lines.size
 
-    /**
-     * Get how many characters is on the given line
-     */
+
     fun getColumnCount(line: Int): Int {
         return getLine(line).length
     }
 
-    /**
-     * Get the given line text without '\n' character
-     */
+
     fun getLineString(line: Int): String {
         lock(false)
         return try {
@@ -180,9 +149,7 @@ open class Content : CharSequence {
         }
     }
 
-    /**
-     * Get region of the given line
-     */
+
     fun getRegionOnLine(line: Int, start: Int, end: Int, dest: CharArray, offset: Int) {
         lock(false)
         try {
@@ -192,16 +159,12 @@ open class Content : CharSequence {
         }
     }
 
-    /**
-     * Get characters of line
-     */
+
     fun getLineChars(line: Int, dest: CharArray) {
         getRegionOnLine(line, 0, getColumnCount(line), dest, 0)
     }
 
-    /**
-     * Transform the (line,column) position to index
-     */
+
     fun getCharIndex(line: Int, column: Int): Int {
         lock(false)
         return try {
@@ -211,9 +174,7 @@ open class Content : CharSequence {
         }
     }
 
-    /**
-     * Check if the given [CharPosition] is valid in this text. Checks include line, column and index.
-     */
+
     fun isValidPosition(position: CharPosition?): Boolean {
         if (position == null) return false
         val line = position.line
@@ -230,9 +191,7 @@ open class Content : CharSequence {
         }
     }
 
-    /**
-     * Insert content to this object
-     */
+
     fun insert(line: Int, column: Int, text: CharSequence) {
         lock(true)
         documentVersion.getAndIncrement()

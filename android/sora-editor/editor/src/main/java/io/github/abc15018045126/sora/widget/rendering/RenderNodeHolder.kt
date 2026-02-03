@@ -11,12 +11,7 @@ import io.github.abc15018045126.sora.widget.CodeEditor
 import java.util.Collections
 import java.util.Stack
 
-/**
- * Hardware accelerated text render, which manages [RenderNode]
- * to speed up rendering.
- *
- * @author abc15018045126
- */
+
 @RequiresApi(Build.VERSION_CODES.Q)
 class RenderNodeHolder(private val editor: CodeEditor) {
     private val cache: ArrayList<TextRenderNode> = ArrayList(64)
@@ -41,11 +36,7 @@ class RenderNodeHolder(private val editor: CodeEditor) {
         return res
     }
 
-    /**
-     * Called by editor when text style changes.
-     * Such as text size/typeface.
-     * Also called when wordwrap state changes from true to false
-     */
+
     fun invalidate() {
         cache.forEach { it.isDirty = true }
     }
@@ -87,7 +78,7 @@ class RenderNodeHolder(private val editor: CodeEditor) {
             throw UnsupportedOperationException("Only hardware-accelerated canvas can be used")
         }
         val styles = editor.styles
-        // It's safe to use row directly because the mode is non-wordwrap
+
         val node = getNode(line)
         if (node.needsRecord()) {
             val spans = styles?.spans
@@ -139,10 +130,7 @@ class RenderNodeHolder(private val editor: CodeEditor) {
     }
 
     class TextRenderNode(
-        /**
-         * The target line of this node.
-         * -1 for unavailable
-         */
+
         var line: Int
     ) {
         var renderNode: RenderNode = RenderNode("editorRenderNode")

@@ -12,11 +12,7 @@ import io.github.abc15018045126.sora.text.ContentReference
 import io.github.abc15018045126.sora.text.TextRange
 import io.github.abc15018045126.sora.widget.SymbolPairMatch
 
-/**
- * Empty language
- *
- * @author abc15018045126
- */
+
 open class EmptyLanguage : Language {
 
     override val formatter: Formatter

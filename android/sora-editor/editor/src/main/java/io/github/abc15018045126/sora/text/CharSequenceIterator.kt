@@ -2,11 +2,7 @@ package io.github.abc15018045126.sora.text
 
 import java.text.CharacterIterator
 
-/**
- * CharacterIterator implementation
- *
- * @author abc15018045126
- */
+
 class CharSequenceIterator(private val src: CharSequence) : CharacterIterator {
 
     private var index: Int = 0

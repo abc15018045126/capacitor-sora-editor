@@ -11,54 +11,50 @@ import kotlin.math.ceil
 
 private typealias SelectionMovementComputeFunc = ((CodeEditor, CharPosition) -> CharPosition)
 
-/**
- * Defines selection movement types for editor.
- *
- * @author abc15018045126
- */
+
 enum class SelectionMovement(
     private val computeFunc: SelectionMovementComputeFunc,
     val basePosition: MovingBasePosition = MovingBasePosition.SELECTION_ANCHOR
 ) {
-    /** Move Up */
+
     UP({ editor, pos ->
         val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
         val newPos = layout.getUpPosition(pos.line, pos.column)
         editor.text.indexer.getCharPosition(IntPair.getFirst(newPos), IntPair.getSecond(newPos))
     }, MovingBasePosition.LEFT_SELECTION),
 
-    /** Move Down */
+
     DOWN({ editor, pos ->
         val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
         val newPos = layout.getDownPosition(pos.line, pos.column)
         editor.text.indexer.getCharPosition(IntPair.getFirst(newPos), IntPair.getSecond(newPos))
     }, MovingBasePosition.RIGHT_SELECTION),
 
-    /** Move Left */
+
     LEFT({ editor, pos ->
         val newPos = editor.cursor!!.getLeftOf(pos.toIntPair())
         editor.text.indexer.getCharPosition(IntPair.getFirst(newPos), IntPair.getSecond(newPos))
     }, MovingBasePosition.LEFT_SELECTION),
 
-    /** Move Right */
+
     RIGHT({ editor, pos ->
         val newPos = editor.cursor!!.getRightOf(pos.toIntPair())
         editor.text.indexer.getCharPosition(IntPair.getFirst(newPos), IntPair.getSecond(newPos))
     }, MovingBasePosition.RIGHT_SELECTION),
 
-    /** Move To Previous Word Boundary */
+
     PREVIOUS_WORD_BOUNDARY({ editor, pos ->
         val newPos = Chars.prevWordStart(pos, editor.text)
         editor.text.indexer.getCharPosition(newPos.line, newPos.column)
     }),
 
-    /** Move To Next Word Boundary */
+
     NEXT_WORD_BOUNDARY({ editor, pos ->
         val newPos = Chars.nextWordEnd(pos, editor.text)
         editor.text.indexer.getCharPosition(newPos.line, newPos.column)
     }),
 
-    /** Move Page Up */
+
     PAGE_UP({ editor, pos ->
         val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
         val rowCount = ceil(editor.height / editor.rowHeight.toFloat()).toInt()
@@ -73,7 +69,7 @@ enum class SelectionMovement(
         editor.text.indexer.getCharPosition(line, column)
     }),
 
-    /** Move Page Down */
+
     PAGE_DOWN({ editor, pos ->
         val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
         val rowCount = ceil(editor.height / editor.rowHeight.toFloat()).toInt()
@@ -88,7 +84,7 @@ enum class SelectionMovement(
         editor.text.indexer.getCharPosition(line, column)
     }),
 
-    /** Move To Page Top */
+
     PAGE_TOP({ editor, pos ->
         val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
         val currIdx = layout.getRowIndexForPosition(pos.index)
@@ -102,7 +98,7 @@ enum class SelectionMovement(
         editor.text.indexer.getCharPosition(line, column)
     }),
 
-    /** Move To Page Bottom */
+
     PAGE_BOTTOM({ editor, pos ->
         val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
         val currIdx = layout.getRowIndexForPosition(pos.index)
@@ -116,7 +112,7 @@ enum class SelectionMovement(
         editor.text.indexer.getCharPosition(line, column)
     }),
 
-    /** Move To Physical Line Start */
+
     LINE_START({ editor, pos ->
         if (editor.props!!.enhancedHomeAndEnd) {
 
@@ -126,7 +122,7 @@ enum class SelectionMovement(
                 )
             )
             if (pos.column == column || column == editor.text.getColumnCount(pos.line)) {
-                // Move to start if already at enhanced start / line is space-filled
+
                 editor.text.indexer.getCharPosition(pos.line, 0)
             } else {
                 editor.text.indexer.getCharPosition(pos.line, column)
@@ -136,7 +132,7 @@ enum class SelectionMovement(
         }
     }),
 
-    /** Move To Physical Line End */
+
     LINE_END({ editor, pos ->
         val colNum = editor.text.getColumnCount(pos.line)
         if (editor.props!!.enhancedHomeAndEnd) {
@@ -156,17 +152,17 @@ enum class SelectionMovement(
         }
     }),
 
-    /** Move To Text Start */
+
     TEXT_START({ _, _ ->
         CharPosition().toBOF()
     }),
 
-    /** Move To Text End */
+
     TEXT_END({ editor, _ ->
         editor.text.indexer.getCharPosition(editor.text.length)
     }),
 
-    /** Move To Visual Line Start */
+
     ROW_START({ editor, pos ->
         val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
 
@@ -186,7 +182,7 @@ enum class SelectionMovement(
                 )
             )
             if (pos.column == column || column == maxColumn) {
-                // Move to start if already at enhanced start / line is space-filled
+
                 editor.text.indexer.getCharPosition(pos.line, row.startColumn)
             } else {
                 editor.text.indexer.getCharPosition(pos.line, column)
@@ -196,7 +192,7 @@ enum class SelectionMovement(
         }
     }),
 
-    /** Move To Visual Line End */
+
     ROW_END({ editor, pos ->
         val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
 
@@ -225,9 +221,7 @@ enum class SelectionMovement(
         }
     });
 
-    /**
-     * For [CodeEditor.moveSelection]
-     */
+
     enum class MovingBasePosition {
         LEFT_SELECTION,
         RIGHT_SELECTION,

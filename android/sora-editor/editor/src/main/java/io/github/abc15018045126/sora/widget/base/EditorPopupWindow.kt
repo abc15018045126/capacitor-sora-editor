@@ -8,33 +8,20 @@ import io.github.abc15018045126.sora.event.ScrollEvent
 import io.github.abc15018045126.sora.widget.CodeEditor
 import kotlin.math.abs
 
-/**
- * Base class for all editor popup windows.
- */
+
 open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
 
     companion object {
-        /**
-         * Update the position of this window when user scrolls the editor
-         */
+
         const val FEATURE_SCROLL_AS_CONTENT = 1
 
-        /**
-         * Allow the window to be displayed outside the view's rectangle.
-         * Otherwise, the window's size will be adjusted to force it to display in the view.
-         * If the space can't display it, it will get hidden.
-         */
+
         const val FEATURE_SHOW_OUTSIDE_VIEW_ALLOWED = 1 shl 1
 
-        /**
-         * Hide this window when the user scrolls fast. Such as the selection handle
-         * is currently near the edge of screen.
-         */
+
         const val FEATURE_HIDE_WHEN_FAST_SCROLL = 1 shl 2
 
-        /**
-         * Dismiss the window if it covers the current caret.
-         */
+
         const val FEATURE_DISMISS_WHEN_OBSCURING_CURSOR = 1 shl 3
     }
 
@@ -46,12 +33,12 @@ open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
     private var registered = false
     private var layoutChangeListenerRegistered = false
     private var parentView: View = editor
-    
+
     private var offsetX = 0f
     private var offsetY = 0f
     private var windowX = 0f
     private var windowY = 0f
-    
+
     var width = 0
         protected set
     var height = 0
@@ -92,9 +79,7 @@ open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
         register()
     }
 
-    /**
-     * Checks whether a single feature is enabled
-     */
+
     fun isFeatureEnabled(feature: Int): Boolean {
         if (Integer.bitCount(feature) != 1) {
             throw IllegalArgumentException("Not a valid feature integer")
@@ -125,17 +110,15 @@ open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
     open val isShowing: Boolean
         get() = popup.isShowing
 
-    /**
-     * @see [PopupWindow.setContentView]
-     */
+
     open fun setContentView(view: View) {
         popup.contentView = view
     }
 
-    private fun wrapHorizontal(horizontal: Float): Float = 
+    private fun wrapHorizontal(horizontal: Float): Float =
         horizontal.coerceIn(0f, editor.width.toFloat())
 
-    private fun wrapVertical(vertical: Float): Float = 
+    private fun wrapVertical(vertical: Float): Float =
         vertical.coerceIn(0f, editor.height.toFloat())
 
     private fun applyWindowAttributes(show: Boolean) {
@@ -147,13 +130,13 @@ open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
         var top = if (autoScroll) (windowY - editor.offsetY) else (windowY - offsetY)
         var right = left + width
         var bottom = top + height
-        
+
         if (!isFeatureEnabled(FEATURE_SHOW_OUTSIDE_VIEW_ALLOWED)) {
             val finalLeft = wrapHorizontal(left)
             val finalRight = wrapHorizontal(right)
             val finalTop = wrapVertical(top)
             val finalBottom = wrapVertical(bottom)
-            
+
             if (finalTop >= finalBottom || finalLeft >= finalRight) {
                 dismiss()
                 return
@@ -163,18 +146,18 @@ open class EditorPopupWindow(open val editor: CodeEditor, val features: Int) {
             top = finalTop
             bottom = finalBottom
         }
-        
+
         if (isCursorObscured(left, top, right, bottom)) {
             dismiss()
             return
         }
-        
+
         editor.getLocationInWindow(locationBuffer)
         val w = (right - left).toInt()
         val h = (bottom - top).toInt()
         val finalX = (left + locationBuffer[0]).toInt()
         val finalY = (top + locationBuffer[1]).toInt()
-        
+
         if (popup.isShowing) {
             popup.update(finalX, finalY, w, h)
         } else if (show) {

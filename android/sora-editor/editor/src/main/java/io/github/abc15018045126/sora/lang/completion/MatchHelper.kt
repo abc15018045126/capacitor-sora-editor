@@ -5,30 +5,18 @@ import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import io.github.abc15018045126.sora.text.TextUtils
 
-/**
- * Utility class to provide some useful matching functions in generating completion.
- *
- * @author abc15018045126
- */
+
 class MatchHelper {
 
-    /**
-     * Color for matched text highlighting
-     */
+
     @JvmField
     var highlightColor: Int = 0xff3f51b5.toInt()
 
-    /**
-     * Case in-sensitive
-     */
+
     @JvmField
     var ignoreCase: Boolean = false
 
-    /**
-     * Match case of first letter if ignoreCase=true
-     *
-     * for [startsWith] only
-     */
+
     @JvmField
     var matchFirstCase: Boolean = false
 
@@ -81,16 +69,12 @@ class MatchHelper {
         return null
     }
 
-    /**
-     * Common sub-sequence
-     */
+
     fun commonSub(name: CharSequence, pattern: CharSequence): Spanned? {
         return commonSub(name, pattern, ignoreCase)
     }
 
-    /**
-     * Common sub-sequence
-     */
+
     fun commonSub(name: CharSequence, pattern: CharSequence, ignoreCase: Boolean): Spanned? {
         if (name.length >= pattern.length) {
             var spanned: SpannableString? = null

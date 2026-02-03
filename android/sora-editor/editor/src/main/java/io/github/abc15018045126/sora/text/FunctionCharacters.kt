@@ -1,10 +1,6 @@
 package io.github.abc15018045126.sora.text
 
-/**
- * Utility for ASCII function characters
- *
- * @author abc15018045126
- */
+
 object FunctionCharacters {
 
     private val names = arrayOf(
@@ -15,25 +11,19 @@ object FunctionCharacters {
         "GS", "RS", "US", "SP"
     )
 
-    /**
-     * Check if the letter is ASCII function character.
-     */
+
     @JvmStatic
     fun isFunctionCharacter(letter: Char): Boolean {
         return letter.code < 32 || letter.code == 127
     }
 
-    /**
-     * Check if the letter is ASCII function character, '\t' excluded.
-     */
+
     @JvmStatic
     fun isEditorFunctionChar(letter: Char): Boolean {
         return letter != '\t' && isFunctionCharacter(letter)
     }
 
-    /**
-     * Get the name of function character
-     */
+
     @JvmStatic
     fun getNameForFunctionCharacter(letter: Char): String {
         if (letter.code < 32) {

@@ -1,10 +1,6 @@
 package io.github.abc15018045126.sora.widget.schemes
 
-/**
- * ColorScheme for editor
- * picked from Eclipse IDE for Java Developers Version 2019-12 (4.14.0)
- * Thanks to liyujiang-gzu (GitHub @liyujiang-gzu)
- */
+
 class SchemeEclipse : EditorColorScheme() {
 
     override fun applyDefault() {

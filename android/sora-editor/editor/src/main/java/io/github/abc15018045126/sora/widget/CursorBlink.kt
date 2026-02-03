@@ -4,11 +4,7 @@ import io.github.abc15018045126.sora.event.EventReceiver
 import io.github.abc15018045126.sora.event.SelectionChangeEvent
 import io.github.abc15018045126.sora.event.Unsubscribe
 
-/**
- * This class is used to control cursor visibility
- *
- * @author Rose
- */
+
 internal class CursorBlink(
     val editor: CodeEditor,
     period: Int
@@ -54,7 +50,7 @@ internal class CursorBlink(
     fun isSelectionVisible(): Boolean {
         val buf = buffer ?: return false
         return (buf[0] >= editor.offsetY && buf[0] - editor.rowHeight <= editor.offsetY + editor.height
-                && buf[1] >= editor.offsetX && buf[1] - 100f /* larger than a single character */ <= editor.offsetX + editor.width)
+                && buf[1] >= editor.offsetX && buf[1] - 100f   <= editor.offsetX + editor.width)
     }
 
     override fun run() {

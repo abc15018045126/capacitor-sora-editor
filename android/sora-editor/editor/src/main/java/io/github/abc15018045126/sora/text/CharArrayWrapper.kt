@@ -3,11 +3,7 @@ package io.github.abc15018045126.sora.text
 import android.text.GetChars
 import java.nio.CharBuffer
 
-/**
- * Wrapper for char array. Make char array work as a char sequence.
- *
- * @author abc15018045126
- */
+
 class CharArrayWrapper(
     private val data: CharArray,
     private val offset: Int,

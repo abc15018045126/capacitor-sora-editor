@@ -29,11 +29,7 @@ import io.github.abc15018045126.sora.util.Logger
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * Connection between input method and editor
- *
- * @author abc15018045126
- */
+
 internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnection(targetView, true) {
     private val editor: CodeEditor = targetView
     @JvmField
@@ -60,9 +56,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         editor.invalidate()
     }
 
-    /**
-     * Reset the state of this connection
-     */
+
     internal fun reset() {
         resetBatchEdit()
         composingText.reset()
@@ -78,12 +72,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
     }
 
     private val cursor: Cursor
-        /**
-         * Private use.
-         * Get the Cursor of Content displaying by Editor
-         *
-         * @return Cursor
-         */
+
         get() = editor.cursor!!
 
     override fun commitText(text: CharSequence?, newCursorPosition: Int): Boolean {
@@ -94,7 +83,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         }
 
         if ("\n" == text.toString()) {
-            // #67
+
             sendKeyClick(KeyEvent.KEYCODE_ENTER)
         } else {
             commitTextInternal(text, true)
@@ -114,9 +103,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         return TextUtils.getCapsMode(editor.text, cursor.left, reqModes)
     }
 
-    /**
-     * Get content region internally
-     */
+
     private fun getTextRegionInternal(start: Int, end: Int, flags: Int, ignoreIPCLimit: Boolean): CharSequence? {
         var mutableStart = start
         var mutableEnd = end
@@ -142,7 +129,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         val sub = origin.subSequence(mutableStart, mutableEnd).toString()
         if (flags == GET_TEXT_WITH_STYLES) {
             val text = SpannableStringBuilder(sub)
-            // Apply composing span
+
             if (composingText.isComposing()) {
                 try {
                     val originalComposingStart = composingText.startIndex
@@ -168,7 +155,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
                     )
                 } catch (e: IndexOutOfBoundsException) {
-                    //ignored
+
                 }
             }
             return text
@@ -202,8 +189,8 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         if (editor.props!!.disallowSuggestions) {
             return null
         }
-        //This text should be limited because when the user try to select all text
-        //it can be quite large text and costs time, which will finally cause ANR
+
+
         val left = cursor.left
         val right = cursor.right
         return if (left == right) null else getTextRegion(left, right, flags)
@@ -249,8 +236,8 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
     internal fun commitTextInternal(text: CharSequence, applyAutoIndent: Boolean) {
         var mutableText = text
         val composingStateBefore = composingText.isComposing()
-        // NOTE: Text styles are ignored by editor
-        // Remove composing text first if there is
+
+
         if (editor.props!!.trackComposingTextOnCommit) {
             if (composingText.isComposing()) {
                 val composingStr = editor.text.subSequence(composingText.startIndex, composingText.endIndex).toString()
@@ -276,9 +263,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         }
     }
 
-    /**
-     * Delete composing region
-     */
+
     private fun deleteComposingText() {
         if (!composingText.isComposing()) {
             return
@@ -300,13 +285,13 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
             return false
         }
 
-        // #170 Gboard compatible
+
         if (beforeLength == 1 && afterLength == 0 && !composingText.isComposing()) {
             editor.deleteText()
             return true
         }
 
-        // Start a batch edit when the operation can not be finished by one call to delete()
+
         if (beforeLength > 0 && afterLength > 0) {
             beginBatchEdit()
         }
@@ -355,8 +340,8 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
     }
 
     override fun deleteSurroundingTextInCodePoints(beforeLength: Int, afterLength: Int): Boolean {
-        // Unsupported operation
-        // According to document, we should return false
+
+
         return false
     }
 
@@ -364,7 +349,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
     override fun beginBatchEdit(): Boolean {
         if (DEBUG) logger.d("beginBatchEdit")
         if (editor.props!!.disallowSuggestions) {
-            return editor.text.isInBatchEdit // Do not start new batch edit layer
+            return editor.text.isInBatchEdit
         }
         return editor.text.beginBatchEdit()
     }
@@ -381,7 +366,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
 
     private fun deleteSelected() {
         if (cursor.isSelected()) {
-            // Delete selected text
+
             editor.deleteText()
         }
     }
@@ -394,14 +379,14 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
         if (editor.props!!.disallowSuggestions) {
             composingText.reset()
             commitText(text, 0)
-            //editor.restartInput();
+
             return false
         }
         if (TextUtils.indexOf(text, '\n') != -1) {
             return false
         }
         if (!composingText.isComposing()) {
-            // Create composing info
+
             composingText.preSetComposing = true
             deleteSelected()
             beginBatchEdit()
@@ -410,14 +395,14 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
             composingText.set(cursor.left - text.length, cursor.left)
             editor.updateCursor()
         } else {
-            // Already have composing text
+
             if (composingText.isComposing()) {
                 if (editor.props!!.minimizeComposingTextUpdate) {
                     setComposingTextCompat(text.toString())
                 } else {
                     editor.text.replace(composingText.startIndex, composingText.endIndex, text)
                 }
-                // Reset range
+
                 composingText.adjustLength(text.length)
             }
         }
@@ -698,9 +683,7 @@ internal class EditorInputConnection(targetView: CodeEditor) : BaseInputConnecti
     companion object {
         private val logger = Logger.instance("EditorInputConnection")
 
-        /**
-         * Memory efficient text length from Android [EditorInfo]
-         */
+
         private const val MEMORY_EFFICIENT_TEXT_LENGTH = 2048
 
         var DEBUG: Boolean = false

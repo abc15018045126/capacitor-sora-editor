@@ -5,16 +5,16 @@ import java.util.ArrayList
 class RegexBackrefParser(private val grammar: RegexBackrefGrammar) {
 
     fun parse(pattern: String, groupCount: Int): List<RegexBackrefToken> {
-        val pat = pattern + '\u0000' // add an extra char to truncate trailing backref
+        val pat = pattern + '\u0000'
         val result = ArrayList<RegexBackrefToken>()
         val escapeChar = grammar.escapeChar
         val backrefChar = grammar.backrefStartChar
         var index = 0
         val len = pat.length
-        // State 0: Text
-        // State 1: Right after escape character
-        // State 2: Require first digit for backref
-        // State 3: Scan reset digits for backref
+
+
+
+
         var state = 0
         var textStart = 0
         var currentGroup: Long = 0
@@ -43,15 +43,15 @@ class RegexBackrefParser(private val grammar: RegexBackrefGrammar) {
                     if (ch in '0'..'9') {
                         currentGroup = (ch - '0').toLong()
                         if (currentGroup <= groupCount) {
-                            state = 3 // scan rest digits
+                            state = 3
                         } else {
-                            // not backref, fallback to plain text
+
                             textStart = index - 1
                             index--
                             state = 0
                         }
                     } else {
-                        // not backref, fallback to plain text
+
                         textStart = index - 1
                         index--
                         state = 0

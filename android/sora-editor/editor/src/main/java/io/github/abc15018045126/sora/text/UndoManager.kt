@@ -4,12 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import java.util.*
 
-/**
- * Helper class for Content to take down modification
- * As well as provide Undo/Redo actions
- *
- * @author abc15018045126
- */
+
 class UndoManager : ContentListener, Parcelable {
 
     private val actionStack: MutableList<ContentAction>
@@ -24,9 +19,7 @@ class UndoManager : ContentListener, Parcelable {
     private var forceNewMultiAction: Boolean = false
     private var memorizedCursorRange: TextRange? = null
 
-    /**
-     * Create an UndoManager
-     */
+
     constructor() {
         actionStack = ArrayList()
         replaceMark = false
@@ -59,17 +52,11 @@ class UndoManager : ContentListener, Parcelable {
         }
     }
 
-    /**
-     * Check whether we are currently in undo/redo operations
-     */
+
     val isModifyingContent: Boolean
         get() = ignoreModification
 
-    /**
-     * Undo on the given Content
-     *
-     * @param content Undo Target
-     */
+
     fun undo(content: Content): TextRange? {
         if (canUndo() && !isModifyingContent) {
             ignoreModification = true
@@ -82,11 +69,7 @@ class UndoManager : ContentListener, Parcelable {
         return null
     }
 
-    /**
-     * Redo on the given Content
-     *
-     * @param content Redo Target
-     */
+
     fun redo(content: Content) {
         if (canRedo() && !isModifyingContent) {
             ignoreModification = true
@@ -106,23 +89,17 @@ class UndoManager : ContentListener, Parcelable {
         }
     }
 
-    /**
-     * Whether it can undo
-     */
+
     fun canUndo(): Boolean {
         return isUndoEnabled && stackPointer > 0
     }
 
-    /**
-     * Whether it can redo
-     */
+
     fun canRedo(): Boolean {
         return isUndoEnabled && stackPointer < actionStack.size
     }
 
-    /**
-     * Whether this UndoManager is enabled
-     */
+
     var isUndoEnabled: Boolean
         get() = undoEnabled
         set(enabled) {
@@ -132,9 +109,7 @@ class UndoManager : ContentListener, Parcelable {
             }
         }
 
-    /**
-     * Get/Set a max stack size for this UndoManager
-     */
+
     var maxUndoStackSize: Int
         get() = maxStackSize
         set(maxSize) {
@@ -145,10 +120,7 @@ class UndoManager : ContentListener, Parcelable {
             cleanStack()
         }
 
-    /**
-     * Clean stack after add or state change
-     * This is to limit stack size
-     */
+
     private fun cleanStack() {
         if (!undoEnabled) {
             actionStack.clear()
@@ -161,20 +133,14 @@ class UndoManager : ContentListener, Parcelable {
         }
     }
 
-    /**
-     * Clean the stack before pushing
-     * If we are not at the end(Undo action executed), remove those actions
-     */
+
     private fun cleanBeforePush() {
         while (stackPointer < actionStack.size) {
             actionStack.removeAt(actionStack.size - 1)
         }
     }
 
-    /**
-     * Push a new [ContentAction] to stack
-     * It will merge actions if possible
-     */
+
     private fun pushAction(content: Content, action: ContentAction) {
         if (!isUndoEnabled) return
         cleanBeforePush()
@@ -285,9 +251,7 @@ class UndoManager : ContentListener, Parcelable {
         memorizedCursorRange = cursor.getRange()
     }
 
-    /**
-     * Base class of content actions
-     */
+
     abstract class ContentAction : Parcelable {
         @JvmField
         @Transient
@@ -299,9 +263,7 @@ class UndoManager : ContentListener, Parcelable {
         abstract fun merge(action: ContentAction)
     }
 
-    /**
-     * Insert action model for UndoManager
-     */
+
     class InsertAction : ContentAction {
         @JvmField
         var startLine: Int = 0
@@ -377,9 +339,7 @@ class UndoManager : ContentListener, Parcelable {
         }
     }
 
-    /**
-     * MultiAction saves several actions for UndoManager
-     */
+
     class MultiAction : ContentAction {
         val actions: MutableList<ContentAction> = ArrayList()
 
@@ -434,9 +394,7 @@ class UndoManager : ContentListener, Parcelable {
         }
     }
 
-    /**
-     * Delete action model for UndoManager
-     */
+
     class DeleteAction : ContentAction {
         @JvmField
         var startLine: Int = 0
@@ -512,9 +470,7 @@ class UndoManager : ContentListener, Parcelable {
         }
     }
 
-    /**
-     * Replace action model for UndoManager
-     */
+
     class ReplaceAction : ContentAction {
         @JvmField
         var insert: InsertAction? = null

@@ -11,12 +11,7 @@ import android.text.TextPaint
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * Helper class for indirectly calling Paint#getTextRunCursor(), which is
- * responsible for cursor controlling.
- *
- * @author abc15018045126
- */
+
 class TextLayoutHelper private constructor() {
 
     private val text: Editable = Editable.Factory.getInstance().newEditable("")
@@ -47,9 +42,7 @@ class TextLayoutHelper private constructor() {
         }
     }
 
-    /**
-     * Get cursor position after moving left
-     */
+
     fun getCurPosLeft(offset: Int, s: CharSequence): Int {
         val left = max(0, offset - CHAR_FACTOR)
         var index = offset - left
@@ -66,9 +59,7 @@ class TextLayoutHelper private constructor() {
         return left + index
     }
 
-    /**
-     * Get cursor position after moving right
-     */
+
     fun getCurPosRight(offset: Int, s: CharSequence): Int {
         val left = max(0, offset - CHAR_FACTOR)
         var index = offset - left
@@ -89,9 +80,7 @@ class TextLayoutHelper private constructor() {
         private val sLocal = ThreadLocal<TextLayoutHelper>()
         private const val CHAR_FACTOR = 64
 
-        /**
-         * Get TextLayoutHelper for current thread
-         */
+
         @JvmStatic
         fun get(): TextLayoutHelper {
             var v = sLocal.get()

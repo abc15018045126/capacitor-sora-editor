@@ -9,57 +9,17 @@ import io.github.abc15018045126.sora.widget.CodeEditor
 import java.lang.ref.WeakReference
 import java.util.Objects
 
-/**
- * This class manages the colors of editor.
- * You can use color IDs that are not in pre-defined id pool for custom languages. We recommend
- *  adding a base offset for your custom color IDs. For example, first custom color ID is 256. This
- *   leaves enough space for editor's future built-in colors.
- *
- * This is also the default color scheme of editor.
- * Be careful to change this class, because this can cause its
- * subclasses behave differently and some subclasses did not apply
- * their default colors to some color ids. So change to this can cause
- * sub themes to change as well.
- *
- * Typically, you can use this class to set color of editor directly
- * with [setColor] in a thread with looper.
- *
- * However, we also accept you to extend this class to customize
- * your own ColorScheme to use different default colors.
- * Subclasses are expected to override [applyDefault]
- * to define colors, though other methods are not final.
- * After overriding this method, you will have to call super class's
- * applyDefault() and then a series of [setColor] calls
- * to apply your colors.
- *
- * Note that new colors can be added in newer version of editor,
- * it is dangerous not to call super.applyDefault(), which can cause
- * newer editor works wrongly.
- *
- * For more pre-defined color schemes, please turn to package io.github.abc15018045126.editor.widget.schemes
- *
- * Thanks to liyujiang-gzu (GitHub @liyujiang-gzu) for contribution to color schemes
- *
- * @author Rose
- */
+
 open class EditorColorScheme @JvmOverloads constructor(private val dark: Boolean = false) {
 
-    /**
-     * Real color saver
-     */
+
     @JvmField
     protected val colors: SparseIntArray = SparseIntArray()
 
-    /**
-     * Host editor object
-     */
+
     private val editors: MutableList<WeakReference<CodeEditor>> = mutableListOf()
 
-    /**
-     * Create a new ColorScheme for the given editor
-     *
-     * @param editor Host editor
-     */
+
     constructor(editor: CodeEditor) : this(false) {
         attachEditor(editor)
     }
@@ -68,11 +28,7 @@ open class EditorColorScheme @JvmOverloads constructor(private val dark: Boolean
         applyDefault()
     }
 
-    /**
-     * Subscribe changes
-     *
-     * Called by editor
-     */
+
     @UnsupportedUserUsage
     open fun attachEditor(@NonNull editor: CodeEditor) {
         for (ref in editors) {
@@ -84,9 +40,7 @@ open class EditorColorScheme @JvmOverloads constructor(private val dark: Boolean
         editor.onColorFullUpdate()
     }
 
-    /**
-     * Unsubscribe changes
-     */
+
     @UnsupportedUserUsage
     open fun detachEditor(@NonNull editor: CodeEditor) {
         val itr = editors.iterator()
@@ -98,20 +52,14 @@ open class EditorColorScheme @JvmOverloads constructor(private val dark: Boolean
         }
     }
 
-    /**
-     * Apply default colors
-     */
+
     open fun applyDefault() {
         for (i in START_COLOR_ID..END_COLOR_ID) {
             applyDefault(i)
         }
     }
 
-    /**
-     * Apply default color for the given type
-     *
-     * @param type The type
-     */
+
     private fun applyDefault(type: Int) {
         var color = colors.get(type)
         when (type) {
@@ -176,15 +124,10 @@ open class EditorColorScheme @JvmOverloads constructor(private val dark: Boolean
         setColor(type, color)
     }
 
-    /**
-     * Apply a new color for the given type
-     *
-     * @param type  The type
-     * @param color New color
-     */
+
     open fun setColor(type: Int, color: Int) {
-        //Do not change if the old value is the same as new value
-        //due to avoid unnecessary invalidate() calls
+
+
         val old = getColor(type)
         if (old == color) {
             return
@@ -192,7 +135,7 @@ open class EditorColorScheme @JvmOverloads constructor(private val dark: Boolean
 
         colors.put(type, color)
 
-        //Notify the editor
+
         val itr = editors.iterator()
         while (itr.hasNext()) {
             val editor = itr.next().get()
@@ -204,30 +147,23 @@ open class EditorColorScheme @JvmOverloads constructor(private val dark: Boolean
         }
     }
 
-    /**
-     * Get color by type
-     *
-     * @param type The type
-     * @return The color for type
-     */
+
     open fun getColor(type: Int): Int {
         return colors.get(type)
     }
 
-    /**
-     * Check whether this color scheme is dark
-     */
+
     open fun isDark(): Boolean {
         return dark
     }
 
     companion object {
-        //----------------Issue colors----------------
+
         const val PROBLEM_TYPO = 37
         const val PROBLEM_WARNING = 36
         const val PROBLEM_ERROR = 35
 
-        //-----------------Highlight colors-----------
+
         const val ATTRIBUTE_VALUE = 34
         const val ATTRIBUTE_NAME = 33
         const val HTML_TAG = 32
@@ -240,17 +176,13 @@ open class EditorColorScheme @JvmOverloads constructor(private val dark: Boolean
         const val COMMENT = 22
         const val KEYWORD = 21
 
-        //-------------View colors---------------------
+
         const val STICKY_SCROLL_DIVIDER = 62
 
-        /**
-         * Color for text strikethrough. If value is 0, text color of that region will be used.
-         */
+
         const val STRIKETHROUGH = 57
 
-        /**
-         * Alias for [STRIKETHROUGH]
-         */
+
         const val STRIKE_THROUGH = STRIKETHROUGH
         const val DIAGNOSTIC_TOOLTIP_ACTION = 56
         const val DIAGNOSTIC_TOOLTIP_DETAILED_MSG = 55
@@ -266,9 +198,7 @@ open class EditorColorScheme @JvmOverloads constructor(private val dark: Boolean
         const val SIDE_BLOCK_LINE = 38
         const val NON_PRINTABLE_CHAR = 31
 
-        /**
-         * Use zero if the text color should not be changed
-         */
+
         const val TEXT_SELECTED = 30
         const val MATCHED_TEXT_BACKGROUND = 29
         const val MATCHED_TEXT_BORDER = 78
@@ -279,9 +209,7 @@ open class EditorColorScheme @JvmOverloads constructor(private val dark: Boolean
         const val COMPLETION_WND_TEXT_SECONDARY = 43
         const val COMPLETION_WND_ITEM_CURRENT = 44
 
-        /**
-         * No longer supported
-         */
+
         const val LINE_BLOCK_LABEL = 18
 
         const val TEXT_HIGHLIGHT_STRONG_BACKGROUND = 73
@@ -329,14 +257,10 @@ open class EditorColorScheme @JvmOverloads constructor(private val dark: Boolean
         const val TEXT_ACTION_WINDOW_BACKGROUND = 65
         const val TEXT_ACTION_WINDOW_ICON_COLOR = 66
 
-        /**
-         * Min pre-defined color id
-         */
+
         protected const val START_COLOR_ID = 1
 
-        /**
-         * Max pre-defined color id
-         */
+
         protected const val END_COLOR_ID = 80
 
         private const val PRIMARY_TEXT_COLOR_DEFAULT_LIGHT = 0xff424242.toInt()
@@ -348,32 +272,20 @@ open class EditorColorScheme @JvmOverloads constructor(private val dark: Boolean
 
         private var globalDefault = EditorColorScheme()
 
-        /**
-         * Get global default color scheme.
-         */
+
         @JvmStatic
         @NonNull
         fun getDefault(): EditorColorScheme {
             return globalDefault
         }
 
-        /**
-         * Set global default color scheme. Newly created editor will use the new default color scheme.
-         *
-         * @param colorScheme new global color scheme, or null for restoring to built-in default
-         */
+
         @JvmStatic
         fun setDefault(@Nullable colorScheme: EditorColorScheme?) {
             setDefault(colorScheme, false)
         }
 
-        /**
-         * Set global default color scheme and optionally update existing editors that are using default
-         * color scheme.
-         *
-         * @param colorScheme   new global color scheme, or null for restoring to built-in default
-         * @param updateEditors update existing editors that are using default color scheme
-         */
+
         @JvmStatic
         fun setDefault(@Nullable colorScheme: EditorColorScheme?, updateEditors: Boolean) {
             var finalColorScheme = colorScheme

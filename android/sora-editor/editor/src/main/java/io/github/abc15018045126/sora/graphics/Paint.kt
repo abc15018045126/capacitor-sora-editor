@@ -82,9 +82,7 @@ open class Paint @JvmOverloads constructor(
         return advance
     }
 
-    /**
-     * Get the advance of text with the context positions related to shaping the characters
-     */
+
     fun measureTextRunAdvance(
         text: CharArray,
         start: Int,
@@ -105,9 +103,7 @@ open class Paint @JvmOverloads constructor(
         )
     }
 
-    /**
-     * Find offset for a certain advance returned by [.measureTextRunAdvance]
-     */
+
     fun findOffsetByRunAdvance(
         text: ContentLine, intStart: Int, end: Int,
         contextStart: Int, contextEnd: Int, isRtl: Boolean,

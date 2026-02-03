@@ -6,11 +6,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-/**
- * Resolver for time-related variables
- *
- * @author abc15018045126
- */
+
 class TimeBasedSnippetVariableResolver : ISnippetVariableResolver {
 
     private fun getDisplayName(field: Int, shortType: Boolean): String {
@@ -23,7 +19,7 @@ class TimeBasedSnippetVariableResolver : ISnippetVariableResolver {
             result = c.getDisplayName(field, if (shortType) Calendar.SHORT else Calendar.LONG, Locale.US)
         }
         if (result == null) {
-            // The very fallback
+
             result = c.get(field).toString()
         }
         return result

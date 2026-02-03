@@ -3,13 +3,9 @@ package io.github.abc15018045126.sora.text.bidi
 import io.github.abc15018045126.sora.util.IntPair
 import java.text.Bidi
 
-/**
- * Helper class for reordering logical text runs to visual runs.
- *
- * @author abc15018045126
- */
+
 class VisualDirections(dirs: Directions) : IDirections {
-    private val runs: Array<RunInfo?> // Bidi.reorderVisually takes Object[]
+    private val runs: Array<RunInfo?>
 
     private class RunInfo(var range: Long, var level: Int)
 

@@ -5,14 +5,7 @@ import java.io.Reader
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * Reference of a content due to be accessed in read-only mode.
- * Access can be validated during accesses.
- * [io.github.abc15018045126.sora.text.TextReference.ValidateFailedException] may be thrown if the check is failed.
- * The result of methods may be dirty when the content is modified.
- *
- * @author abc15018045126
- */
+
 class ContentReference(private val content: Content) : TextReference(content) {
 
     override fun get(index: Int): Char {
@@ -40,67 +33,51 @@ class ContentReference(private val content: Content) : TextReference(content) {
         return content.getIndexer().getCharPosition(index)
     }
 
-    /**
-     * @see Content.getLineCount
-     */
+
     val lineCount: Int
         get() {
             validateAccess()
             return content.lineCount
         }
 
-    /**
-     * @see Content.getColumnCount
-     */
+
     fun getColumnCount(line: Int): Int {
         validateAccess()
         return content.getColumnCount(line)
     }
 
-    /**
-     * @see Content.getLineSeparatorUnsafe
-     */
+
     fun getLineSeparator(line: Int): String {
         validateAccess()
         return content.getLineSeparatorUnsafe(line).content
     }
 
-    /**
-     * @see Content.getLineString
-     */
+
     fun getLine(line: Int): String {
         validateAccess()
         return content.getLineString(line)
     }
 
-    /**
-     * @see Content.getLineChars
-     */
+
     fun getLineChars(line: Int, dest: CharArray) {
         validateAccess()
         content.getLineChars(line, dest)
     }
 
-    /**
-     * @see Content.getLine
-     */
+
     fun appendLineTo(sb: StringBuilder, line: Int) {
         validateAccess()
         content.getLine(line).appendTo(sb)
     }
 
-    /**
-     * @see Content.getDocumentVersion
-     */
+
     val documentVersionValue: Long
         get() {
             validateAccess()
             return content.documentVersion.get()
         }
 
-    /**
-     * Create a reader to read the text
-     */
+
     fun createReader(): Reader {
         return RefReader()
     }

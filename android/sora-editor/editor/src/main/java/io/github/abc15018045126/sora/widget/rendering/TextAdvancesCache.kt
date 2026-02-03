@@ -4,11 +4,7 @@ import androidx.annotation.IntRange
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * This class is introduced in order to avoid accumulated floating-point error for extreme long lines
- *
- * @author abc15018045126
- */
+
 class TextAdvancesCache(@IntRange(from = 0) val size: Int) {
     private val cache: Array<FloatArray>
 
@@ -21,18 +17,14 @@ class TextAdvancesCache(@IntRange(from = 0) val size: Int) {
         }
     }
 
-    /**
-     * Set advance at the given index
-     */
+
     fun setAdvanceAt(index: Int, advance: Float) {
         val i = index / BLOCK_SIZE
         val j = index % BLOCK_SIZE
         cache[i][j] = advance
     }
 
-    /**
-     * Compute the prefix sum cache
-     */
+
     fun finishBuilding() {
         for (arr in cache) {
             var pending = arr[0]
@@ -45,24 +37,17 @@ class TextAdvancesCache(@IntRange(from = 0) val size: Int) {
         }
     }
 
-    /**
-     * Get advance for character at the given index
-     */
+
     fun getAdvanceAt(index: Int): Float {
         val i = index / BLOCK_SIZE
         val j = index % BLOCK_SIZE
         return cache[i][j + 1] - cache[i][j]
     }
 
-    /**
-     * Get the sum of character advances of the given text region
-     *
-     * @param start inclusive start
-     * @param end   exclusive end
-     */
+
     fun getAdvancesSum(start: Int, end: Int): Float {
         if (cache.size == 1) {
-            // Normal case
+
             return cache[0][end] - cache[0][start]
         }
         val low = start / BLOCK_SIZE
@@ -81,9 +66,7 @@ class TextAdvancesCache(@IntRange(from = 0) val size: Int) {
     }
 
     companion object {
-        /**
-         * Divide the prefix sum by this block size
-         */
+
         private const val BLOCK_SIZE = 1 shl 18
     }
 }

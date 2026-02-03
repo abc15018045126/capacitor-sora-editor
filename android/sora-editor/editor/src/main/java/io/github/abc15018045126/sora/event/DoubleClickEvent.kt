@@ -6,12 +6,6 @@ import io.github.abc15018045126.sora.text.CharPosition
 import io.github.abc15018045126.sora.text.TextRange
 import io.github.abc15018045126.sora.widget.CodeEditor
 
-/**
- * Report double click in editor.
- * This event can be intercepted.
- *
- * @author abc15018045126
- */
 class DoubleClickEvent(
     editor: CodeEditor,
     position: CharPosition,

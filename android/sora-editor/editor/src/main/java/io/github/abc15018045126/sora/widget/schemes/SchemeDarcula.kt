@@ -1,10 +1,6 @@
 package io.github.abc15018045126.sora.widget.schemes
 
-/**
- * ColorScheme for editor
- * picked from Android Studio
- * Thanks to liyujiang-gzu (GitHub @liyujiang-gzu)
- */
+
 class SchemeDarcula : EditorColorScheme(true) {
 
     override fun applyDefault() {

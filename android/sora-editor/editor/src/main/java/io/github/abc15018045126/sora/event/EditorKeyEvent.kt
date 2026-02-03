@@ -3,18 +3,6 @@ package io.github.abc15018045126.sora.event
 import android.view.KeyEvent
 import io.github.abc15018045126.sora.widget.CodeEditor
 
-/**
- * Receives key related events in editor.
- * <p>
- * You may set a boolean for editor to return to the Android KeyEvent framework.
- *
- * @author abc15018045126
- * @see ResultedEvent.result
- * <p>
- * This class mirrors methods of {@link KeyEvent}, but some methods are changed:
- * @see #isAltPressed()
- * @see #isShiftPressed()
- */
 open class EditorKeyEvent(
     editor: CodeEditor,
     private val src: KeyEvent,
@@ -49,16 +37,10 @@ open class EditorKeyEvent(
     override val eventTime: Long
         get() = src.eventTime
 
-    /**
-     * editor change: track shift/alt by {@link KeyMetaStates}
-     */
     fun isShiftPressed(): Boolean {
         return shiftPressed
     }
 
-    /**
-     * editor change: track shift/alt by {@link KeyMetaStates}
-     */
     fun isAltPressed(): Boolean {
         return altPressed
     }
@@ -81,23 +63,14 @@ open class EditorKeyEvent(
         }
     }
 
-    /**
-     * The type of {@link EditorKeyEvent}.
-     */
+
     enum class Type {
-        /**
-         * Used for {@link CodeEditor#onKeyUp(int, KeyEvent)}.
-         */
+
         UP,
 
-        /**
-         * Used for {@link CodeEditor#onKeyDown(int, KeyEvent)}.
-         */
+
         DOWN,
 
-        /**
-         * Used for {@link CodeEditor#onKeyMultiple(int, int, KeyEvent)}.
-         */
         MULTIPLE
     }
 }

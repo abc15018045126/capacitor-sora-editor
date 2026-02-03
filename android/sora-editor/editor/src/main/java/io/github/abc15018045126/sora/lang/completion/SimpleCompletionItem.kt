@@ -4,17 +4,7 @@ import android.graphics.drawable.Drawable
 import io.github.abc15018045126.sora.text.Content
 import io.github.abc15018045126.sora.widget.CodeEditor
 
-/**
- * SimpleCompletionItem represents a simple replace action for auto-completion.
- * [prefixLength] is the length of prefix (text length you want to replace before the
- * auto-completion position).
- * [commitText] is the text you want to replace the original text.
- *
- * Note that you must make sure the start position of replacement is on the same line as auto-completion's
- * required position.
- *
- * @see CompletionItem
- */
+
 open class SimpleCompletionItem : CompletionItem {
 
     var commitText: String?

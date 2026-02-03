@@ -3,24 +3,16 @@ package io.github.abc15018045126.sora.lang.styling.span
 import io.github.abc15018045126.sora.lang.styling.color.ResolvableColor
 
 object SpanExtAttrs {
-    /**
-     * @see SpanColorResolver
-     */
+
     const val EXT_COLOR_RESOLVER = 0
 
-    /**
-     * @see SpanExternalRenderer
-     */
+
     const val EXT_EXTERNAL_RENDERER = 1
 
-    /**
-     * @see SpanInteractionInfo
-     */
+
     const val EXT_INTERACTION_INFO = 2
 
-    /**
-     * Set a [ResolvableColor] object for underline color resolving
-     */
+
     const val EXT_UNDERLINE_COLOR = 3
 
     @JvmStatic

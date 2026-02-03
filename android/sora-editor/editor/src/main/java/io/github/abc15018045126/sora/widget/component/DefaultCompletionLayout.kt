@@ -168,9 +168,7 @@ class DefaultCompletionLayout : CompletionLayout {
         return listView
     }
 
-    /**
-     * Perform motion events
-     */
+
     private fun performScrollList(offset: Int) {
         val adpView = getCompletionList()
 
@@ -209,7 +207,7 @@ class DefaultCompletionLayout : CompletionLayout {
 
     override fun ensureListPositionVisible(position: Int, increment: Int) {
         listView.post {
-            // Used for reset scroll position
+
             if (position == 0 && increment == 0) {
                 listView.setSelectionFromTop(0, 0)
                 return@post

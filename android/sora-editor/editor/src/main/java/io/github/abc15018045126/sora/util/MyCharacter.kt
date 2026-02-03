@@ -2,61 +2,37 @@ package io.github.abc15018045126.sora.util
 
 import java.util.Arrays
 
-/**
- * @author Rose
- * Get whether Identifier part/start quickly
- */
+
 object MyCharacter {
 
-    /**
-     * Compressed bit set for isJavaIdentifierStart()
-     */
+
     private var bitsIsStart: IntArray? = null
 
-    /**
-     * Compressed bit set for isJavaIdentifierPart()
-     */
+
     private var bitsIsPart: IntArray? = null
 
     init {
         initMapInternal()
     }
 
-    /**
-     * Get bit in compressed bit set
-     *
-     * @param values   Compressed bit set
-     * @param bitIndex Target index
-     * @return Boolean value at the index
-     */
+
     private fun get(values: IntArray?, bitIndex: Int): Boolean {
         return (values!![bitIndex / 32] and (1 shl (bitIndex % 32))) != 0
     }
 
-    /**
-     * Make the given position's bit true
-     *
-     * @param values   Compressed bit set
-     * @param bitIndex Index of bit
-     */
+
     private fun set(values: IntArray?, bitIndex: Int) {
         values!![bitIndex / 32] = values[bitIndex / 32] or (1 shl (bitIndex % 32))
     }
 
-    /**
-     * Init maps
-     *
-     * @deprecated The class will be initialized automatically
-     */
+
     @Deprecated("The class will be initialized automatically")
     @JvmStatic
     fun initMap() {
-        // Empty
+
     }
 
-    /**
-     * Init maps
-     */
+
     private fun initMapInternal() {
         if (bitsIsStart != null) {
             return
@@ -75,22 +51,14 @@ object MyCharacter {
         }
     }
 
-    /**
-     * @param key Character
-     * @return Whether a identifier part
-     * @see Character.isJavaIdentifierPart
-     */
+
     @JvmStatic
     fun isJavaIdentifierPart(key: Char): Boolean {
         val i = key.code
         return (bitsIsPart!![i shr 5] and (1 shl (i and 31))) != 0
     }
 
-    /**
-     * @param key Character
-     * @return Whether a identifier start
-     * @see Character.isJavaIdentifierStart
-     */
+
     @JvmStatic
     fun isJavaIdentifierStart(key: Char): Boolean {
         val i = key.code

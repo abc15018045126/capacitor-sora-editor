@@ -3,10 +3,7 @@ package io.github.abc15018045126.sora.util
 import kotlin.math.abs
 import kotlin.math.max
 
-/**
- * @author Rose
- * TrieTree to query values quickly
- */
+
 class TrieTree<T> {
 
     @JvmField
@@ -62,11 +59,7 @@ class TrieTree<T> {
         var token: T? = null
     }
 
-    /**
-     * Hashmap with fixed length
-     *
-     * @author abc15018045126
-     */
+
     class HashCharMap<V> {
 
         private val columns: Array<LinkedPair<V>?> = arrayOfNulls(CAPACITY)
@@ -124,11 +117,7 @@ class TrieTree<T> {
         }
     }
 
-    /**
-     * 数据节点
-     *
-     * @author Rose
-     */
+
     class LinkedPair<V> {
         @JvmField var next: LinkedPair<V>? = null
         @JvmField var first: Char = '\u0000'

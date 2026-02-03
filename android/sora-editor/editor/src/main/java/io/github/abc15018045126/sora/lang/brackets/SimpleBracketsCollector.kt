@@ -3,27 +3,19 @@ package io.github.abc15018045126.sora.lang.brackets
 import android.util.SparseIntArray
 import io.github.abc15018045126.sora.text.Content
 
-/**
- * Collect brackets for simple languages. Not very effective. Not thread-safe.
- *
- * @author abc15018045126
- */
+
 class SimpleBracketsCollector : BracketsProvider {
 
     private val mapping = SparseIntArray()
 
-    /**
-     * Add new pair
-     */
+
     fun add(start: Int, end: Int) {
-        // add 1 to avoid zeros
+
         mapping.put(start + 1, end + 1)
         mapping.put(end + 1, start + 1)
     }
 
-    /**
-     * Remove all pairs
-     */
+
     fun clear() {
         mapping.clear()
     }

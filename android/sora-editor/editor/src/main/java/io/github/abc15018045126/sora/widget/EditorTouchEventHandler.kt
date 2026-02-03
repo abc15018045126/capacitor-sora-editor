@@ -43,11 +43,7 @@ fun interface EditorMotionEventConstructor {
     ): EditorMotionEvent
 }
 
-/**
- * Handles touch events of editor
- *
- * @author abc15018045126
- */
+
 class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
     GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener,
     ScaleGestureDetector.OnScaleGestureListener {
@@ -65,9 +61,9 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
     @JvmField
     internal var motionY: Float = 0f
     @JvmField
-    internal var glowTopOrBottom: Boolean = false //true for bottom
+    internal var glowTopOrBottom: Boolean = false
     @JvmField
-    internal var glowLeftOrRight: Boolean = false //true for right
+    internal var glowLeftOrRight: Boolean = false
     @JvmField
     @get:JvmName("isScaling")
     var isScaling: Boolean = false
@@ -101,7 +97,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
     @JvmField
     internal var draggingSelection: CharPosition? = null
 
-    /* dragging selection fields */
+
     private var dragSelectActive: Boolean = false
     private var dragSelectStarted: Boolean = false
     private var dragSelectInitialCharIndex: Int = -1
@@ -133,11 +129,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         return selHandleMoving
     }
 
-    /**
-     * Whether we should draw scroll bars
-     *
-     * @return whether draw scroll bars
-     */
+
     fun shouldDrawScrollBarForTouch(): Boolean {
         return System.currentTimeMillis() - timeLastScroll < EditorTouchEventHandler.HIDE_DELAY + EditorTouchEventHandler.SCROLLBAR_FADE_ANIMATION_TIME || holdingScrollbarVertical || holdingScrollbarHorizontal
     }
@@ -153,9 +145,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         return 1f
     }
 
-    /**
-     * Hide the insert handle at once
-     */
+
     fun hideInsertHandle() {
         if (!shouldDrawInsertHandle()) {
             return
@@ -164,45 +154,27 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         editor.invalidate()
     }
 
-    /**
-     * Whether the vertical scroll bar is touched
-     *
-     * @return Whether touched
-     */
+
     fun holdVerticalScrollBar(): Boolean {
         return holdingScrollbarVertical
     }
 
-    /**
-     * Whether the horizontal scroll bar is touched
-     *
-     * @return Whether touched
-     */
+
     fun holdHorizontalScrollBar(): Boolean {
         return holdingScrollbarHorizontal
     }
 
-    /**
-     * Whether insert handle is touched
-     *
-     * @return Whether touched
-     */
+
     fun holdInsertHandle(): Boolean {
         return selHandleType == BOTH
     }
 
-    /**
-     * Whether the editor should draw insert handler
-     *
-     * @return Whether to draw
-     */
+
     fun shouldDrawInsertHandle(): Boolean {
         return System.currentTimeMillis() - timeLastSetSelection < HIDE_DELAY_HANDLE || holdInsertHandle()
     }
 
-    /**
-     * Notify the editor later to hide scroll bars
-     */
+
     fun notifyScrolled() {
         timeLastScroll = System.currentTimeMillis()
         val scrollNotifier = Runnable {
@@ -215,9 +187,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
 
 
 
-    /**
-     * Notify the editor later to hide insert handle
-     */
+
     fun notifyLater() {
         timeLastSetSelection = System.currentTimeMillis()
         val invalidateNotifier = Runnable {
@@ -232,36 +202,23 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
     }
 
 
-    /**
-     * Called by editor
-     * Whether this class is handling motions by user
-     *
-     * @return Whether handling
-     */
+
     fun handlingMotions(): Boolean {
         return holdHorizontalScrollBar() || holdVerticalScrollBar() || hasAnyHeldHandle()
     }
 
-    /**
-     * Get scroller for editor
-     *
-     * @return Scroller using
-     */
+
     fun getScroller(): EditorScroller {
         return scroller
     }
 
-    /**
-     * Reset states of handler
-     */
+
     fun reset() {
         scroller.startScroll(0, 0, 0, 0, 0)
         reset2()
     }
 
-    /**
-     * Reset states of handler, except scrolling state
-     */
+
     fun reset2() {
         holdingScrollbarHorizontal = false
         holdingScrollbarVertical = false
@@ -284,7 +241,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
             dismissMagnifier()
             return
         }
-        // A handle is already held
+
         val desc = getHandleDescriptorByType(selHandleType) ?: return
         val pos = desc.position
 
@@ -406,12 +363,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         }
     }
 
-    /**
-     * Handle events apart from detectors
-     *
-     * @param e The event editor received
-     * @return Whether this touch event is handled by this class
-     */
+
     fun onTouchEvent(e: MotionEvent): Boolean {
         motionY = e.y
         motionX = e.x
@@ -521,9 +473,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         return holdingScrollbarHorizontal || holdingScrollbarVertical
     }
 
-    /**
-     * Entry for mouse motion events
-     */
+
     fun onMouseEvent(event: MotionEvent): Boolean {
         if (editor.isFormatting) {
             resetMouse()
@@ -637,9 +587,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         return true
     }
 
-    /**
-     * Reset mouse handling state
-     */
+
     fun resetMouse() {
         mouseDownX = 0f
         mouseDownY = 0f
@@ -652,9 +600,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         }
     }
 
-    /**
-     * Context click
-     */
+
     fun onContextClick(event: MotionEvent) {
         lastContextClickPosition = PointF(event.x, event.y)
         if ((dispatchEditorMotionEvent(::ContextClickEvent, null, event) and InterceptTarget.TARGET_EDITOR) != 0) {
@@ -1030,7 +976,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
             return false
         }
 
-        // If we do not finish it here, it can produce a high speed and cause the final scroll range to be broken, even a NaN for velocity
+
         scroller.forceFinished(true)
         scroller.fling(
             scroller.getCurrX(),
@@ -1158,9 +1104,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         return true
     }
 
-    /**
-     * This is a helper for EventHandler to control handles
-     */
+
     inner class SelectionHandle(var type: Int) {
 
         private fun checkNoIntersection(
@@ -1170,11 +1114,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
             return !RectF.intersects(one.position, another.position)
         }
 
-        /**
-         * Handle the event
-         *
-         * @param e Event sent by EventHandler
-         */
+
         fun applyPosition(e: MotionEvent) {
             val descriptor = when (type) {
                 LEFT -> editor.leftHandleDescriptor!!
@@ -1204,7 +1144,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                         }
                         RIGHT -> {
                             if (anotherLine > line || (anotherLine == line && anotherColumn > column)) {
-                                //Swap type
+
                                 if (checkNoIntersection(descriptor, anotherDesc)) {
                                     dispatchHandleStateChange(this@EditorTouchEventHandler.selHandleType, false)
                                     this@EditorTouchEventHandler.selHandleType = LEFT
@@ -1222,7 +1162,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                         }
                         LEFT -> {
                             if (anotherLine < line || (anotherLine == line && anotherColumn < column)) {
-                                //Swap type
+
                                 if (checkNoIntersection(descriptor, anotherDesc)) {
                                     dispatchHandleStateChange(this@EditorTouchEventHandler.selHandleType, false)
                                     this@EditorTouchEventHandler.selHandleType = RIGHT
@@ -1245,9 +1185,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
 
     }
 
-    /**
-     * Runnable for controlling auto-scrolling when thumb reaches the edges of editor
-     */
+
     private inner class EdgeScrollRunnable(initDelta: Int) : Runnable {
         private val initialDelta: Float = initDelta.toFloat()
         private var deltaHorizontal: Float = initDelta.toFloat()
@@ -1262,7 +1200,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
             var dx = (if ((edgeFlags and LEFT_EDGE) != 0) -deltaHorizontal else 0f) + (if ((edgeFlags and RIGHT_EDGE) != 0) deltaHorizontal else 0f)
             var dy = (if ((edgeFlags and TOP_EDGE) != 0) -deltaVertical else 0f) + (if ((edgeFlags and BOTTOM_EDGE) != 0) deltaVertical else 0f)
             if (dx > 0) {
-                // Check whether there is content at right
+
                 val cursor = editor.cursor!!
                 val line: Int = if (selHandleType == BOTH || selHandleType == LEFT) {
                     cursor.leftLine
@@ -1271,7 +1209,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                 }
 
                 val column = editor.text.getColumnCount(line)
-                // Do not scroll too far from text region of this line
+
                 val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
                 val maxOffset = editor.measureTextRegionOffset() + layout.getCharLayoutOffset(line, column)[1] - editor.width * 0.85f
 
@@ -1284,14 +1222,14 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
                 editorMagnifier.dismiss()
             }
 
-            // Speed up if we are scrolling in the direction
+
             if (isSameSign(dx, lastDx)) {
                 if (factorX < MAX_FACTOR && postTimes % 2 == 0L) {
                     factorX++
                     deltaHorizontal *= INCREASE_FACTOR
                 }
             } else {
-                // Recover initial speed because direction changed
+
                 deltaHorizontal = initialDelta
                 factorX = 0f
             }
@@ -1307,7 +1245,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
             lastDx = dx
             lastDy = dy
 
-            // Update selection
+
             thumbMotionRecord?.let {
                 if (!handleDragSelect(it, true)) {
                     handleSelectionChange2(it)
@@ -1315,7 +1253,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
             }
 
             postTimes++
-            // Post for animation
+
             if (edgeFlags != 0) {
                 io.github.abc15018045126.sora.util.EditorHandler.postDelayed({
                     if (editor.isReleased) return@postDelayed

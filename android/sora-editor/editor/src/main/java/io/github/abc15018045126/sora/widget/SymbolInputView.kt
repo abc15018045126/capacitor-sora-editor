@@ -10,15 +10,7 @@ import androidx.annotation.NonNull
 import io.github.abc15018045126.sora.R
 import io.github.abc15018045126.sora.widget.snippet.SnippetController
 
-/**
- * A simple symbol input view implementation for editor.
- *
- *
- * First, add your symbols by [addSymbols].
- * Then, bind a certain editor by [bindEditor] so that it works
- *
- * @author abc15018045126
- */
+
 class SymbolInputView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -42,26 +34,17 @@ class SymbolInputView @JvmOverloads constructor(
         textColor = context.resources.getColor(R.color.defaultSymbolInputTextColor)
     }
 
-    /**
-     * Bind editor for the view
-     */
+
     fun bindEditor(editor: CodeEditor?) {
         this.editor = editor
     }
 
-    /**
-     * Remove all added symbols
-     */
+
     fun removeSymbols() {
         removeAllViews()
     }
 
-    /**
-     * Add symbols to the view.
-     *
-     * @param display    The texts displayed in button
-     * @param insertText The actual text to be inserted to editor when the button is clicked
-     */
+
     fun addSymbols(@NonNull display: Array<String>, @NonNull insertText: Array<String>) {
         val count = Math.max(display.size, insertText.size)
         for (i in 0 until count) {

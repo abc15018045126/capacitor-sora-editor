@@ -20,11 +20,7 @@ import io.github.abc15018045126.sora.widget.base.EditorPopupWindow
 import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
 import io.github.abc15018045126.sora.widget.snippet.SnippetController
 
-/**
- * Auto-completion component for CodeEditor.
- *
- * This window is displayed when the user types text and the language can provide completions.
- */
+
 class EditorAutoCompletion(editor: CodeEditor) :
     EditorPopupWindow(editor, FEATURE_SCROLL_AS_CONTENT or FEATURE_SHOW_OUTSIDE_VIEW_ALLOWED),
     EditorBuiltinComponent {
@@ -136,7 +132,7 @@ class EditorAutoCompletion(editor: CodeEditor) :
             dismiss()
             return
         }
-        
+
         if (event.action == ContentChangeEvent.ACTION_DELETE) {
             if (isShowing) {
                 updateCompletions()
@@ -148,7 +144,7 @@ class EditorAutoCompletion(editor: CodeEditor) :
             requireCompletion()
             return
         }
-        
+
         if (isShowing) {
             updateCompletions()
         }
@@ -159,9 +155,9 @@ class EditorAutoCompletion(editor: CodeEditor) :
         val line = cursor.leftLine
         val col = cursor.leftColumn
         val text = editor.text
-        
+
         thread?.cancel()
-        
+
         val lang = editor.editorLanguage!!
         val publisher = CompletionPublisher(editor.handler, {
             io.github.abc15018045126.sora.util.EditorHandler.post {
@@ -191,7 +187,7 @@ class EditorAutoCompletion(editor: CodeEditor) :
         val sorted = items.highlightMatchLabel(editor.colorScheme)
         adapter?.attachValues(this, sorted)
         adapter?.notifyDataSetChanged()
-        
+
         if (!isShowing) {
             show()
         }
@@ -213,28 +209,28 @@ class EditorAutoCompletion(editor: CodeEditor) :
 
     private fun updateCompletionWindowPosition() {
         if (!isShowing) return
-        
+
         val cursor = editor.cursor
         val line = cursor.leftLine
         val col = cursor.leftColumn
-        
+
         val charX = editor.getCharOffsetX(line, col)
         val charY = editor.getCharOffsetY(line, col)
-        
+
         val dp = editor.dpUnit
         val rowHeight = editor.rowHeight
-        
+
         val panelX = charX
         var panelY = charY + rowHeight
-        
+
         val adapterCount = adapter?.count ?: 0
         val itemHeight = (dp * 40).toInt()
         val totalHeight = Math.min(maxHeight, adapterCount * itemHeight)
-        
+
         if (panelY + totalHeight > editor.height) {
             panelY = charY - totalHeight
         }
-        
+
         setSize(Math.min(editor.width, (dp * 250).toInt()), totalHeight)
         setLocationAbsolutely(panelX, panelY)
     }
@@ -293,7 +289,7 @@ class EditorAutoCompletion(editor: CodeEditor) :
             try {
                 language.requireAutoComplete(ContentReference(text), position, publisher, Bundle.EMPTY)
             } catch (e: Exception) {
-                // Ignore
+
             }
         }
     }

@@ -13,14 +13,7 @@ import io.github.abc15018045126.sora.text.Cursor
 import io.github.abc15018045126.sora.text.method.KeyMetaStates
 import java.util.Objects
 
-/**
- * Handles [KeyEvent]s in editor.
- *
- * **This is for internal use only.**
- *
- * @author Rose
- * @author Akash Yadav
- */
+
 class EditorKeyEventHandler(private val editor: CodeEditor) {
 
     private val keyMetaStates: KeyMetaStates = KeyMetaStates(editor)
@@ -29,27 +22,19 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
         Objects.requireNonNull(editor, "Cannot setup KeyEvent with null editor instance.")
     }
 
-    /**
-     * Check if the given [KeyEvent] is a key binding event.
-     * [EditorKeyEventHandler.getKeyMetaStates()] must be notified about the key event before this
-     * method is called.
-     *
-     * @param keyCode The keycode.
-     * @param event   The key event.
-     * @return `true` if the event is a key binding event. `false` otherwise.
-     */
+
     private fun isKeyBindingEvent(keyCode: Int, event: KeyEvent): Boolean {
-        // These keys must be pressed for the key event to be a key binding event
+
         if (!(keyMetaStates.isShiftPressed || keyMetaStates.isAltPressed || event.isCtrlPressed)) {
             return false
         }
 
-        // Any alphabet key
+
         if (keyCode in KeyEvent.KEYCODE_A..KeyEvent.KEYCODE_Z) {
             return true
         }
 
-        // Other key combinations
+
         return keyCode == KeyEvent.KEYCODE_ENTER ||
                 keyCode == KeyEvent.KEYCODE_DPAD_UP ||
                 keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
@@ -59,23 +44,13 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                 keyCode == KeyEvent.KEYCODE_MOVE_END
     }
 
-    /**
-     * Get the [KeyMetaStates] instance.
-     *
-     * @return The [KeyMetaStates] instance.
-     */
+
     @NonNull
     fun getKeyMetaStates(): KeyMetaStates {
         return keyMetaStates
     }
 
-    /**
-     * Called by editor in [CodeEditor.onKeyDown].
-     *
-     * @param keyCode The key code.
-     * @param event   The key event.
-     * @return `true` if the event was handled, `false` otherwise.
-     */
+
     fun onKeyDown(keyCode: Int, @NonNull event: KeyEvent): Boolean {
         keyMetaStates.onKeyDown(event)
         val eventManager = editor.eventManager!!
@@ -100,8 +75,8 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
         val isAltPressed = keyMetaStates.isAltPressed
         val isCtrlPressed = event.isCtrlPressed
 
-        // Currently, KeyBindingEvent is triggered only for (Shift | Ctrl | Alt) + alphabet keys
-        // Should we add support for more keys?
+
+
         if (isKeyBindingEvent(keyCode, event)) {
             if ((eventManager.dispatchEvent(keybindingEvent) and InterceptTarget.TARGET_EDITOR) != 0) {
                 return keybindingEvent.result(false) || editorKeyEvent.result(false)
@@ -209,7 +184,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                         val right = editorCursor!!.right()
                         val lines = editorText.lineCount
                         if (right.line == lines - 1) {
-                            // last line, cannot move down
+
                             return true
                         }
 
@@ -224,7 +199,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                         editorText.insert(left.line, 0, next + editor.lineSeparator!!.content)
                         editorText.endBatchEdit()
 
-                        // Update selection
+
                         val newLeft = editorText.indexer.getCharPosition(left.line + 1, left.column)
                         val newRight = editorText.indexer.getCharPosition(right.line + 1, right.column)
                         if (left.index != right.index) {
@@ -260,7 +235,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                         val left = editorCursor!!.left()
                         val right = editorCursor!!.right()
                         if (left.line == 0) {
-                            // first line, cannot move up
+
                             return true
                         }
 
@@ -274,7 +249,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                         )
                         editorText.endBatchEdit()
 
-                        // Update selection
+
                         val newLeft = editorText.indexer.getCharPosition(left.line - 1, left.column)
                         val newRight = editorText.indexer.getCharPosition(right.line - 1, right.column)
                         if (left.index != right.index) {
@@ -365,7 +340,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                             }
                         } else {
                             if (isShiftPressed) {
-                                // Shift + TAB -> unindent the [selected] lines
+
                                 editor.unindentSelection()
                             } else {
                                 editor.indentOrCommitTab()
@@ -418,10 +393,10 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
         var charCode = event.getUnicodeChar(keyMetaStates.getMetaState(event))
         if (charCode != 0 && editor.isEditable) {
             if (charCode == KeyCharacterMap.HEX_INPUT.toInt() || charCode == KeyCharacterMap.PICKER_DIALOG_INPUT.toInt()) {
-                // unsupported: character picker dialog and hex input
+
                 return editor.onSuperKeyDown(keyCode, event)
             }
-            // #547 Dead Keys
+
             var dead = false
             if ((charCode and KeyCharacterMap.COMBINING_ACCENT) != 0) {
                 charCode = charCode and KeyCharacterMap.COMBINING_ACCENT_MASK
@@ -507,7 +482,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
             KeyEvent.KEYCODE_W -> editor.selectCurrentWord()
             KeyEvent.KEYCODE_J -> {
                 if (!isShiftPressed || editorCursor!!.isSelected()) {
-                    // TODO If the cursor is selected, then the selected lines must be joined.
+
                     editorResult = false
                 } else {
                     val line = editorCursor!!.leftLine
@@ -535,13 +510,13 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
             val editorLanguage = editor.editorLanguage!!
 
             if (isShiftPressed && !isAltPressed && !isCtrlPressed) {
-                // Shift + Enter
+
                 return startNewLine(editor, editorCursor!!, editorText, editorKeyEvent, keybindingEvent)
             }
 
             if (isCtrlPressed && !isShiftPressed) {
                 if (isAltPressed) {
-                    // Ctrl + Alt + Enter
+
                     var line = editorCursor!!.left().line
                     if (line == 0) {
                         editorText.insert(0, 0, lineSeparator)
@@ -555,7 +530,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
                     }
                 }
 
-                // Ctrl + Enter
+
                 val left = editorCursor!!.left().fromThis()
                 editor.commitText(lineSeparator)
                 editor.setSelection(left.line, left.column)
@@ -616,13 +591,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
         return keybindingEvent.result(true) || e.result(true)
     }
 
-    /**
-     * Called by editor in [CodeEditor.onKeyUp].
-     *
-     * @param keyCode The key code.
-     * @param event   The key event.
-     * @return `true` if the event was handled, `false` otherwise.
-     */
+
     fun onKeyUp(keyCode: Int, @NonNull event: KeyEvent): Boolean {
         keyMetaStates.onKeyUp(event)
 
@@ -654,14 +623,7 @@ class EditorKeyEventHandler(private val editor: CodeEditor) {
         return e.result(editor.onSuperKeyUp(keyCode, event))
     }
 
-    /**
-     * Called by editor in [CodeEditor.onKeyMultiple].
-     *
-     * @param keyCode     The key code.
-     * @param repeatCount The repeat count.
-     * @param event       The key event.
-     * @return `true` if the event was handled, `false` otherwise.
-     */
+
     fun onKeyMultiple(keyCode: Int, repeatCount: Int, @NonNull event: KeyEvent): Boolean {
         val e = EditorKeyEvent(editor, event, EditorKeyEvent.Type.MULTIPLE)
         val eventManager = editor.eventManager!!

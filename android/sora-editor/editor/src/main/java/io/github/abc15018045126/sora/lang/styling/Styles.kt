@@ -7,14 +7,7 @@ import io.github.abc15018045126.sora.util.MutableInt
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * This class stores styles of text and other decorations in editor related to code.
- *
- * Note that this does not save any information related to languages. No extra space is provided
- * for communication between analyzers and auto-completion. You should manage it by yourself.
- *
- * If you are going to extend this class, please read the source code carefully in advance
- */
+
 @Suppress("unused")
 open class Styles @JvmOverloads constructor(
     @JvmField
@@ -30,9 +23,7 @@ open class Styles @JvmOverloads constructor(
     @JvmField
     var blocks: MutableList<CodeBlock>? = null
 
-    /**
-     * Internal, automatically generated
-     */
+
     @JvmField
     var blocksByStart: MutableList<CodeBlock>? = null
 
@@ -48,22 +39,13 @@ open class Styles @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Get analyzed spans
-     */
+
     fun getSpans(): Spans? = spans
 
-    /**
-     * Returns suppress switch
-     *
-     * @return suppress switch
-     * @see Styles.suppressSwitch
-     */
+
     fun getSuppressSwitch(): Int = suppressSwitch
 
-    /**
-     * Set suppress switch for editor
-     */
+
     fun setSuppressSwitch(suppressSwitch: Int) {
         this.suppressSwitch = suppressSwitch
     }
@@ -74,19 +56,13 @@ open class Styles @JvmOverloads constructor(
         this.isIndentCountMode = indentCountMode
     }
 
-    /**
-     * Add a new code block info
-     *
-     * @param block Info of code block
-     */
+
     fun addCodeBlock(block: CodeBlock) {
         Objects.requireNonNull(block, "CodeBlock must not be null")
         blocks?.add(block)
     }
 
-    /**
-     * Adjust styles on insert.
-     */
+
     fun adjustOnInsert(start: CharPosition, end: CharPosition) {
         spans?.adjustOnInsert(start, end)
         val delta = end.line - start.line
@@ -108,9 +84,7 @@ open class Styles @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Adjust styles on delete.
-     */
+
     fun adjustOnDelete(start: CharPosition, end: CharPosition) {
         spans?.adjustOnDelete(start, end)
         val delta = start.line - end.line
@@ -130,7 +104,7 @@ open class Styles @JvmOverloads constructor(
                 if (line > end.line) {
                     styles.line = line + delta
                     styles.updateElements()
-                } else if (line > start.line /* line <= end.line */) {
+                } else if (line > start.line  ) {
                     itr.remove()
                 }
             }
@@ -165,9 +139,7 @@ open class Styles @JvmOverloads constructor(
         res.value += delta
     }
 
-    /**
-     * Remove the style of given kind from line
-     */
+
     fun eraseLineStyle(line: Int, type: Class<out LineAnchorStyle>) {
         val currentLineStyles = lineStyles ?: return
         for (lineStyle in currentLineStyles) {
@@ -178,18 +150,14 @@ open class Styles @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Remove all line styles
-     */
+
     fun eraseAllLineStyles() {
         val currentLineStyles = lineStyles ?: return
         currentLineStyles.clear()
         styleTypeCount?.clear()
     }
 
-    /**
-     * Do some extra work before finally sending the result to editor.
-     */
+
     fun finishBuilding() {
         val currentBlocks = blocks
         if (currentBlocks != null) {

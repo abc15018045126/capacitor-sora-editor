@@ -17,11 +17,7 @@ import io.github.abc15018045126.sora.widget.base.EditorPopupWindow
 import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
 import io.github.abc15018045126.sora.widget.snippet.SnippetController
 
-/**
- * This window will show when selecting text to present text actions.
- *
- * @author abc15018045126
- */
+
 class EditorTextActionWindow(editor: CodeEditor) :
     EditorPopupWindow(editor, FEATURE_SHOW_OUTSIDE_VIEW_ALLOWED), View.OnClickListener,
     EditorBuiltinComponent {
@@ -178,8 +174,8 @@ class EditorTextActionWindow(editor: CodeEditor) :
             && !event.isHeld
         ) {
             displayWindow()
-            // Also, post to hide the window on handle disappearance
-            // Also, post to hide the window on handle disappearance
+
+
             io.github.abc15018045126.sora.util.EditorHandler.postDelayed(object : Runnable {
                 override fun run() {
                     if (editor.isReleased) return
@@ -210,7 +206,7 @@ class EditorTextActionWindow(editor: CodeEditor) :
             || event.cause == SelectionChangeEvent.CAUSE_SELECTION_HANDLE
             || event.cause == SelectionChangeEvent.CAUSE_SEARCH || event.cause == SelectionChangeEvent.CAUSE_UNKNOWN
         ) {
-            // Always post show. See #193
+
             if (event.cause != SelectionChangeEvent.CAUSE_SEARCH) {
                 io.github.abc15018045126.sora.util.EditorHandler.post {
                    if (editor.isReleased) return@post
@@ -241,9 +237,7 @@ class EditorTextActionWindow(editor: CodeEditor) :
         }
     }
 
-    /**
-     * Get the view root of the panel.
-     */
+
     fun getView(): ViewGroup {
         return popup.contentView as ViewGroup
     }
@@ -307,9 +301,7 @@ class EditorTextActionWindow(editor: CodeEditor) :
         show()
     }
 
-    /**
-     * Update the state of paste button
-     */
+
     private fun updateBtnState() {
         pasteBtn.isEnabled = editor.hasClip()
         copyBtn.visibility = if (editor.cursor.isSelected()) View.VISIBLE else View.GONE

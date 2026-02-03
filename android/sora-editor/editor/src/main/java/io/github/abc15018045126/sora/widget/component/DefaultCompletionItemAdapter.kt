@@ -9,15 +9,11 @@ import android.widget.TextView
 import io.github.abc15018045126.sora.R
 import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
 
-/**
- * Default adapter to display results
- *
- * @author Rose
- */
+
 class DefaultCompletionItemAdapter : EditorCompletionAdapter() {
 
     override fun getItemHeight(): Int {
-        // 45 dp
+
         return TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
             45f,

@@ -93,10 +93,10 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
     private val preloadedDirections: SparseArray<Directions> = SparseArray()
     private val editor: CodeEditor
     private val collectedDiagnostics: MutableList<DiagnosticRegion> = ArrayList()
-    
+
     @JvmField
     var lastStuckLines: List<CodeBlock?>? = null
-    
+
     @JvmField
     var metricsText: AndroidPaint.FontMetricsInt? = null
 
@@ -131,9 +131,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
     private var renderingFlag = false
     internal var forcedRecreateLayout: Boolean = false
 
-    /**
-     * Called when the editor text is changed by [CodeEditor.setText]
-     */
+
     fun onEditorFullTextUpdate() {
         cursor = editor.cursor
         content = editor.text
@@ -226,11 +224,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         updateTimestamp()
     }
 
-    /**
-     * Set text's typeface
-     * 
-     * @param typefaceText New typeface
-     */
+
     fun setTypefaceText(typefaceText: Typeface?) {
         var typefaceText: Typeface? = typefaceText
         if (typefaceText == null) {
@@ -277,9 +271,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         editor.invalidate()
     }
 
-    /**
-     * Update timestamp required for measuring cache
-     */
+
     fun updateTimestamp() {
         this.timestamp = SystemClock.elapsedRealtimeNanos()
     }
@@ -322,7 +314,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         return getLine(line).length
     }
 
-    // draw methods
+
     @RequiresApi(29)
     fun updateLineDisplayList(renderNode: RenderNode, line: Int, spans: Spans.Reader?) {
         val widthLine = drawSingleTextLine(null, line, 0f, 0f, spans, false)
@@ -454,18 +446,14 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         return false
     }
 
-    /**
-     * Paint the view on given Canvas
-     * 
-     * @param canvas Canvas you want to draw
-     */
+
     fun drawView(canvas: Canvas) {
         cursor?.updateCache(editor.firstVisibleLine)
 
         val color: EditorColorScheme = editor.colorScheme
         drawColor(canvas, color.getColor(EditorColorScheme.WHOLE_BACKGROUND), viewRect)
 
-        val lineNumberWidth: Float = editor.measureLineNumber() // include line number margin
+        val lineNumberWidth: Float = editor.measureLineNumber()
         val sideIconWidth = if (hasSideHintIcons()) editor.logicalRowHeight.toFloat() else 0f
         var offsetX: Float = -editor.offsetX.toFloat() + editor.measureTextRegionOffset()
         val textOffset = offsetX
@@ -552,29 +540,29 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     (textOffset - editor.dividerMarginRight).toInt()
                 )
             }
-            // User defined gutter background
+
             drawUserGutterBackground(canvas, (textOffset - editor.dividerMarginRight).toInt())
             drawSideIcons(canvas, offsetX + lineNumberWidth)
             canvas.restore()
 
             val isRightOfDivider = editor.isLineNumberRightOfDivider()
-            
-            // Draw Divider
-            val dividerX = if (isRightOfDivider) 
-                offsetX 
-            else 
+
+
+            val dividerX = if (isRightOfDivider)
+                offsetX
+            else
                 offsetX + lineNumberWidth + sideIconWidth + editor.dividerMarginLeft
-            
+
             drawDivider(
                 canvas,
                 dividerX,
                 color.getColor(EditorColorScheme.LINE_DIVIDER)
             )
 
-            // Draw Line Numbers
-            val numberX = if (isRightOfDivider) 
+
+            val numberX = if (isRightOfDivider)
                 offsetX + editor.dividerWidth + editor.dividerMarginRight + sideIconWidth
-            else 
+            else
                 offsetX
 
             canvas.save()
@@ -583,7 +571,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 val bottom: Int = editor.getRowBottom(0)
                 val y: Float
                 if (postDrawLineNumbers.size == 0 || editor.getRowTop(IntPair.getSecond(postDrawLineNumbers.get(0))) - editor.offsetY > bottom) {
-                    // Free to draw at first line
+
                     y =
                         (editor.getRowBottom(0) + editor.getRowTop(0)) / 2f - (metricsLineNumber.descent - metricsLineNumber.ascent) / 2f - metricsLineNumber.ascent
                 } else {
@@ -977,14 +965,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
     }
 
-    /**
-     * Draw rect on screen
-     * Will not do anything if color is zero
-     * 
-     * @param canvas Canvas to draw
-     * @param color  Color of rect
-     * @param rect   Rect to draw
-     */
+
     protected fun drawColor(canvas: Canvas?, color: Int, rect: RectF?) {
         if (canvas != null && color != 0 && rect != null) {
             paintGeneral.color = color
@@ -992,14 +973,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
     }
 
-    /**
-     * Draw rect on screen in a round rectangle
-     * Will not do anything if color is zero
-     * 
-     * @param canvas Canvas to draw
-     * @param color  Color of rect
-     * @param rect   Rect to draw
-     */
+
     protected fun drawColorRound(canvas: Canvas, color: Int, rect: RectF) {
         if (color != 0) {
             paintGeneral.color = color
@@ -1012,14 +986,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
     }
 
-    /**
-     * Draw rect on screen
-     * Will not do anything if color is zero
-     * 
-     * @param canvas Canvas to draw
-     * @param color  Color of rect
-     * @param rect   Rect to draw
-     */
+
     protected fun drawColor(canvas: Canvas?, color: Int, rect: Rect?) {
         if (canvas != null && color != 0 && rect != null) {
             paintGeneral.color = color
@@ -1027,9 +994,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
     }
 
-    /**
-     * Draw background for whole row
-     */
+
     protected fun drawRowBackground(canvas: Canvas, color: Int, row: Int) {
         drawRowBackground(canvas, color, row, viewRect.right)
     }
@@ -1042,9 +1007,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         drawColor(canvas, color, tmpRect)
     }
 
-    /**
-     * Draw single line number
-     */
+
     protected fun drawLineNumber(canvas: Canvas, line: Int, row: Int, offsetX: Float, width: Float, color: Int) {
         var line = line
         if (width + offsetX <= 0) {
@@ -1054,7 +1017,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
             paintOther.setTextAlign(editor.getLineNumberAlign())
         }
         paintOther.setColor(color)
-        // Line number center align to text center
+
         val y: Float =
             (editor.getRowBottom(row) + editor.getRowTop(row)) / 2f - (metricsLineNumber.descent - metricsLineNumber.ascent) / 2f - metricsLineNumber.ascent - editor.offsetY
 
@@ -1080,14 +1043,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         TemporaryCharBuffer.recycle(buffer)
     }
 
-    /**
-     * Draw line number background
-     * 
-     * @param canvas  Canvas to draw
-     * @param offsetX Start x of line number region
-     * @param width   Width of line number region
-     * @param color   Color of line number background
-     */
+
     protected fun drawLineNumberBackground(canvas: Canvas, offsetX: Float, width: Float, color: Int) {
         val right = offsetX + width
         if (right < 0) {
@@ -1106,13 +1062,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         drawColor(canvas, color, tmpRect)
     }
 
-    /**
-     * Draw divider line
-     * 
-     * @param canvas  Canvas to draw
-     * @param offsetX End x of line number region
-     * @param color   Color to draw divider
-     */
+
     protected fun drawDivider(canvas: Canvas, offsetX: Float, color: Int) {
         val shadow = editor.isLineNumberPinned && !editor.isWordwrap && editor.offsetX > 0
         val right = offsetX + editor.dividerWidth
@@ -1170,7 +1120,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
             }
             val styles = editor.styles ?: return null
             val codeBlocks = styles.blocksByStart ?: return null
-            
+
             var startLine = editor.firstVisibleLine
             var offsetY = editor.offsetY
             val rowHeight = editor.logicalRowHeight
@@ -1198,7 +1148,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 }
                 i++
             }
-            
+
             val maxLines = editor.props!!.stickyScrollMaxLines
             var finalCandidates: List<CodeBlock> = candidates
             if (finalCandidates.size > maxLines) {
@@ -1301,9 +1251,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         return null
     }
 
-    /**
-     * Draw current line background during animation
-     */
+
     protected fun drawAnimatedCurrentLineBackground(canvas: Canvas, currentLineBgColor: Int) {
         tmpRect.bottom = (editor.cursorAnimator.animatedLineBottom() - editor.offsetY).toFloat()
         tmpRect.top = tmpRect.bottom - editor.cursorAnimator.animatedLineHeight()
@@ -1322,14 +1270,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         )
     }
 
-    /**
-     * Draw rows with a [RowIterator]
-     * 
-     * @param canvas              Canvas to draw
-     * @param offset              Offset of text region start
-     * @param postDrawLineNumbers Line numbers to be drawn later
-     * @param postDrawCursor      Cursors to be drawn later
-     */
+
     protected fun drawRows(
         canvas: Canvas,
         offset: Float,
@@ -1374,17 +1315,17 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
         val offset2: Float = editor.offsetX - editor.measureTextRegionOffset()
 
-        // Step 1 - Draw background of rows
+
 
         val trParams = createTextRowParams()
 
-        // Pre-draw animated current line background
+
         if (editor.cursorAnimator.isRunning() && editor.isHighlightCurrentLine && editor.isEditable
             && (editor.props!!.cursorLineBgOverlapBehavior === CURSOR_LINE_BG_OVERLAP_CURSOR || editor.props!!.cursorLineBgOverlapBehavior === CURSOR_LINE_BG_OVERLAP_MIXED)
         ) {
             drawAnimatedCurrentLineBackground(canvas, currentLineBgColor)
         }
-        // Draw custom line backgrounds & normal current line background
+
         run {
             var row = firstVis
             while (row <= editor.lastVisibleRow && rowIterator.hasNext()) {
@@ -1408,7 +1349,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 var isOverlapping = false
 
                 if (drawCustomLineBg) {
-                    // Draw custom background
+
                     val customBackground: ResolvableColor? = getUserBackgroundForLine(line)
                     if (customBackground != null) {
                         val color =
@@ -1428,18 +1369,18 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 if (drawCurrentLineBg) {
                     var commitCurrentLineBg = currentLineBgColor
                     if (isOverlapping && lineBgOverlapBehavior == CURSOR_LINE_BG_OVERLAP_MIXED) {
-                        // alpha = 0.5f = 0.5 * 255 = 128 = 0x80
+
                         commitCurrentLineBg = (commitCurrentLineBg and 0x00FFFFFF) or -0x80000000
                     }
 
-                    // Draw current line background
+
                     drawRowBackground(canvas, commitCurrentLineBg, row)
                     postDrawCurrentLines.add(row)
                 }
                 row++
             }
         }
-        // Post-draw animated current line background
+
         if (editor.cursorAnimator.isRunning() && editor.isHighlightCurrentLine
             && editor.props!!.cursorLineBgOverlapBehavior == CURSOR_LINE_BG_OVERLAP_CUSTOM
         ) {
@@ -1447,7 +1388,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
         rowIterator.reset()
 
-        // Other system line background are drawn last
+
         run {
             var row = firstVis
             while (row <= editor.lastVisibleRow && rowIterator.hasNext()) {
@@ -1465,7 +1406,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 var paintingOffset = -offset2
                 if (!rowInf.isLeadingRow) paintingOffset += miniGraphWidth
 
-                // Draw matched text background
+
                 if (matchedPositions.size > 0) {
                     updateTextRow(sharedTextRow, row)
                     for (i in 0 until matchedPositions.size) {
@@ -1489,7 +1430,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     }
                 }
 
-                // Draw highlight text background
+
                 if (highlightPositions.size > 0) {
                     val finalRow = row
                     val tr: TextRow = createTextRow(row)
@@ -1507,7 +1448,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     })
                 }
 
-                // Draw selected text background
+
                 if (cursor.isSelected() && line >= cursor.leftLine && line <= cursor.rightLine) {
                     var selectionStart = 0
                     var selectionEnd = columnCount
@@ -1539,7 +1480,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 }
                 canvas.restore()
 
-                // Draw current row border
+
                 if (row == currentRow && currentRowBorder != 0) {
                     tmpRect.top = (editor.getRowTop(row) - editor.offsetY).toFloat()
                     tmpRect.bottom = (editor.getRowBottom(row) - editor.offsetY).toFloat()
@@ -1556,13 +1497,13 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
         rowIterator.reset()
 
-        // Background of snippets
+
         patchSnippetRegions(canvas, offset)
 
-        // Hard wrap marker
+
         drawHardwrapMarker(canvas, offset)
 
-        // Step 2 - Draw text and text decorations
+
         var reader: Spans.Reader? = null
         lastPreparedLine = -1
         var lineCache: TextAdvancesCache? = null
@@ -1578,7 +1519,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 postDrawLineNumbers.add(IntPair.pack(line, row))
             }
 
-            // Prepare data
+
             if (lastPreparedLine != line) {
                 lastPreparedLine = line
                 val cache =
@@ -1591,7 +1532,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     lineCache = null
                 }
                 prepareLine(line)
-                // Release old reader
+
                 if (reader != null) {
                     try {
                         reader.moveToLine(-1)
@@ -1603,11 +1544,11 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                         )
                     }
                 }
-                // Get new reader and lock
-                // Note that we should hold the reader during the **text line** rendering process
-                // Otherwise, the spans?.filterNotNull() of that line can be changed during the inter rendering time
-                // between two **rows** because the spans?.filterNotNull() could have been changed concurrently
-                // See #290
+
+
+
+
+
                 reader = if (spans == null) EmptyReader.INSTANCE else spans.read()
                 try {
                     reader.moveToLine(line)
@@ -1620,7 +1561,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     reader = EmptyReader.INSTANCE
                 }
                 if (reader!!.getSpanCount() == 0) {
-                    // Unacceptable span count, use fallback reader
+
                     reader = EmptyReader.INSTANCE
                 }
                 if (editor.shouldInitializeNonPrintable()) {
@@ -1630,7 +1571,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 }
             }
 
-            // Get visible region on the line
+
             var paintingOffset = -offset2
             var offsetCopy = offset2
 
@@ -1648,9 +1589,9 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
             val backupOffset = paintingOffset
             val nonPrintableFlags: Int = editor.nonPrintablePaintingFlags
 
-            // Draw text here
-            if (!editor.isHardwareAcceleratedDrawAllowed || editor.touchHandler!!.isScaling || !canvas.isHardwareAccelerated || editor.isWordwrap || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || (rowInf.endColumn - rowInf.startColumn > 128 && !editor.props!!.cacheRenderNodeForLongLines) /* Save memory */) {
-                // Draw without hardware acceleration
+
+            if (!editor.isHardwareAcceleratedDrawAllowed || editor.touchHandler!!.isScaling || !canvas.isHardwareAccelerated || editor.isWordwrap || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || (rowInf.endColumn - rowInf.startColumn > 128 && !editor.props!!.cacheRenderNodeForLongLines)  ) {
+
                 sharedTextRow.set(
                     lineBuf!!,
                     rowInf.startColumn,
@@ -1666,11 +1607,11 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
 
                 canvas.save()
                 canvas.translate(-offsetCopy, (editor.getRowTop(row) - editor.offsetY).toFloat())
-                // visible editor window: [offsetX, offsetX+editorWidth]
-                // current row window region: [textRegionOffsetW+leftMiniGraphWidth, textRegionOffsetX+leftMiniGraphX+rowWidth]
-                // shifted start at offsetX-(textRegionOffsetX+leftMiniGraphWidth)
-                // visible in-row offset from max{offsetX, textRegionOffsetX+leftMiniGraphWidth} - (textRegionOffsetX+leftMiniGraphWidth)
-                // to min{textRegionOffsetX+leftMiniGraphX+rowWidth, offsetX+editorWidth-(textRegionOffsetX+leftMiniGraphWidth)}
+
+
+
+
+
                 val beginOffset: Float = max(0f, offsetCopy)
                 val endOffset: Float = beginOffset + editor.width
                 val result =
@@ -1680,7 +1621,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 val exhausted = IntPair.getFirst(result) == 1
                 paintingOffset += IntPair.getSecondAsFloat(result)
 
-                // Draw hard wrap & soft wrap
+
                 if (exhausted && rowInf.isTrailingRow && (nonPrintableFlags and io.github.abc15018045126.sora.widget.CodeEditor.Companion.FLAG_DRAW_LINE_SEPARATOR) !== 0) {
                     drawMiniGraph(canvas, paintingOffset, row, lineBreakGraph)
                 } else if (!rowInf.isTrailingRow && editor.isWordwrap && (nonPrintableFlags and io.github.abc15018045126.sora.widget.CodeEditor.Companion.FLAG_DRAW_SOFT_WRAP) !== 0) {
@@ -1689,16 +1630,16 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
             } else {
                 paintingOffset = editor.renderContext!!.renderNodeHolder
                     ?.drawLineHardwareAccelerated(canvas, line, offset, (editor.getRowTop(row) - editor.offsetY).toFloat())?.toFloat() ?: 0f
-                // Draw hard wrap
+
                 if (rowInf.isTrailingRow && (nonPrintableFlags and io.github.abc15018045126.sora.widget.CodeEditor.Companion.FLAG_DRAW_LINE_SEPARATOR) !== 0) {
                     drawMiniGraph(canvas, paintingOffset, row, lineBreakGraph)
                 }
             }
 
-            // Recover the offset
+
             paintingOffset = backupOffset
 
-            // Draw non-printable characters
+
             if (circleRadius != 0f && (leadingWhitespaceEnd != columnCount || (nonPrintableFlags and io.github.abc15018045126.sora.widget.CodeEditor.Companion.FLAG_DRAW_WHITESPACE_FOR_EMPTY_LINE) !== 0)) {
                 sharedTextRow.set(
                     lineBuf!!,
@@ -1866,7 +1807,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 bufferedDrawPoints.setOffsets(0f, 0f)
             }
 
-            // Draw composing text underline
+
             if (composingPosition != null && line == composingPosition.line) {
                 val composingStart: Int = composingPosition.column
                 val composingEnd: Int = composingStart + composingLength
@@ -1905,7 +1846,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
 
             val layout =
                 editor.layout!!
-            // Draw cursors
+
             if (cursor.isSelected()) {
                 if (cursor.leftLine == line && isInside(
                         cursor.leftColumn,
@@ -1982,7 +1923,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     applyBidiIndicatorAttrs(task, c.leftLine, c.leftColumn)
                 }
             }
-            // Draw dragging selection or selecting target
+
             val draggingSelection = editor.touchHandler!!.draggingSelection
             if (draggingSelection != null) {
                 if (draggingSelection.line == line && isInside(
@@ -2037,7 +1978,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
             row++
         }
 
-        // Release last used reader object
+
         if (reader != null) {
             try {
                 reader.moveToLine(-1)
@@ -2060,7 +2001,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         val lineDirections: Directions = getLineDirections(line)
         val count: Int = lineDirections.runCount
         if (count == 1) {
-            // Simple LTR/RTL Run
+
             return IntPair.pack(0, if (lineDirections.isRunRtl(0)) 1 else 0)
         }
         for (i in 0..<count) {
@@ -2088,7 +2029,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         isRtl: Boolean
     ) {
         val height = selectionHeight * 0.2f
-        val deltaX = height * 0.866f // sqrt(3)/ 2
+        val deltaX = height * 0.866f
         tmpPath.reset()
         tmpPath.moveTo(x, topY)
         tmpPath.lineTo(x + (if (isRtl) -deltaX else deltaX), topY + height / 2f)
@@ -2107,7 +2048,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         val waveLength: Float = editor.dpUnit * editor.props!!.indicatorWaveLength
         val amplitude: Float = editor.dpUnit * editor.props!!.indicatorWaveAmplitude
         val waveWidth: Float = editor.dpUnit * editor.props!!.indicatorWaveWidth
-        // Draw
+
         val centerY: Float = (editor.getRowBottom(i) - editor.offsetY).toFloat()
         when (style) {
             DiagnosticIndicatorStyle.NONE -> {}
@@ -2128,7 +2069,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     tmpPath.quadTo(waveLength * j + waveLength * 3 / 4, -amplitude, waveLength * j + waveLength, 0f)
                     j++
                 }
-                // Draw path
+
                 paintOther.setStrokeWidth(waveWidth)
                 paintOther.setStyle(AndroidPaint.Style.STROKE)
                 canvas.drawPath(tmpPath, paintOther)
@@ -2187,7 +2128,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     editor.layout!!.getRowIndexForPosition(startIndex)
                 val endRow =
                     editor.layout!!.getRowIndexForPosition(endIndex)
-                // Setup color
+
                 val severity = region.severity.toInt()
                 val colorId =
                     if (severity >= 0 && severity <= 3) sDiagnosticsColorMapping[severity] else 0
@@ -2210,7 +2151,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                         finalOffset = offset + row.renderTranslateX
                     }
                     if (startColumn == endColumn) {
-                        // Make it always visible
+
                         val startX =
                             finalOffset + sharedTextRow.getCursorOffsetForIndex(startColumn)
                         val endX =
@@ -2237,9 +2178,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         collectedDiagnostics.clear()
     }
 
-    /**
-     * Draw non-printable characters
-     */
+
     private fun drawWhitespaces(
         canvas: Canvas,
         tr: TextRow,
@@ -2333,9 +2272,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
             return height * (w.toFloat() / h)
         }
 
-    /**
-     * Draw small characters as graph
-     */
+
     protected fun drawMiniGraph(canvas: Canvas?, offset: Float, row: Int, graph: Drawable?) {
         if (canvas == null) {
             return
@@ -2376,15 +2313,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
     }
 
-    /**
-     * Draw background of a text region
-     * 
-     * @param canvas         Canvas to draw
-     * @param row            The row index
-     * @param highlightStart Region start
-     * @param highlightEnd   Region end
-     * @param color          Color of background
-     */
+
     protected fun drawRowRegionBackground(
         @NonNull canvas: Canvas,
         row: Int,
@@ -2468,16 +2397,9 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
     }
 
-    /**
-     * Is inside the region
-     * 
-     * @param index Index to test
-     * @param start Start of region
-     * @param end   End of region
-     * @return true if cursor should be drawn in this row
-     */
+
     private fun isInside(index: Int, start: Int, end: Int, isLastRow: Boolean): Boolean {
-        // Due not to draw duplicate cursors for a single one
+
         if (index == end && !isLastRow) {
             return false
         }
@@ -2490,11 +2412,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
     val textMetrics: android.graphics.Paint.FontMetricsInt?
         get() = metricsText
 
-    /**
-     * Draw effect of edges
-     * 
-     * @param canvas The canvas to draw
-     */
+
     protected fun drawEdgeEffect(canvas: Canvas) {
         var postDraw = false
         val verticalEdgeEffect =
@@ -2548,12 +2466,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
     }
 
-    /**
-     * Draw code block lines on screen
-     * 
-     * @param canvas  The canvas to draw
-     * @param offsetX The start x offset for text
-     */
+
     protected fun drawBlockLines(canvas: Canvas?, offsetX: Float) {
         if (canvas == null) {
             return
@@ -2607,8 +2520,8 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                         tmpRect
                     )
                 } catch (e: IndexOutOfBoundsException) {
-                    // Ignored
-                    // Because the exception usually occurs when the content is changed.
+
+
                 }
                 mark = true
             } else if (mark) {
@@ -2647,17 +2560,13 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     paintGeneral.setStrokeWidth(editor.dpUnit * editor.getBlockLineWidth())
                     canvas.drawLine(center, top, center, bottom, paintGeneral)
                 } catch (e: IndexOutOfBoundsException) {
-                    //ignored
+
                 }
             }
         }
     }
 
-    /**
-     * Draw scroll bars and tracks
-     * 
-     * @param canvas The canvas to draw
-     */
+
     protected fun drawScrollBars(canvas: Canvas) {
         verticalScrollBarRect.setEmpty()
         horizontalScrollBarRect.setEmpty()
@@ -2692,11 +2601,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
     }
 
-    /**
-     * Draw vertical scroll bar track
-     * 
-     * @param canvas Canvas to draw
-     */
+
     protected fun drawScrollBarTrackVertical(canvas: Canvas?) {
         if (canvas == null) {
             return
@@ -2722,11 +2627,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
     }
 
-    /**
-     * Draw vertical scroll bar
-     * 
-     * @param canvas Canvas to draw
-     */
+
     protected fun drawScrollBarVertical(canvas: Canvas) {
         val height: Int = editor.height
         val all: Float = (editor.scrollMaxY + height).toFloat()
@@ -2769,13 +2670,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
     }
 
-    /**
-     * Draw line number panel
-     * 
-     * @param canvas Canvas to draw
-     * @param topY   The y at the top of the vertical scrollbar
-     * @param length The length of vertical scrollbar
-     */
+
     protected fun drawLineInfoPanel(canvas: Canvas, topY: Float, length: Float) {
         if (!editor.isDisplayLnPanel) {
             return
@@ -2868,11 +2763,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         metricsText = backupMetrics
     }
 
-    /**
-     * Draw horizontal scroll bar track
-     * 
-     * @param canvas Canvas to draw
-     */
+
     protected fun drawScrollBarTrackHorizontal(canvas: Canvas?) {
         if (canvas == null) {
             return
@@ -2966,7 +2857,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     paired.rightLength
                 )
             ) {
-                // Index out of bounds
+
                 return
             }
 
@@ -3251,11 +3142,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
     }
 
-    /**
-     * Draw horizontal scroll bar
-     * 
-     * @param canvas Canvas to draw
-     */
+
     protected fun drawScrollBarHorizontal(canvas: Canvas?) {
         val page: Int = editor.width
         val all: Float = editor.scrollMaxX.toFloat()
@@ -3296,10 +3183,8 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
         }
     }
 
-    // BEGIN Measure-------------------------------------
-    /**
-     * Build measure cache for the given lines, if the timestamp indicates that it is outdated.
-     */
+
+
     @JvmOverloads
     fun buildMeasureCacheForLines(
         startLine: Int,
@@ -3338,7 +3223,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     )
                 if (context.cache.getStyleHash(startLine) != hash || forced) {
                     context.cache.setStyleHash(startLine, hash)
-                    // Build cache here
+
                     val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
                     val beginRowIndex =
                         layout.getRowIndexForPosition(text.getCharIndex(startLine, 0))
@@ -3389,7 +3274,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
     }
 
 
-    // END Measure---------------------------------------
+
     protected inner class DrawCursorTask(
         protected var x: Float,
         protected var y: Float,
@@ -3435,7 +3320,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
 
 
         internal fun execute(canvas: Canvas) {
-            // Hide cursors (API level 31)
+
             if (handleType != SelectionHandleStyle.HANDLE_TYPE_UNDEFINED) {
                 if (editor.inputConnection!!.imeConsumingInput || !editor.isFocused()) {
                     return
@@ -3447,7 +3332,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
             }
             val descriptor: SelectionHandleStyle.HandleDescriptor =
                 this.descriptor ?: TMP_DESC
-            // Follow the thumb or stick to text row
+
             if (!descriptor.position.isEmpty()) {
                 if (!editor.isStickyTextSelection) {
                     val handler: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = editor.touchHandler!!
@@ -3487,13 +3372,13 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 paintGeneral.setStyle(android.graphics.Paint.Style.FILL)
                 paintGeneral.setPathEffect(null)
                 if (drawSelForInsert() && isBidiIndicatorRequired) {
-                    // Draw a flag for LTR/RTL mixed row
+
                     val height = (stopY - startY)
                     drawBidiSelectionIndicator(canvas, x, startY, height, isRightToLeft)
                 }
             }
             var handleType = this.handleType
-            // Hide insert handle conditionally
+
             val handler: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = editor.touchHandler!!
             if (handleType == SelectionHandleStyle.HANDLE_TYPE_INSERT && (editor.isInLongSelect || !handler
                     .shouldDrawInsertHandle())
@@ -3501,7 +3386,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
             ) {
                 handleType = SelectionHandleStyle.HANDLE_TYPE_UNDEFINED
             }
-            if (handleType != SelectionHandleStyle.HANDLE_TYPE_UNDEFINED && !editor.isInMouseMode /* hide if mouse inside */) {
+            if (handleType != SelectionHandleStyle.HANDLE_TYPE_UNDEFINED && !editor.isInMouseMode  ) {
                 editor.handleStyle!!.draw(
                     canvas,
                     handleType,

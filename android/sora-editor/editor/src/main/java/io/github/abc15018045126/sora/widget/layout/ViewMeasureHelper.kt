@@ -11,9 +11,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 object ViewMeasureHelper {
-    /**
-     * Get desired view size for the given arguments
-     */
+
     @JvmStatic
     fun getDesiredSize(
         widthMeasureSpec: Int,

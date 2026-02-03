@@ -6,11 +6,7 @@ import io.github.abc15018045126.sora.widget.style.CursorAnimator
 
 import io.github.abc15018045126.sora.widget.layout.Layout
 
-/**
- * Scale-Up/Scale-Down cursor animation
- *
- * @author Dmitry Rubtsov
- */
+
 class ScaleCursorAnimator(private val editor: CodeEditor) : CursorAnimator, ValueAnimator.AnimatorUpdateListener {
 
     private val duration: Long = 180

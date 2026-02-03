@@ -25,11 +25,7 @@ import io.github.abc15018045126.sora.event.ColorSchemeUpdateEvent
 import io.github.abc15018045126.sora.widget.CodeEditor
 import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
 
-/**
- * Magnifier specially designed for CodeEditor
- *
- * @author abc15018045126
- */
+
 class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
 
     private val eventManager = view.createSubEventManager()
@@ -49,9 +45,7 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
     private var isWithinEditorForcibly = false
     private var parentView: View = view
 
-    /**
-     * Scale factor for regions
-     */
+
     private var scaleFactor = 1.25f
 
     init {
@@ -82,33 +76,23 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
         }
     }
 
-    /**
-     * @see setParentView
-     */
+
     fun getParentView(): View {
         return parentView
     }
 
-    /**
-     * Set parent view for popup
-     */
+
     fun setParentView(parentView: View) {
         this.parentView = parentView
     }
 
-    /**
-     * Get the scale factor of the image to be displayed in magnifier
-     */
+
     @FloatRange(from = 1.0, fromInclusive = false)
     fun getScaleFactor(): Float {
         return scaleFactor
     }
 
-    /**
-     * Set the scale factor of the image to be displayed in magnifier
-     *
-     * @param scaleFactor Scale factor. Must not be under 1.0
-     */
+
     fun setScaleFactor(@FloatRange(from = 1.0, fromInclusive = false) scaleFactor: Float) {
         if (scaleFactor <= 1.0f) {
             throw IllegalArgumentException("factor can not be under 1.0")
@@ -116,18 +100,12 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
         this.scaleFactor = scaleFactor
     }
 
-    /**
-     * Set the max text size to show the magnifier
-     *
-     * @param maxTextSize Text size in px
-     */
+
     fun setMaxTextSize(@Px maxTextSize: Float) {
         this.maxTextSize = maxTextSize
     }
 
-    /**
-     * @return Text size in px
-     */
+
     @Px
     fun getMaxTextSize(): Float {
         return maxTextSize
@@ -137,20 +115,12 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
         return isWithinEditorForcibly
     }
 
-    /**
-     * If true, the magnifier will never try to copy pixels by system and create the image by
-     * editor.
-     * If you are trying to add the view into an activity by WindowManager, this should be enabled.
-     * Otherwise, the generated image may be wrong.
-     */
+
     fun setWithinEditorForcibly(withinEditorForcibly: Boolean) {
         this.isWithinEditorForcibly = withinEditorForcibly
     }
 
-    /**
-     * Show the magnifier according to the given position.
-     * X and Y are relative to the code editor view
-     */
+
     fun show(x: Int, y: Int) {
         if (!isEnabled) {
             return
@@ -184,24 +154,17 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
         updateDisplay()
     }
 
-    /**
-     * Whether the magnifier is showing
-     */
+
     fun isShowing(): Boolean {
         return popup.isShowing
     }
 
-    /**
-     * Hide the magnifier
-     */
+
     fun dismiss() {
         popup.dismiss()
     }
 
-    /**
-     * Update the display of the magnifier without updating the window's
-     * location on screen.
-     */
+
     fun updateDisplay() {
         if (!isShowing()) {
             return
@@ -213,9 +176,7 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
         }
     }
 
-    /**
-     * Check if [PixelCopy] is applicable in current view context
-     */
+
     private fun isPixelCopyApplicable(): Boolean {
         val ctx = view.context
         if (ctx !is Activity) {
@@ -227,9 +188,7 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
         return localWndId != null && localWndId == activityWndId
     }
 
-    /**
-     * Update display on API 26 or later.
-     */
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     private fun updateDisplayOreo(activity: Activity) {
         val requiredWidth = (popup.width / scaleFactor).toInt()
@@ -296,9 +255,7 @@ class Magnifier(private val view: CodeEditor) : EditorBuiltinComponent {
         }
     }
 
-    /**
-     * Update display on low API devices
-     */
+
     private fun updateDisplayWithinEditor() {
         if (popup.width <= 0 || popup.height <= 0) {
             dismiss()

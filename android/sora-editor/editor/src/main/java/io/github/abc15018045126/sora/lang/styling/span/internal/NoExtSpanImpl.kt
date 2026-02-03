@@ -6,11 +6,7 @@ import io.github.abc15018045126.sora.lang.styling.color.ResolvableColor
 import io.github.abc15018045126.sora.lang.styling.span.SpanExt
 import java.util.*
 
-/**
- * Span without SpanExt support.
- *
- * @author abc15018045126
- */
+
 class NoExtSpanImpl : Span {
 
     override var column: Int = 0

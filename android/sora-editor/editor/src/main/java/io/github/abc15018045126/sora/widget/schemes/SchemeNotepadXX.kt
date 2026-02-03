@@ -1,10 +1,6 @@
 package io.github.abc15018045126.sora.widget.schemes
 
-/**
- * ColorScheme for editor
- * picked from Notepad++ v7.8.1
- * Thanks to liyujiang-gzu (GitHub @liyujiang-gzu)
- */
+
 class SchemeNotepadXX : EditorColorScheme() {
 
     override fun applyDefault() {

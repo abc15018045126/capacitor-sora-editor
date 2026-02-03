@@ -5,11 +5,7 @@ import io.github.abc15018045126.sora.text.CharPosition
 import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
 import java.util.*
 
-/**
- * Store spans by mapping.
- *
- * @see Builder
- */
+
 class MappedSpans private constructor(@NonNull private val spanMap: MutableList<MutableList<Span>>) : Spans {
 
     override fun adjustOnInsert(start: CharPosition, end: CharPosition) {
@@ -52,22 +48,12 @@ class MappedSpans private constructor(@NonNull private val spanMap: MutableList<
         return spanMap.size
     }
 
-    /**
-     * Allow you to build a span map linearly.
-     */
+
     class Builder @JvmOverloads constructor(lineCapacity: Int = 128) {
         private val spans: MutableList<MutableList<Span>> = ArrayList(lineCapacity)
         private var last: Span? = null
 
-        /**
-         * Add a new span if required.
-         *
-         * If no special style is specified, you can use colorId as style long integer
-         *
-         * @param spanLine Line
-         * @param column   Column
-         * @param style    Style of text
-         */
+
         fun addIfNeeded(spanLine: Int, column: Int, style: Long) {
             val currentLast = last
             if (currentLast != null && currentLast.style == style) {
@@ -76,16 +62,7 @@ class MappedSpans private constructor(@NonNull private val spanMap: MutableList<
             add(spanLine, SpanFactory.obtainNoExt(column, style))
         }
 
-        /**
-         * Add a span directly
-         *
-         * Note: the line should always >= the line of span last committed
-         *
-         * If two spans are on the same line, you must add them in order by their column
-         *
-         * @param spanLine The line position of span
-         * @param span     The span
-         */
+
         fun add(spanLine: Int, span: Span) {
             var mapLine = spans.size - 1
             if (spanLine == mapLine) {
@@ -112,12 +89,7 @@ class MappedSpans private constructor(@NonNull private val spanMap: MutableList<
             last = span
         }
 
-        /**
-         * This method must be called when whole text is analyzed.
-         * **Note that it is not the line count but line index!**
-         *
-         * @param line The line is the line last of text
-         */
+
         fun determine(line: Int) {
             var mapLine = spans.size - 1
             var extendedSpan = last
@@ -132,9 +104,7 @@ class MappedSpans private constructor(@NonNull private val spanMap: MutableList<
             }
         }
 
-        /**
-         * Ensure the list not empty
-         */
+
         fun addNormalIfNull() {
             if (spans.isEmpty()) {
                 val spanList = mutableListOf<Span>()

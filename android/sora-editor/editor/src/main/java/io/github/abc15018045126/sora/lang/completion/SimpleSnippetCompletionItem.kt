@@ -30,6 +30,6 @@ class SimpleSnippetCompletionItem : CompletionItem {
     }
 
     override fun performCompletion(editor: CodeEditor, text: Content, line: Int, column: Int) {
-        // do nothing
+
     }
 }

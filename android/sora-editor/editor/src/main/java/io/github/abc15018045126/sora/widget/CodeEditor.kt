@@ -66,7 +66,7 @@ import android.widget.SearchView
 import android.widget.EditText
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
-// Removed duplicate InputType import
+
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityEvent
 import android.view.inputmethod.ExtractedText
@@ -93,18 +93,7 @@ import io.github.abc15018045126.sora.widget.layout.LineBreakLayout
 import io.github.abc15018045126.sora.widget.layout.WordwrapLayout
 import io.github.abc15018045126.sora.widget.layout.ViewMeasureHelper
 import android.graphics.PointF
-/**
- * CodeEditor is an editor that can highlight text regions by doing basic syntax analyzing
- * This project in [GitHub](https://github.com/abc15018045126/sora-editor)
- *
- *
- * Note:
- * Row and line are different in this editor
- * When we say 'row', it means a line displayed on screen. It can be a part of a line in the text object.
- * When we say 'line', it means a real line in the original text.
- *
- * @author abc15018045126
- */
+
 @SuppressWarnings("unused")
 open class CodeEditor @JvmOverloads constructor(
     context: Context,
@@ -153,11 +142,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
 
     private var _blockIndex = -1
-    /**
-     * Get cursor code block index
-     * 
-     * @return index of cursor's code block
-     */
+
     var blockIndex: Int
         get() = _blockIndex
         set(value) { _blockIndex = value }
@@ -168,17 +153,13 @@ open class CodeEditor @JvmOverloads constructor(
     private var completionWndPosMode = 0
     private var availableFloatArrayRegion: Long = 0
 
-    /**
-     * Get 1dp = ?px
-     * 
-     * @return 1dp in pixel
-     */
+
     var dpUnit: Float = 0f
         private set
     private var _dividerWidth = 0f
     var dividerWidth: Float
         get() = _dividerWidth
-        set(value) { 
+        set(value) {
             if (_dividerWidth != value) {
                 _dividerWidth = value
                 requestLayoutIfNeeded()
@@ -187,10 +168,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
 
 
-    /**
-     * @return Margin left of divider line
-     * @see CodeEditor.setDividerMargin
-     */
+
     @get:Px
     internal var dividerMarginLeft: Float = 0f
         set(value) {
@@ -200,10 +178,7 @@ open class CodeEditor @JvmOverloads constructor(
             invalidate()
         }
 
-    /**
-     * @return Margin right of divider line
-     * @see CodeEditor.setDividerMargin
-     */
+
     @get:Px
     internal var dividerMarginRight: Float = 0f
         set(value) {
@@ -233,22 +208,14 @@ open class CodeEditor @JvmOverloads constructor(
     var insertSelectionWidth: Float = 0f
         private set
 
-    /**
-     * Margin left for line number
-     */
+
     private var blockLineWidth = 0f
     private var textBorderWidth = 0f
     private var verticalScrollFactor = 0f
 
-    /**
-     * @see .setLineInfoTextSize
-     */
+
     var lineInfoTextSize: Float = 0f
-        /**
-         * Set text size for line info panel
-         * 
-         * @param size Text size for line information, **unit is SP**
-         */
+
         set(size) {
             kotlin.require(!(size <= 0))
             field = size
@@ -260,15 +227,8 @@ open class CodeEditor @JvmOverloads constructor(
     private var lineNumberMarginLeft = 0f
     private var verticalExtraSpaceFactor = 0.5f
     private var waitForNextChange = false
-    /**
-     * @return Whether allow scaling
-     * @see CodeEditor.setScalable
-     */
-    /**
-     * Allow scale text size by thumb
-     * 
-     * @param scale Whether allow
-     */
+
+
     var isScalable: Boolean = false
     private var _editable = true
     var isEditable: Boolean
@@ -289,79 +249,41 @@ open class CodeEditor @JvmOverloads constructor(
     @Volatile
     internal var layoutBusy = false
 
-    /**
-     * Check if the editor is currently calculating layout (e.g. word wrap)
-     */
+
     fun isLayoutBusy(): Boolean = layoutBusy
 
-    /**
-     * @return Enabled / disabled
-     * @see CodeEditor.setDisplayLnPanel
-     */
+
     var isDisplayLnPanel: Boolean = false
-        /**
-         * Whether display the line number panel beside vertical scroll bar
-         * when the scroll bar is touched by user
-         * 
-         * @param this.isDisplayLnPanel Enabled / disabled
-         */
+
         set(displayLnPanel) {
             field = displayLnPanel
             invalidate()
         }
 
-    /**
-     * @return position
-     * @see CodeEditor.setLnPanelPosition
-     */
+
     var lnPanelPosition: Int = 0
-        /**
-         * Set display position the line number panel beside vertical scroll bar <br></br>
-         * Only TOP,CENTER and BOTTOM will be effective when position mode is follow.
-         * 
-         * @param position default TOP|RIGHT
-         * @see io.github.abc15018045126.sora.widget.style.LineInfoPanelPosition
-         */
+
         set(position) {
             field = position
             invalidate()
         }
 
-    /**
-     * @return LineInfoPanelPosition.FOLLOW or LineInfoPanelPosition.FIXED
-     * @see CodeEditor.setLnPanelPosition
-     */
+
     var lnPanelPositionMode: Int = 0
-        /**
-         * Set display position mode the line number panel beside vertical scroll bar
-         * 
-         * @param mode Default LineInfoPanelPosition.FOLLOW
-         * @see io.github.abc15018045126.sora.widget.style.LineInfoPanelPositionMode
-         */
+
         set(mode) {
             field = mode
             invalidate()
         }
     private var rejectComposingCount = 0
 
-    /**
-     * Check if the editor is released.
-     * When an editor is released, you are unexpected to make any changes to it.
-     */
+
     var isReleased: Boolean = false
         private set
 
-    /**
-     * Check whether line numbers are shown
-     * 
-     * @return The state of line number displaying
-     */
+
     var isLineNumberEnabled: Boolean = false
-        /**
-         * Set whether we should display line numbers
-         * 
-         * @param this.isLineNumberEnabled The state of line number displaying
-         */
+
         set(lineNumberEnabled) {
             if (lineNumberEnabled != field && isWordwrap) {
                 createLayout()
@@ -371,31 +293,20 @@ open class CodeEditor @JvmOverloads constructor(
         }
     private var blockLineEnabled = false
 
-    /**
-     * @see CodeEditor.setInterceptParentHorizontalScrollIfNeeded
-     */
+
     var isInterceptParentHorizontalScrollEnabled: Boolean = false
         private set
     private var highlightCurrentBlock = false
 
-    /**
-     * @see CodeEditor.setHighlightCurrentLine
-     */
+
     var isHighlightCurrentLine: Boolean = false
-        /**
-         * Specify whether the editor should use a different color to draw
-         * the background of current line
-         */
+
         set(highlightCurrentLine) {
             field = highlightCurrentLine
             invalidate()
         }
-    /**
-     * {@inheritDoc}
-     */
-    /**
-     * {@inheritDoc}
-     */
+
+
     override fun isVerticalScrollBarEnabled(): Boolean = super.isVerticalScrollBarEnabled()
     override fun setVerticalScrollBarEnabled(enabled: Boolean) = super.setVerticalScrollBarEnabled(enabled)
     override fun isHorizontalScrollBarEnabled(): Boolean = super.isHorizontalScrollBarEnabled()
@@ -405,9 +316,7 @@ open class CodeEditor @JvmOverloads constructor(
     @JvmField var forceSyncBreakLines = false
     private var isLineNumberRightOfDivider = false
 
-    /**
-     * @see CodeEditor.setPinLineNumber
-     */
+
     var isLineNumberPinned: Boolean = false
         private set
 
@@ -418,33 +327,21 @@ open class CodeEditor @JvmOverloads constructor(
             setWordwrap(wordwrap, this.isAntiWordBreaking, this.isWordwrapRtlDisplaySupport)
         }
 
-    /**
-     * This only makes sense when wordwrap is enabled.
-     * Checks if anti word breaking is enabled in wordwrap mode.
-     */
+
     var isAntiWordBreaking: Boolean = false
         set(antiWordBreaking) {
             setWordwrap(this.isWordwrap, antiWordBreaking, this.isWordwrapRtlDisplaySupport)
         }
 
-    /**
-     * This only makes sense when wordwrap is enabled.
-     * Checks if RTL-based text should display from right of the widget in wordwrap mode.
-     */
+
     var isWordwrapRtlDisplaySupport: Boolean = false
         set(supportRtlRow) {
             setWordwrap(this.isWordwrap, this.isAntiWordBreaking, supportRtlRow)
         }
 
-    /**
-     * @see CodeEditor.setFirstLineNumberAlwaysVisible
-     */
+
     var isFirstLineNumberAlwaysVisible: Boolean = false
-        /**
-         * Show first line number in screen in word wrap mode
-         * 
-         * @see CodeEditor.isFirstLineNumberAlwaysVisible
-         */
+
         set(enabled) {
             field = enabled
             if (isWordwrap) {
@@ -452,34 +349,20 @@ open class CodeEditor @JvmOverloads constructor(
             }
         }
 
-    /**
-     * @see CodeEditor.setLigatureEnabled
-     */
+
     var isLigatureEnabled: Boolean = false
-        /**
-         * Enable/disable ligature of all types(except 'rlig').
-         */
+
         set(enabled) {
             field = enabled
             setFontFeatureSettings(if (enabled) null else "'liga' 0,'calt' 0,'hlig' 0,'dlig' 0,'clig' 0")
         }
     private var lastCursorState = false
-    /**
-     * Returns whether the cursor should stick to the text row while selecting the text
-     * 
-     * @see CodeEditor.setStickyTextSelection
-     */
-    /**
-     * Whether the cursor should stick to the text row while selecting the text.
-     * 
-     * @param stickySelection value
-     */
+
+
     var isStickyTextSelection: Boolean = false
     private var highlightBracketPair = false
 
-    /**
-     * Checks whether long select mode is started
-     */
+
     var isInLongSelect: Boolean = false
         private set
     private var anyWrapContentSet = false
@@ -521,7 +404,7 @@ open class CodeEditor @JvmOverloads constructor(
         set(colors) {
             field.detachEditor(this)
             field = colors
-            // Automatically invoke scheme updating related methods
+
             colors.attachEditor(this)
             invalidate()
         }
@@ -536,7 +419,7 @@ open class CodeEditor @JvmOverloads constructor(
                 language = EmptyLanguage()
             }
 
-            // Destroy old one
+
             val old: Language? = _editorLanguage
             if (old != null) {
                 val formatter = old.formatter
@@ -561,7 +444,7 @@ open class CodeEditor @JvmOverloads constructor(
                 _text!!.addContentListener(this)
             }
 
-            // Symbol pairs
+
             if (languageSymbolPairs != null) {
                 languageSymbolPairs?.parent = null
             }
@@ -579,7 +462,7 @@ open class CodeEditor @JvmOverloads constructor(
             renderContext?.invalidateRenderNodes()
             invalidate()
 
-            // reset inlay hints (partially re-layout!! required)
+
             if (this.inlayHints != null) {
                 inlayHints = null
             }
@@ -706,16 +589,8 @@ open class CodeEditor @JvmOverloads constructor(
         applyAttributeSets(attrs, defStyleAttr, defStyleRes)
     }
 
-    /**
-     * Get builtin component so that you can enable/disable them or do some other actions.
-     * 
-     * @see io.github.abc15018045126.sora.widget.component
-     */
-    /**
-     * Get builtin component so that you can enable/disable them or do some other actions.
-     * 
-     * @see io.github.abc15018045126.sora.widget.component
-     */
+
+
     @Suppress("UNCHECKED_CAST")
     fun <T : EditorBuiltinComponent> getComponent(clazz: Class<T>): T {
         if (clazz == EditorAutoCompletion::class.java) {
@@ -733,14 +608,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Replace the built-in component to the given one.
-     * The new component's enabled state will extend the old one.
-     * 
-     * @param clazz       Built-in class type. Such as `EditorAutoCompletion.class`
-     * @param replacement The new component to apply
-     * @param <T>         Type of built-in component
-    </T> */
+
     fun <T : EditorBuiltinComponent> replaceComponent(clazz: Class<T>, replacement: T) {
         val old: EditorBuiltinComponent = getComponent(clazz)
         val isEnabled = old.isEnabled
@@ -802,24 +670,16 @@ open class CodeEditor @JvmOverloads constructor(
 
     fun getKeyMetaStates(): KeyMetaStates = keyEventHandler.getKeyMetaStates()
 
-    /**
-     * Get the touch event handler of the editor
-     */
+
     @NonNull
 
-    /**
-     * Cancel the next animation for [CodeEditor.ensurePositionVisible]
-     */
+
     @UnsupportedUserUsage
     open fun cancelAnimation() {
         lastMakeVisible = System.currentTimeMillis()
     }
 
-    /**
-     * Get the width of line number and divider line
-     * 
-     * @return The width
-     */
+
     public fun measureTextRegionOffset(): Float {
 
         return if (this.isLineNumberEnabled) (measureLineNumber() + dividerMarginLeft + dividerMarginRight + dividerWidth +
@@ -827,60 +687,29 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     val leftHandleDescriptor: SelectionHandleStyle.HandleDescriptor?
-        /**
-         * Get the rect of left selection handle painted on view
-         * 
-         * @return Descriptor of left handle
-         */
+
         get() = handleDescLeft
 
     val rightHandleDescriptor: SelectionHandleStyle.HandleDescriptor?
-        /**
-         * Get the rect of right selection handle painted on view
-         * 
-         * @return Descriptor of right handle
-         */
+
         get() = handleDescRight
 
-    /**
-     * Get the character's x offset on view
-     * 
-     * @param line   The line position of character
-     * @param column The column position of character
-     * @return The x offset on view
-     */
+
     fun getOffset(line: Int, column: Int): Float {
         return layout!!.getCharLayoutOffset(line, column)[1] + measureTextRegionOffset() - this.offsetX
     }
 
-    /**
-     * Get the character's x offset on view
-     * 
-     * @param line   The line position of character
-     * @param column The column position of character
-     * @return The x offset on view
-     */
+
     fun getCharOffsetX(line: Int, column: Int): Float {
         return layout!!.getCharLayoutOffset(line, column)[1] + measureTextRegionOffset() - this.offsetX
     }
 
-    /**
-     * Get the character's y offset on view
-     * 
-     * @param line   The line position of character
-     * @param column The column position of character
-     * @return The y offset on view
-     */
+
     fun getCharOffsetY(line: Int, column: Int): Float {
         return layout!!.getCharLayoutOffset(line, column)[0] - this.offsetY
     }
 
-    /**
-     * Prepare editor
-     * 
-     * 
-     * Initialize variants
-     */
+
     protected fun initialize(attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) {
         Log.v(
             LOG_TAG,
@@ -972,7 +801,7 @@ open class CodeEditor @JvmOverloads constructor(
         this.isSoftKeyboardEnabled = true
         this.isDisableSoftKbdIfHardKbdAvailable = true
 
-        // Issue #41 View being highlighted when focused on Android 11
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             setDefaultFocusHighlightEnabled(false)
         }
@@ -980,13 +809,11 @@ open class CodeEditor @JvmOverloads constructor(
             this.edgeEffectColor = ThemeUtils.getColorPrimary(getContext() as ContextThemeWrapper)
         }
 
-        // Config scale detector
+
         scaleDetector!!.setQuickScaleEnabled(false)
     }
 
-    /**
-     * Apply attributes from XML
-     */
+
     protected fun applyAttributeSets(attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) {
         val array = getContext().obtainStyledAttributes(attrs, R.styleable.CodeEditor, defStyleAttr, defStyleRes)
 
@@ -1039,32 +866,19 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
 
-    /**
-     * Get `DirectAccessProps` object of the editor.
-     * 
-     * 
-     * You can update some features in editor with the instance without disturb to call methods.
-     */
 
-    /**
-     * @see .setFormatTip
-     */
+
+
     fun getFormatTip(): String? {
         return formatTip
     }
 
-    /**
-     * Set the tip text while formatting
-     */
+
     fun setFormatTip(@NonNull formatTip: String?) {
         this.formatTip = Objects.requireNonNull(formatTip)
     }
 
-    /**
-     * Set whether line number region will scroll together with code region
-     * 
-     * @see CodeEditor.isLineNumberPinned
-     */
+
     fun setPinLineNumber(pinLineNumber: Boolean) {
         this.isLineNumberPinned = pinLineNumber
         if (this.isLineNumberEnabled) {
@@ -1072,42 +886,21 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Set the order of text action menu items
-     */
+
     var textActionMenuOrder: List<String>? = null
         set(value) {
             field = value
             textActionWindow?.updateMenuOrderAndVisibility()
         }
 
-    /**
-     * Set the list of hidden text action menu items
-     */
+
     var textActionMenuHidden: List<String>? = null
         set(value) {
             field = value
             textActionWindow?.updateMenuOrderAndVisibility()
         }
 
-    /**
-     * Inserts the given text in the editor.
-     * 
-     * 
-     * This method allows you to insert texts externally to the content of editor.
-     * The content of {@param text} is not checked to be exactly characters of symbols.
-     * 
-     * 
-     * Note that this still works when the editor is not editable. But you should not
-     * call it at that time due to possible problems, especially when [.getEditable] returns
-     * true but [.isEditable] returns false
-     * 
-     * 
-     * @param text            Text to insert, usually a text of symbols
-     * @param selectionOffset New selection position relative to the start of text to insert.
-     * Ranging from 0 to text.length()
-     * @throws IllegalArgumentException If the {@param selectionRegion} is invalid
-     */
+
     fun insertText(text: String, selectionOffset: Int) {
         kotlin.require(!(selectionOffset < 0 || selectionOffset > text.length)) { "selectionOffset is invalid" }
         val cur = cursor ?: return
@@ -1124,12 +917,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Set cursor blinking period
-     * If zero or negative period is passed, the cursor will always be shown.
-     * 
-     * @param period The period time of cursor blinking
-     */
+
     fun setCursorBlinkPeriod(period: Int) {
         if (cursorBlink != null) {
             cursorBlink!!.onSelectionChanged()
@@ -1142,11 +930,7 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
 
-    /**
-     * Set font feature settings for all paints used by editor
-     * 
-     * @see Paint.setFontFeatureSettings
-     */
+
     fun setFontFeatureSettings(features: String?) {
         renderer.paint.setFontFeatureSettingsWrapped(features)
         renderer.getPaintOther().setFontFeatureSettings(features)
@@ -1155,15 +939,7 @@ open class CodeEditor @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * Set the style of selection handler.
-     * 
-     * @see SelectionHandleStyle
-     * 
-     * @see HandleStyleDrop
-     * 
-     * @see HandleStyleSideDrop
-     */
+
     fun setSelectionHandleStyle(@NonNull style: SelectionHandleStyle?) {
         handleStyle = Objects.requireNonNull(style)
         invalidate()
@@ -1171,23 +947,12 @@ open class CodeEditor @JvmOverloads constructor(
 
     @NonNull
 
-    /**
-     * Returns whether highlight current code block
-     * 
-     * @return This module enabled / disabled
-     * @see CodeEditor.setHighlightCurrentBlock
-     */
+
     fun isHighlightCurrentBlock(): Boolean {
         return highlightCurrentBlock
     }
 
-    /**
-     * Whether the editor should use a different color to draw
-     * the current code block line and this code block's start line and end line's
-     * background.
-     * 
-     * @param highlightCurrentBlock Enabled / Disabled this module
-     */
+
     fun setHighlightCurrentBlock(highlightCurrentBlock: Boolean) {
         this.highlightCurrentBlock = highlightCurrentBlock
         if (!this.highlightCurrentBlock) {
@@ -1198,22 +963,9 @@ open class CodeEditor @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * Get the editor's language.
-     * 
-     * @return EditorLanguage
-     */
 
-    /**
-     * Internal callback to check if the editor is capable of handling the given
-     * keybinding [KeyEvent]
-     * 
-     * @param keyCode      The keycode for the keybinding event.
-     * @param ctrlPressed  Is 'Ctrl' key pressed?
-     * @param shiftPressed Is 'Shift' key pressed?
-     * @param altPressed   Is 'Alt' key pressed?
-     * @return `true` if the editor can handle the keybinding, `false` otherwise.
-     */
+
+
     internal fun canHandleKeyBinding(
         keyCode: Int,
         ctrlPressed: Boolean,
@@ -1226,44 +978,35 @@ open class CodeEditor @JvmOverloads constructor(
 
         if (ctrlPressed) {
             if (shiftPressed) {
-                // Ctrl+Shift+[xx] keys
+
                 return isDpadKey || isHomeOrEnd || keyCode == KeyEvent.KEYCODE_J
             }
 
             if (altPressed) {
-                // Ctrl+Alt+[xx] keys
+
                 return keyCode == KeyEvent.KEYCODE_ENTER
             }
 
-            // Ctrl+[xx] keys
+
             return isDpadKey || isHomeOrEnd
                     || keyCode == KeyEvent.KEYCODE_A || keyCode == KeyEvent.KEYCODE_C || keyCode == KeyEvent.KEYCODE_X || keyCode == KeyEvent.KEYCODE_V || keyCode == KeyEvent.KEYCODE_U || keyCode == KeyEvent.KEYCODE_R || keyCode == KeyEvent.KEYCODE_D || keyCode == KeyEvent.KEYCODE_W || keyCode == KeyEvent.KEYCODE_ENTER
         }
 
 
         if (shiftPressed) {
-            // Shift+[xx] keys
+
             return isDpadKey || isHomeOrEnd || keyCode == KeyEvent.KEYCODE_ENTER
         }
 
         return false
     }
 
-    /**
-     * Getter
-     * 
-     * @return The width in dp unit
-     * @see CodeEditor.setBlockLineWidth
-     */
+
     fun getBlockLineWidth(): Float {
         return blockLineWidth
     }
 
-    /**
-     * Set the width of code block line
-     * 
-     * @param dp Width in dp unit
-     */
+
     fun setBlockLineWidth(dp: Float) {
         blockLineWidth = dp
         invalidate()
@@ -1271,32 +1014,12 @@ open class CodeEditor @JvmOverloads constructor(
 
 
 
-    /**
-     * Set whether text in editor should be wrapped to fit its size, with anti-word-breaking enabled
-     * by default
-     * 
-     * @param wordwrap Whether to wrap words
-     * @see .setWordwrap
-     * @see .isWordwrap
-     */
-
-    /**
-     * Set whether text in editor should be wrapped to fit its size
-     * 
-     * @param wordwrap         Whether to wrap words
-     * @param antiWordBreaking Prevent English words to be split into two lines
-     * @see .isWordwrap
-     */
 
 
-    /**
-     * Set whether text in editor should be wrapped to fit its size
-     * 
-     * @param wordwrap         Whether to wrap words
-     * @param antiWordBreaking Prevent English words to be split into two lines
-     * @param supportRtlRow    Allow rows with RTL base direction to display from the right side of widget
-     * @see .isWordwrap
-     */
+
+
+
+
 
     private fun setWordwrap(wordwrap: Boolean, antiWordBreaking: Boolean, supportRtlRow: Boolean) {
         if (_wordwrap != wordwrap || this.isAntiWordBreaking != antiWordBreaking || this.isWordwrapRtlDisplaySupport != supportRtlRow) {
@@ -1313,13 +1036,9 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     var isCursorAnimationEnabled: Boolean
-        /**
-         * @see .setCursorAnimationEnabled
-         */
+
         get() = cursorAnimation
-        /**
-         * Set cursor animation enabled
-         */
+
         set(enabled) {
             if (!enabled) {
                 _cursorAnimator!!.cancel()
@@ -1327,21 +1046,15 @@ open class CodeEditor @JvmOverloads constructor(
             cursorAnimation = enabled
         }
 
-    /**
-     * Get the number of lines to be broken synchronously when editor is initialized or layout is changed.
-     */
+
     fun getInitialPreviewLines(): Int = initialPreviewLines
 
-    /**
-     * Set the number of lines to be broken synchronously when editor is initialized or layout is changed.
-     */
+
     fun setInitialPreviewLines(lines: Int) {
         this.initialPreviewLines = lines
     }
 
-    /**
-     * Set whether the line number is displayed on the right side of the divider.
-     */
+
     fun setLineNumberRightOfDivider(isRight: Boolean) {
         if (this.isLineNumberRightOfDivider != isRight) {
             this.isLineNumberRightOfDivider = isRight
@@ -1349,34 +1062,19 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Check if the line number is displayed on the right side of the divider.
-     */
+
     fun isLineNumberRightOfDivider(): Boolean {
         return isLineNumberRightOfDivider
     }
 
-    /**
-     * @see .setCursorAnimator
-     */
 
-    /**
-     * Set cursor animation
-     * 
-     * @see CursorAnimator
-     * 
-     * @see .getCursorAnimator
-     * @see .setCursorAnimationEnabled
-     */
+
+
     fun setCursorAnimator(@NonNull cursorAnimator: CursorAnimator) {
         _cursorAnimator = cursorAnimator
     }
 
-    /**
-     * Whether display vertical scroll bar when scrolling
-     * 
-     * @param enabled Enabled / disabled
-     */
+
     fun setScrollBarEnabled(enabled: Boolean) {
         this.isHorizontalScrollBarEnabled = enabled
         this.isVerticalScrollBarEnabled = this.isHorizontalScrollBarEnabled
@@ -1414,16 +1112,12 @@ open class CodeEditor @JvmOverloads constructor(
     override fun setVerticalScrollbarTrackDrawable(drawable: Drawable?) {
         super.setVerticalScrollbarTrackDrawable(drawable)
     }
-  /**
-     * @see CodeEditor.setLineNumberTipTextProvider
-     */
+
     fun getLineNumberTipTextProvider(): LineNumberTipTextProvider? {
         return lineNumberTipTextProvider
     }
 
-    /**
-     * Set the tip text before line number for the line number panel
-     */
+
     fun setLineNumberTipTextProvider(provider: LineNumberTipTextProvider?) {
         Objects.requireNonNull(provider, "Provider can not be null")
         lineNumberTipTextProvider = provider
@@ -1431,28 +1125,14 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     val insertHandleDescriptor: SelectionHandleStyle.HandleDescriptor?
-        /**
-         * Get the rect of insert cursor handle on view
-         * 
-         * @return Rect of insert handle
-         */
+
         get() = handleDescInsert
 
     @get:Px
     var textSizePx: Float
-        /**
-         * Get text size in pixel unit
-         * 
-         * @return Text size in pixel unit
-         * @see CodeEditor.setTextSize
-         * @see CodeEditor.setTextSizePx
-         */
+
         get() = renderer.paint.getTextSize()
-        /**
-         * Set text size in pixel unit
-         * 
-         * @param size Text size in pixel unit
-         */
+
         set(size) {
             setTextSizePxDirect(size)
             requestLayoutIfNeeded()
@@ -1460,11 +1140,7 @@ open class CodeEditor @JvmOverloads constructor(
             invalidate()
         }
 
-    /**
-     * Set text size directly without creating layout!! or invalidating view
-     * 
-     * @param size Text size in pixel unit
-     */
+
     @UnsupportedUserUsage
     open fun setTextSizePxDirect(@Px size: Float) {
 
@@ -1504,9 +1180,7 @@ open class CodeEditor @JvmOverloads constructor(
     val lineNumberMetrics: android.graphics.Paint.FontMetricsInt
         get() = renderer.lineNumberMetrics
 
-    /**
-     * Whether non-printable is to be drawn
-     */
+
     internal fun shouldInitializeNonPrintable(): Boolean {
 
         return Numbers.clearBits(
@@ -1517,17 +1191,9 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     var isHardwareAcceleratedDrawAllowed: Boolean
-        /**
-         * @see .setHardwareAcceleratedDrawAllowed
-         */
+
         get() = hardwareAccAllowed
-        /**
-         * Set whether allow the editor to use RenderNode to draw its text.
-         * Enabling this can cause more memory usage, but the editor can display text
-         * much quicker.
-         * However, only when hardware accelerate is enabled on this view can the switch
-         * make a difference.
-         */
+
         set(acceleratedDraw) {
             hardwareAccAllowed = acceleratedDraw
             if (acceleratedDraw && !isWordwrap) {
@@ -1535,11 +1201,7 @@ open class CodeEditor @JvmOverloads constructor(
             }
         }
 
-    /**
-     * As the name is, we find where leading spaces end and trailing spaces start
-     * 
-     * @param line The line to search
-     */
+
     internal fun findLeadingAndTrailingWhitespacePos(line: ContentLine): Long {
 
         val buffer =
@@ -1550,7 +1212,7 @@ open class CodeEditor @JvmOverloads constructor(
         while (leading < column && Character.isWhitespace(buffer[leading])) {
             leading++
         }
-        // Only when this action is needed
+
         if (leading != column && (nonPrintableOptions and (FLAG_DRAW_WHITESPACE_INNER or FLAG_DRAW_WHITESPACE_TRAILING)) != 0) {
             while (trailing > 0 && Character.isWhitespace(buffer[trailing - 1])) {
                 trailing--
@@ -1559,19 +1221,12 @@ open class CodeEditor @JvmOverloads constructor(
         return IntPair.pack(leading, trailing)
     }
 
-    /**
-     * A quick method to predicate whitespace character
-     */
+
     private fun Character.isWhitespace(ch: Char): Boolean {
         return ch == '\t' || ch == ' '
     }
 
-    /**
-     * Get matched text regions on the given line
-     * 
-     * @param line      Target line
-     * @param positions Output start positions
-     */
+
     internal fun computeMatchedPositions(line: Int, positions: LongArrayList) {
 
         positions.clear()
@@ -1649,48 +1304,25 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     var edgeEffectColor: Int
-        /**
-         * Get the color of EdgeEffect
-         * 
-         * @return The color of EdgeEffect.
-         */
+
         get() = edgeEffectVertical!!.color
-        /**
-         * Set the color of EdgeEffect
-         * 
-         * @param color The color of EdgeEffect
-         */
+
         set(color) {
             edgeEffectVertical!!.setColor(color)
             edgeEffectHorizontal!!.setColor(color)
         }
 
-    /**
-     * Get the layout!! of editor
-     */
+
 
     val verticalEdgeEffect: EdgeEffect
-        /**
-         * Get EdgeEffect for vertical direction
-         * 
-         * @return EdgeEffect
-         */
+
         get() = edgeEffectVertical!!
 
     val horizontalEdgeEffect: EdgeEffect
-        /**
-         * Get EdgeEffect for horizontal direction
-         * 
-         * @return EdgeEffect
-         */
+
         get() = edgeEffectHorizontal!!
 
-    /**
-     * Find the smallest code block that cursor is in
-     * 
-     * @return The smallest code block index.
-     * If cursor is not in any code block,just -1.
-     */
+
     private fun findCursorBlock(): Int {
         val blocks: List<CodeBlock>? = if (textStyles == null) null else textStyles!!.blocks
         if (blocks == null || blocks.isEmpty()) {
@@ -1699,13 +1331,7 @@ open class CodeEditor @JvmOverloads constructor(
         return findCursorBlock(blocks)
     }
 
-    /**
-     * Find the cursor code block internal
-     * 
-     * @param blocks Current code blocks
-     * @return The smallest code block index.
-     * If cursor is not in any code block,just -1.
-     */
+
     private fun findCursorBlock(blocks: List<CodeBlock>): Int {
         val line: Int = cursor!!.leftLine
         var min = binarySearchEndBlock(line, blocks)
@@ -1741,23 +1367,13 @@ open class CodeEditor @JvmOverloads constructor(
         return found
     }
 
-    /**
-     * Find the first code block that maybe seen on screen Because the code blocks is sorted by its
-     * end line position we can use binary search to quicken this process in order to decrease the
-     * time we use on finding
-     * 
-     * @param firstVis The first visible line
-     * @param blocks   Current code blocks
-     * @return The index of the block we found or `-1` if no code block is found.
-     */
+
     fun binarySearchEndBlock(firstVis: Int, blocks: List<CodeBlock>?): Int {
         return CodeBlock.binarySearchEndBlock(firstVis, blocks)
     }
 
 
-    /**
-     * Get spans on the given line
-     */
+
     @NonNull
     fun getSpansForLine(line: Int): List<Span?> {
         val spanMap =
@@ -1776,11 +1392,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Get the width of line number region (include line number margin)
-     * 
-     * @return width of line number region
-     */
+
     fun measureLineNumber(): Float {
         if (!this.isLineNumberEnabled) {
             return 0f
@@ -1804,9 +1416,7 @@ open class CodeEditor @JvmOverloads constructor(
         return single * count + lineNumberMarginLeft
     }
 
-    /**
-     * Create layout!! for text
-     */
+
     internal fun createLayout(clearWordwrapCache: Boolean = true) {
         val layout = _layout
         val text = _text
@@ -1841,20 +1451,12 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Indents the selected lines. Does nothing if the text is not selected.
-     */
+
     fun indentSelection() {
         indentLines(true)
     }
 
-    /**
-     * Indents the lines. Does nothing if the `onlyIfSelected` is `true` and
-     * no text is selected.
-     * 
-     * @param onlyIfSelected Set to `true` if lines must be indented only if the text is
-     * selected.
-     */
+
     fun indentLines(onlyIfSelected: Boolean) {
         val cursor: Cursor = cursor
         if (onlyIfSelected && !cursor.isSelected()) {
@@ -1879,33 +1481,29 @@ open class CodeEditor @JvmOverloads constructor(
 
             val requiredSpaces = tabWidth - (spaces % tabWidth)
             if (spaceCount > 0 && tabCount > 0) {
-                // indentation contains spaces as well as tabs
-                // replace the leading indentation with appropriate indentation (according to language.useTabs())
-                // this should be done while incrementing the indentation
+
+
+
                 val finalSpaceCount = ((if (requiredSpaces == 0) tabWidth else requiredSpaces) + spaces) / tabWidth
                 text.replace(i, 0, i, endColumn, tabString.repeat(finalSpaceCount))
                 continue
             }
 
             if (requiredSpaces == tabWidth) {
-                // line is evenly indented
-                // increase the indentation by \t or tabWidthSpaces
+
+
                 text.insert(i, endColumn, tabString)
             } else {
-                // line is oddly indented
-                // We know that a line can never be oddly indented when it is indented only with tabs
-                // therefore, we insert spaces to align the line
+
+
+
                 text.insert(i, endColumn, " ".repeat(requiredSpaces))
             }
         }
         text.endBatchEdit()
     }
 
-    /**
-     * Removes indentation from the start of the selected lines. If the text is not selected, or if
-     * the start and end selection is on the same line, only the line at the cursor position is
-     * unindented.
-     */
+
     fun unindentSelection() {
         val cursor: Cursor = cursor
         val text: Content = text
@@ -1924,7 +1522,7 @@ open class CodeEditor @JvmOverloads constructor(
                 IntPair.getSecond(result)
             val spaces: Int = spaceCount + (tabCount * tabWidth)
             if (spaces == 0) {
-                // line is not indented
+
                 continue
             }
 
@@ -1932,9 +1530,9 @@ open class CodeEditor @JvmOverloads constructor(
 
             val extraSpaces = spaces % tabWidth
             if (spaceCount > 0 && tabCount > 0) {
-                // indentation contains spaces as well as tabs
-                // replace the leading indentation with appropriate indentation (according to language.useTabs())
-                // this should be done while decrementing the indentation
+
+
+
                 val finalSpaceCount =
                     Math.abs(spaces - (if (extraSpaces == 0) tabWidth else extraSpaces)) / tabWidth
                 text.replace(i, 0, i, endColumn, tabString.repeat(finalSpaceCount))
@@ -1942,39 +1540,34 @@ open class CodeEditor @JvmOverloads constructor(
             }
 
             if (extraSpaces == 0) {
-                // line is evenly indented
-                // remove tabString.length() characters from the start
 
-                // do not use tabString.length()
+
+
+
 
                 text.delete(i, endColumn - (if (tabCount > 0) 1 else tabWidth), i, endColumn)
             } else {
-                // line is oddly indented
-                // We know that a line can never be oddly indented when it is indented only with tabs
-                // therefore, we delete spaces to align the line
+
+
+
                 text.delete(i, endColumn - extraSpaces, i, endColumn)
             }
         }
         text.endBatchEdit()
     }
 
-    /**
-     * Commit a tab to cursor
-     */
+
     protected fun commitTab() {
         if (inputConnection != null && isEditable) {
             if (inputConnection!!.composingText.isComposing()) {
-                // This external change will damage the composing text (#784)
+
                 restartInput()
             }
             inputConnection!!.commitTextInternal(createTabString(), true)
         }
     }
 
-    /**
-     * Indents the line if text is not selected and the cursor is at the start of the line. Inserts
-     * an indentation string otherwise.
-     */
+
     fun indentOrCommitTab() {
         val cursor: Cursor = cursor
         if (cursor.isSelected()) {
@@ -1994,7 +1587,7 @@ open class CodeEditor @JvmOverloads constructor(
             IntPair.getSecond(count)
 
         if (left.column > spaceCount + tabCount) {
-            // there is text before the cursor
+
             commitTab()
             return
         }
@@ -2002,22 +1595,13 @@ open class CodeEditor @JvmOverloads constructor(
         indentLines(false)
     }
 
-    /**
-     * Creates the string to insert when `KEYCODE_TAB` key event is received from the IME.
-     * 
-     * @return The string to insert for tab character.
-     */
+
     protected fun createTabString(): String {
         val language: Language = editorLanguage!!
         return TextUtils.createIndent(tabWidth, tabWidth, language.useTab())
     }
 
-    /**
-     * Update the information of cursor
-     * Such as the position of cursor on screen(For input method that can go to any position on screen like PC input method)
-     * 
-     * @return The offset x of right cursor on view
-     */
+
     fun updateCursorAnchor(): Float {
         val l: Int = cursor!!.rightLine
         val column: Int = cursor!!.rightColumn
@@ -2062,9 +1646,7 @@ open class CodeEditor @JvmOverloads constructor(
         return x
     }
 
-    /**
-     * Delete text before cursor or selected text (if there is)
-     */
+
     fun deleteText() {
         val cur: Cursor = cursor!!
         if (cur.isSelected()) {
@@ -2074,7 +1656,7 @@ open class CodeEditor @JvmOverloads constructor(
             val line: Int = cur.leftLine
             if (props!!.deleteEmptyLineFast || (props!!.deleteMultiSpaces !== 1 && col > 0 && text.getLineString(line)[col - 1] === ' ')
             ) {
-                // Check whether selection is in leading spaces
+
                 val text =
                     this.text.getLine(cur.leftLine).backingCharArray
                 var inLeading = true
@@ -2087,7 +1669,7 @@ open class CodeEditor @JvmOverloads constructor(
                 }
 
                 if (inLeading) {
-                    // Check empty line
+
                     var emptyLine = true
                     val max =
                         this.text.getColumnCount(line)
@@ -2100,7 +1682,7 @@ open class CodeEditor @JvmOverloads constructor(
                     }
                     if (props!!.deleteEmptyLineFast && emptyLine) {
                         if (line == 0) {
-                            // Just delete whitespaces before
+
                             this.text.delete(line, 0, line, col)
                         } else {
                             this.text.delete(line - 1, this.text.getColumnCount(line - 1), line, max)
@@ -2122,7 +1704,7 @@ open class CodeEditor @JvmOverloads constructor(
                     }
                 }
             }
-            // Do not put cursor inside combined characters
+
             var begin: Int
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 begin = TextUtilsP.getOffsetForBackspaceKey(text.getLine(cur.leftLine), col)
@@ -2145,32 +1727,19 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Commit text to the content from IME
-     */
+
     fun commitText(@NonNull text: CharSequence) {
         commitText(text, true)
     }
 
-    /**
-     * Commit text at current state from IME
-     * 
-     * @param text            Text commit by InputConnection
-     * @param applyAutoIndent Apply automatic indentation
-     */
+
     fun commitText(@NonNull text: CharSequence, applyAutoIndent: Boolean) {
         commitText(text, applyAutoIndent, true)
     }
 
-    /**
-     * Commit text with given options
-     * 
-     * @param text Text commit by InputConnection
-     * @param applyAutoIndent Apply automatic indentation
-     * @param applySymbolCompletion Apply symbol surroundings and completions
-     */
+
     fun commitText(@NonNull text: CharSequence, applyAutoIndent: Boolean, applySymbolCompletion: Boolean) {
-        // replace text
+
         var text = text
         var pair: SymbolPairMatch.SymbolPair? = null
         if (applySymbolCompletion && props!!.symbolPairAutoCompletion && text.length > 0) {
@@ -2179,7 +1748,7 @@ open class CodeEditor @JvmOverloads constructor(
 
             var inputText: CharArray? = null
 
-            //size > 1
+
             if (text.length > 1) {
                 inputText = text.toString().toCharArray()
             }
@@ -2196,21 +1765,21 @@ open class CodeEditor @JvmOverloads constructor(
             LanguageHelper.getQuickQuoteHandler(editorLanguage!!)
 
         if (pair != null && pair !== SymbolPairMatch.SymbolPair.EMPTY_SYMBOL_PAIR) {
-            // QuickQuoteHandler can easily implement the feature of AutoSurround
-            // and is at a higher level (customizable),
-            // so if the language implemented QuickQuoteHandler,
-            // the AutoSurround feature is not considered needed because it can be implemented through QuickQuoteHandler
+
+
+
+
 
             if (pair.shouldDoAutoSurround(editorText) && quoteHandler == null) {
                 editorText.beginBatchEdit()
-                // insert left
+
                 editorText.insert(cur.leftLine, cur.leftColumn, pair.open)
-                // editorText.insert(editorCursor.leftLine,editorCursor.leftColumn,selectText);
-                // insert right
+
+
                 editorText.insert(cur.rightLine, cur.rightColumn, pair.close)
                 editorText.endBatchEdit()
 
-                // setSelection
+
                 setSelectionRegion(
                     cur.leftLine, cur.leftColumn,
                     cur.rightLine, cur.rightColumn - pair.close.length
@@ -2319,43 +1888,9 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     var nonPrintablePaintingFlags: Int
-        /**
-         * @see .setNonPrintablePaintingFlags
-         * @see .FLAG_DRAW_WHITESPACE_LEADING
-         * 
-         * @see .FLAG_DRAW_WHITESPACE_INNER
-         * 
-         * @see .FLAG_DRAW_WHITESPACE_TRAILING
-         * 
-         * @see .FLAG_DRAW_WHITESPACE_FOR_EMPTY_LINE
-         * 
-         * @see .FLAG_DRAW_LINE_SEPARATOR
-         * 
-         * @see .FLAG_DRAW_WHITESPACE_IN_SELECTION
-         */
+
         get() = nonPrintableOptions
-        /**
-         * Sets non-printable painting flags.
-         * Specify where they should be drawn and some other properties.
-         * 
-         * 
-         * Flags can be mixed.
-         * 
-         * @param flags Flags
-         * @see .FLAG_DRAW_WHITESPACE_LEADING
-         * 
-         * @see .FLAG_DRAW_WHITESPACE_INNER
-         * 
-         * @see .FLAG_DRAW_WHITESPACE_TRAILING
-         * 
-         * @see .FLAG_DRAW_WHITESPACE_FOR_EMPTY_LINE
-         * 
-         * @see .FLAG_DRAW_LINE_SEPARATOR
-         * 
-         * @see .FLAG_DRAW_WHITESPACE_IN_SELECTION
-         * 
-         * @see .FLAG_DRAW_SOFT_WRAP
-         */
+
         set(flags) {
             val oldFlags = nonPrintableOptions
             this.nonPrintableOptions = flags
@@ -2369,33 +1904,20 @@ open class CodeEditor @JvmOverloads constructor(
         return inputConnection!!.composingText.isComposing()
     }
 
-    /**
-     * Make the selection visible
-     */
+
     fun ensureSelectionVisible() {
         ensurePositionVisible(cursor.rightLine, cursor.rightColumn)
     }
 
-    /**
-     * Make the given character position visible
-     * 
-     * @param line        Line in text
-     * @param column      Column in text
-     * @param noAnimation true if no animation should be applied
-     */
-    /**
-     * Make the given character position visible
-     * 
-     * @param line   Line in text
-     * @param column Column in text
-     */
+
+
     @JvmOverloads
     fun ensurePositionVisible(line: Int, column: Int, noAnimation: Boolean = false) {
         val scroller: EditorScroller = this.scroller
         val layoutOffset: FloatArray = layout!!.getCharLayoutOffset(line, column)
-        // x offset is the left of character
+
         val xOffset = layoutOffset[1] + measureTextRegionOffset()
-        // y offset is the bottom of row
+
         val yOffset = layoutOffset[0]
 
         val currFinalY: Float = if (scroller.isFinished) this.offsetY.toFloat() else scroller.getFinalY().toFloat()
@@ -2405,11 +1927,11 @@ open class CodeEditor @JvmOverloads constructor(
 
         val topLines = if (props!!.stickyScroll) props!!.stickyScrollMaxLines else 2
         if (yOffset - this.rowHeight * topLines < currFinalY) {
-            // top may be invisible
+
             targetY = yOffset - this.rowHeight * topLines.toFloat()
         }
         if (yOffset > height + currFinalY) {
-            // bottom invisible
+
             targetY = yOffset - height + this.rowHeight * 1f
         }
         val charWidth: Float = if (column == 0) 0f else this.textPaint.measureText("a")
@@ -2467,37 +1989,21 @@ open class CodeEditor @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * Whether there is clip
-     * 
-     * @return whether clip in clip board
-     */
+
     fun hasClip(): Boolean {
         return clipboardManager!!.hasPrimaryClip()
     }
 
     val scroller: EditorScroller
-        /**
-         * Get scroller from EventHandler
-         * You would better not use it for your own scrolling
-         * 
-         * @return The scroller
-         */
+
         get() = touchHandler!!.getScroller()
 
-    /**
-     * Checks whether the position is over max Y position
-     * 
-     * @param posOnScreen Y position on view
-     * @return Whether over max Y
-     */
+
     fun isOverMaxY(posOnScreen: Float): Boolean {
         return posOnScreen + this.offsetY > layout!!.layoutHeight
     }
 
-    /**
-     * Check if the point on editor view, is inside text region on that row
-     */
+
     fun isScreenPointOnText(x: Float, y: Float): Boolean {
         val pos = getPointPositionOnScreen(x, y)
         val rowIdx: Int =
@@ -2511,33 +2017,19 @@ open class CodeEditor @JvmOverloads constructor(
         return offset >= textRegionX && offset <= rowRegionRightX
     }
 
-    /**
-     * Determine character position using positions in scroll coordinate
-     * 
-     * @param xOffset Horizontal position in scroll coordinate
-     * @param yOffset Vertical position in scroll coordinate
-     * @return IntPair. first is line and second is column
-     * @see IntPair
-     */
+
     fun getPointPosition(xOffset: Float, yOffset: Float): Long {
         return layout!!.getCharPositionForLayoutOffset(xOffset - measureTextRegionOffset(), yOffset)
     }
 
-    /**
-     * Determine character position using positions on view
-     * 
-     * @param x X on view
-     * @param y Y on view
-     * @return IntPair. first is line and second is column
-     * @see IntPair
-     */
+
     fun getPointPositionOnScreen(x: Float, y: Float): Long {
         var y = y
         y = kotlin.math.max(0f, y)
         val stuckLines: List<CodeBlock?>? =
             renderer.lastStuckLines
         if (stuckLines != null) {
-            // position Y maybe negative
+
             val index = kotlin.math.max(0f, (y / this.rowHeight)).toInt()
             if (y < stuckLines.size * this.rowHeight && index < stuckLines.size) {
                 return getPointPosition(
@@ -2550,11 +2042,7 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     val scrollMaxY: Int
-        /**
-         * Get max scroll y
-         * 
-         * @return max scroll y
-         */
+
         get() {
             val params: ViewGroup.LayoutParams? =
                 getLayoutParams()
@@ -2565,59 +2053,32 @@ open class CodeEditor @JvmOverloads constructor(
         }
 
     val scrollMaxX: Int
-        /**
-         * Get max scroll x
-         * 
-         * @return max scroll x
-         */
+
         get() = kotlin.math.max(0, (layout!!.layoutWidth + measureTextRegionOffset() - width / 2f).toInt())
 
-    /**
-     * Set the factor of extra space in vertical direction. The factor is multiplied with editor
-     * height to compute the extra space of vertical viewport. Specially, when factor is zero, no
-     * extra space is added.
-     * 
-     * @param extraSpaceFactor the factor. 0.5 by default.
-     * @throws IllegalArgumentException if the factor is negative or bigger than 1.0f
-     * @see .getVerticalExtraSpaceFactor
-     */
+
     fun setVerticalExtraSpaceFactor(extraSpaceFactor: Float) {
         kotlin.require(!(extraSpaceFactor < 0 || extraSpaceFactor > 1.0f)) { "the factor should be in range [0.0, 1.0]" }
         this.verticalExtraSpaceFactor = extraSpaceFactor
-        // ensure offset is in scroll range
+
         touchHandler!!.scrollBy(0f, 0f)
     }
 
-    /**
-     * Get the factor used to compute extra space of vertical viewport.
-     * 
-     * @see .setVerticalExtraSpaceFactor
-     */
+
     fun getVerticalExtraSpaceFactor(): Float {
         return verticalExtraSpaceFactor
     }
 
     val cursorAnimator: CursorAnimator
-        /**
-         * Get CursorAnimator of editor
-         *
-         * @return CursorAnimator
-         */
+
         get() = _cursorAnimator!!
 
     val searcher: EditorSearcher
-        /**
-         * Get EditorSearcher
-         * 
-         * @return EditorSearcher
-         */
+
         get() = _searcher
 
 
-    /**
-     * Set selection around the given position
-     * It will try to set selection as near as possible (Exactly the position if that position exists)
-     */
+
     internal fun setSelectionAround(line: Int, column: Int) {
 
         var column = column
@@ -2632,11 +2093,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Format text Async
-     * 
-     * @return Whether the format task is scheduled
-     */
+
     @Synchronized
     fun formatCodeAsync(): Boolean {
         if (this.isFormatting) {
@@ -2653,17 +2110,7 @@ open class CodeEditor @JvmOverloads constructor(
         return true
     }
 
-    /**
-     * Format text in the given region.
-     * 
-     * 
-     * Note: Make sure the given positions are valid (line, column and index). Typically, you should
-     * obtain a position by an object of [io.github.abc15018045126.sora.text.Indexer]
-     * 
-     * @param start Start position created by Indexer
-     * @param end   End position created by Indexer
-     * @return Whether the format task is scheduled
-     */
+
     @Synchronized
     fun formatCodeAsync(start: CharPosition, end: CharPosition): Boolean {
         kotlin.require(!(start.index > end.index)) { "start > end" }
@@ -2682,30 +2129,17 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     val cursorRange: TextRange
-        /**
-         * Get the cursor range of editor
-         */
+
         get() = cursor!!.getRange()
 
     val isTextSelected: Boolean
-        /**
-         * If any text is selected
-         */
+
         get() = cursor!!.isSelected()
 
 
-    /**
-     * Set tab width
-     * 
-     * @param width tab width compared to space
-     */
 
-    /**
-     * Set max and min text size that can be used by user zooming.
-     * 
-     * 
-     * Unit is px.
-     */
+
+
     fun setScaleTextSizes(minSize: Float, maxSize: Float) {
         kotlin.require(!(minSize > maxSize)) { "min size can not be bigger than max size" }
         kotlin.require(!(minSize < 2f)) { "min size must be at least 2px" }
@@ -2713,13 +2147,7 @@ open class CodeEditor @JvmOverloads constructor(
         touchHandler!!.scaleMaxSize = maxSize
     }
 
-    /**
-     * When the parent is a scrollable view group,
-     * request it not to allow horizontal scrolling to be intercepted.
-     * Until the code cannot scroll horizontally
-     * 
-     * @param forceHorizontalScrollable Whether force horizontal scrolling
-     */
+
     fun setInterceptParentHorizontalScrollIfNeeded(forceHorizontalScrollable: Boolean) {
         this.isInterceptParentHorizontalScrollEnabled = forceHorizontalScrollable
         if (!forceHorizontalScrollable) {
@@ -2730,16 +2158,12 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * @see .setHighlightBracketPair
-     */
+
     fun isHighlightBracketPair(): Boolean {
         return highlightBracketPair
     }
 
-    /**
-     * Whether to highlight brackets pairs
-     */
+
     fun setHighlightBracketPair(highlightBracketPair: Boolean) {
         this.highlightBracketPair = highlightBracketPair
         if (!highlightBracketPair) {
@@ -2750,42 +2174,22 @@ open class CodeEditor @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * Set line separator when new lines are created in editor (only texts from IME. texts from clipboard
-     * or other strategies are not encountered). Must not be[LineSeparator.NONE]
-     * 
-     * @param lineSeparator
-     * @see .getLineSeparator
-     * @see LineSeparator
-     */
 
-    /**
-     * @see .setLineSeparator
-     */
 
-    /**
-     * @see CodeEditor.setInputType
-     */
+
+
+
     fun getInputType(): Int {
         return inputType
     }
 
-    /**
-     * Specify input type for the editor
-     * 
-     * 
-     * Zero for default input type
-     * 
-     * @see EditorInfo.inputType
-     */
+
     fun setInputType(inputType: Int) {
         this.inputType = inputType
         restartInput()
     }
 
-    /**
-     * Undo last action
-     */
+
     fun undo() {
         val range: TextRange? = text.undo()
         if (range != null) {
@@ -2799,51 +2203,34 @@ open class CodeEditor @JvmOverloads constructor(
                     SelectionChangeEvent.CAUSE_TEXT_MODIFICATION
                 )
             } catch (e: IndexOutOfBoundsException) {
-                // Suppressed, typically because an invalid position is memorized.
+
             }
         }
         notifyIMEExternalCursorChange()
     }
 
-    /**
-     * Redo last action
-     */
+
     fun redo() {
         text.redo()
         notifyIMEExternalCursorChange()
     }
 
-    /**
-     * Checks whether we can undo
-     * 
-     * @return true if we can undo
-     */
+
     fun canUndo(): Boolean {
         return text.canUndo()
     }
 
-    /**
-     * Checks whether we can redo
-     * 
-     * @return true if we can redo
-     */
+
     fun canRedo(): Boolean {
         return text.canRedo()
     }
 
-    /**
-     * @return Enabled/Disabled
-     * @see CodeEditor.setUndoEnabled
-     */
+
     fun isUndoEnabled(): Boolean {
         return undoEnabled
     }
 
-    /**
-     * Enable / disabled undo manager
-     * 
-     * @param enabled Enable/Disable
-     */
+
     fun setUndoEnabled(enabled: Boolean) {
         undoEnabled = enabled
         if (text != null) {
@@ -2859,12 +2246,10 @@ open class CodeEditor @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * Start search action mode
-     */
+
     fun beginSearchMode() {
         class SearchActionMode : ActionMode.Callback {
-            
+
             override fun onCreateActionMode(p1: ActionMode, p2: Menu): Boolean {
                 startedActionMode = ACTION_MODE_SEARCH_TEXT
                 p2.add(0, 0, 0, I18nConfig.getResourceId(R.string.sora_editor_next))
@@ -2877,13 +2262,13 @@ open class CodeEditor @JvmOverloads constructor(
                     .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_NEVER)
                 val sv: SearchView = SearchView(getContext())
                 sv.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                    
+
                     override fun onQueryTextSubmit(text: String?): Boolean {
                         _searcher.gotoNext()
                         return false
                     }
 
-                    
+
                     override fun onQueryTextChange(text: String?): Boolean {
                         if (text == null || text.isEmpty()) {
                             _searcher.stopSearch()
@@ -2901,12 +2286,12 @@ open class CodeEditor @JvmOverloads constructor(
                 return true
             }
 
-            
+
             override fun onPrepareActionMode(p1: ActionMode?, p2: Menu?): Boolean {
                 return true
             }
 
-            
+
             override fun onActionItemClicked(am: ActionMode, p2: MenuItem): Boolean {
                 if (!_searcher.hasQuery()) {
                     return false
@@ -2939,7 +2324,7 @@ open class CodeEditor @JvmOverloads constructor(
                 return false
             }
 
-            
+
             override fun onDestroyActionMode(p1: ActionMode?) {
                 startedActionMode = ACTION_MODE_NONE
                 _searcher.stopSearch()
@@ -2951,17 +2336,10 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     val eventHandler: EditorTouchEventHandler?
-        /**
-         * Get [EditorTouchEventHandler] of the editor
-         */
+
         get() = touchHandler!!
 
-    /**
-     * Set divider line's left and right margin
-     * 
-     * @param marginLeft  Margin left for divider line
-     * @param marginRight Margin right for divider line
-     */
+
     fun setDividerMargin(@Px marginLeft: Float, @Px marginRight: Float) {
         kotlin.require(!(marginLeft < 0 || marginRight < 0)) { "margin can not be under zero" }
         dividerMarginLeft = marginLeft
@@ -2971,18 +2349,12 @@ open class CodeEditor @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * Set divider line's left and right margin
-     * 
-     * @param margin Margin left and right for divider line
-     */
+
     fun setDividerMargin(@Px margin: Float) {
         setDividerMargin(margin, margin)
     }
 
-    /**
-     * Set line number margin left
-     */
+
     fun setLineNumberMarginLeft(@Px lineNumberMarginLeft: Float) {
         this.lineNumberMarginLeft = lineNumberMarginLeft
         requestLayoutIfNeeded()
@@ -2990,26 +2362,17 @@ open class CodeEditor @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * @see .setLineNumberMarginLeft
-     */
+
     @Px
     fun getLineNumberMarginLeft(): Float {
         return lineNumberMarginLeft
     }
 
     val typefaceLineNumber: Typeface
-        /**
-         * @return Typeface of line number
-         * @see CodeEditor.setTypefaceLineNumber
-         */
+
         get() = renderer.getPaintOther().typeface
 
-    /**
-     * Set line number's typeface
-     * 
-     * @param typefaceLineNumber New typeface
-     */
+
     fun setTypefaceLineNumber(typefaceLineNumber: Typeface?) {
         renderer.setTypefaceLineNumber(typefaceLineNumber)
         requestLayoutIfNeeded()
@@ -3017,66 +2380,38 @@ open class CodeEditor @JvmOverloads constructor(
 
     val typefaceText: Typeface
 
-        /**
-         * @return Typeface of text
-         * @see CodeEditor.setTypefaceText
-         */
+
         get() = renderer.paint.typeface
 
-    /**
-     * Set text's typeface
-     * 
-         * @param typefaceText New typeface
-     */
+
     fun setTypefaceText(typefaceText: Typeface?) {
         renderer.setTypefaceText(typefaceText)
         requestLayoutIfNeeded()
     }
 
     var textScaleX: Float
-        /**
-         * @see .setTextScaleX
-         */
+
         get() = renderer.paint.getTextScaleX()
-        /**
-         * Set text scale x of Paint
-         * 
-         * @see Paint.setTextScaleX
-         * @see .getTextScaleX
-         */
+
         set(textScaleX) {
             renderer.setTextScaleX(textScaleX)
         }
 
     var textLetterSpacing: Float
-        /**
-         * @see .setTextLetterSpacing
-         */
+
         get() = renderer.paint.getLetterSpacing()
-        /**
-         * Set letter spacing of Paint
-         * 
-         * @see Paint.setLetterSpacing
-         * @see .getTextLetterSpacing
-         */
+
         set(textLetterSpacing) {
             renderer.setLetterSpacing(textLetterSpacing)
             requestLayoutIfNeeded()
         }
 
-    /**
-     * @return Line number align
-     * @see CodeEditor.setLineNumberPaint.Align
-     */
+
     fun getLineNumberAlign(): AndroidPaint.Align? {
         return lineNumberAlign
     }
 
-    /**
-     * Set line number align
-     * 
-     * @param align Paint.Align for line number
-     */
+
     fun setLineNumberPaintAlign(align: AndroidPaint.Align?) {
         var align: AndroidPaint.Align? = align
         if (align == null) {
@@ -3086,58 +2421,34 @@ open class CodeEditor @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * Width for insert cursor
-     * 
-     * @param width Cursor width
-     */
+
     fun setCursorWidth(@Px width: Float) {
         kotlin.require(!(width < 0)) { "width can not be under zero" }
         insertSelectionWidth = width
         invalidate()
     }
 
-    /**
-     * Border width for text border
-     */
+
     fun setTextBorderWidth(@Px width: Float) {
         kotlin.require(!(width < 0)) { "width can not be under zero" }
         textBorderWidth = width
         invalidate()
     }
 
-    /**
-     * @see .setTextBorderWidth
-     */
+
     @Px
     fun getTextBorderWidth(): Float {
         return textBorderWidth
     }
 
-    /**
-     * Get text cursor.
-     * 
-     * 
-     * Always set selection position by [.setSelection] or [.setSelectionRegion].
-     * Do not modify the object returned.
-     * 
-     * @return Cursor of text
-     */
+
 
     val lineCount: Int
-        /**
-         * Get line count
-         * 
-         * @return line count
-         */
+
         get() = text.lineCount
 
     val firstVisibleLine: Int
-        /**
-         * Get first visible line on screen
-         * 
-         * @return first visible line
-         */
+
         get() {
             try {
                 return layout!!.getLineNumberForRow(this.firstVisibleRow)
@@ -3147,33 +2458,21 @@ open class CodeEditor @JvmOverloads constructor(
         }
 
     val firstVisibleRow: Int
-        /**
-         * Get first visible row on screen
-         * 
-         * @return first visible row
-         */
+
         get() {
             if (layout!! == null) return (this.offsetY / this.logicalRowHeight).toInt()
             return layout!!.getRowIndexForY(this.offsetY.toFloat())
         }
 
     val lastVisibleRow: Int
-        /**
-         * Get last visible row on screen.
-         * 
-         * @return last visible row
-         */
+
         get() {
             if (layout!! == null) return ((this.offsetY + height) / this.logicalRowHeight).toInt()
             return kotlin.math.max(0, kotlin.math.min(layout!!.rowCount - 1, layout!!.getRowIndexForY((this.offsetY + height).toFloat())))
         }
 
     val lastVisibleLine: Int
-        /**
-         * Get last visible line on screen
-         * 
-         * @return last visible line
-         */
+
         get() {
             try {
                 return layout!!.getLineNumberForRow(this.lastVisibleRow)
@@ -3182,25 +2481,12 @@ open class CodeEditor @JvmOverloads constructor(
             }
         }
 
-    /**
-     * Checks whether this row is visible on screen
-     * 
-     * @param row Row to check
-     * @return Whether visible
-     */
+
     fun isRowVisible(row: Int): Boolean {
         return (this.firstVisibleRow <= row && row <= this.lastVisibleRow)
     }
 
-    /**
-     * Sets line spacing for this TextView. Each line other than the last line will have its height
-     * multiplied by `mult` and have `add` added to it.
-     * 
-     * @param add  The value in pixels that should be added to each line other than the last line.
-     * This will be applied after the multiplier
-     * @param mult The value by which each line height other than the last line will be multiplied
-     * by
-     */
+
     fun setLineSpacing(add: Float, mult: Float) {
         lineSpacingAdd = add
         lineSpacingMultiplier = mult
@@ -3208,9 +2494,7 @@ open class CodeEditor @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * Set wrap line spacing
-     */
+
     fun setWrapLineSpacing(add: Float, mult: Float) {
         wrapLineSpacingAdd = add
         wrapLineSpacingMultiplier = mult
@@ -3219,61 +2503,37 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     var lineSpacingExtra: Float
-        /**
-         * Gets the line spacing extra space
-         * 
-         * @return the extra space that is added to the height of each lines of this TextView.
-         * @see .setLineSpacing
-         * @see .getLineSpacingMultiplier
-         */
+
         get() = lineSpacingAdd
-        /**
-         * @param lineSpacingExtra The value in pixels that should be added to each line other than the last line.
-         * *            This will be applied after the multiplier
-         */
+
         set(lineSpacingExtra) {
             lineSpacingAdd = lineSpacingExtra
             invalidate()
         }
 
-    /**
-     * @return the value by which each line's height is multiplied to get its actual height.
-     * @see .setLineSpacingMultiplier
-     */
+
     fun getLineSpacingMultiplier(): Float {
         return lineSpacingMultiplier
     }
 
-    /**
-     * @param lineSpacingMultiplier The value by which each line height other than the last line will be multiplied
-     * *             by. Default 1.0f
-     */
+
     fun setLineSpacingMultiplier(lineSpacingMultiplier: Float) {
         this.lineSpacingMultiplier = lineSpacingMultiplier
         invalidate()
     }
 
     val lineSpacingPixels: Int
-        /**
-         * Get actual line spacing in pixels.
-         */
+
         get() = getLineSpacingPixels(lineSpacingMultiplier, lineSpacingAdd)
 
-    /**
-     * Get actual line spacing in pixels.
-     */
+
     fun getLineSpacingPixels(multiplier: Float, add: Float): Int {
         val metrics: android.graphics.Paint.FontMetricsInt? =
             renderer.metricsText
         return (((metrics!!.descent - metrics.ascent) * (multiplier - 1f) + add).toInt()) / 2 * 2
     }
 
-    /**
-     * Get baseline directly
-     * 
-     * @param row Row
-     * @return baseline y offset
-     */
+
     fun getRowBaseline(row: Int): Int {
         val lineSpacing = this.lineSpacingPixels
         val metrics: android.graphics.Paint.FontMetricsInt? =
@@ -3285,17 +2545,11 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     val rowHeight: Int
-        /**
-         * Get row height
-         * 
-         * @return height of single row
-         */
+
         get() = this.logicalRowHeight
 
     val logicalRowHeight: Int
-        /**
-         * Get logical row height
-         */
+
         get() {
             val metrics: android.graphics.Paint.FontMetricsInt? =
                 renderer.metricsText
@@ -3306,9 +2560,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
 
     val wrapRowHeight: Int
-        /**
-         * Get wrap row height
-         */
+
         get() {
             val metrics: android.graphics.Paint.FontMetricsInt? =
                 renderer.metricsText
@@ -3318,78 +2570,50 @@ open class CodeEditor @JvmOverloads constructor(
             )
         }
 
-    /**
-     * Get row height for specific row
-     */
+
     fun getRowHeight(row: Int): Int {
         if (layout!! == null) return this.rowHeight
         return if (layout!!.getRowAt(row).isTrailingRow) this.logicalRowHeight else this.wrapRowHeight
     }
 
-    /**
-     * Get row top y offset
-     * 
-     * @param row Row
-     * @return top y offset
-     */
+
     fun getRowTop(row: Int): Int {
         if (layout!! == null) return this.logicalRowHeight * row
         return layout!!.getRowTop(row)
     }
 
-    /**
-     * Get row bottom y offset
-     * 
-     * @param row Row
-     * @return Bottom y offset
-     */
+
     fun getRowBottom(row: Int): Int {
         if (layout!! == null) return this.logicalRowHeight * (row + 1)
         return layout!!.getRowBottom(row)
     }
 
-    /**
-     * Get the top of text in target row
-     */
+
     fun getRowTopOfText(row: Int): Int {
         return getRowTop(row) + this.lineSpacingPixels / 2
     }
 
-    /**
-     * Get the bottom of text in target row
-     */
+
     fun getRowBottomOfText(row: Int): Int {
         return getRowBottom(row) - this.lineSpacingPixels / 2
     }
 
     val rowHeightOfText: Int
-        /**
-         * Get the height of text in row
-         */
+
         get() {
             val metrics = renderer.metricsText!!
             return (metrics.descent - metrics.ascent)
         }
 
     val offsetX: Int
-        /**
-         * Get scroll x
-         * 
-         * @return scroll x
-         */
+
         get() = touchHandler!!.getScroller().getCurrX()
 
     val offsetY: Int
-        /**
-         * Get scroll y
-         * 
-         * @return scroll y
-         */
+
         get() = touchHandler!!.getScroller().getCurrY()
 
-    /**
-     * Indicate whether the layout!! is working
-     */
+
     @UnsupportedUserUsage
     public fun setLayoutBusy(busy: Boolean) {
 
@@ -3398,7 +2622,7 @@ open class CodeEditor @JvmOverloads constructor(
                 touchHandler!!.positionNotApplied = false
                 val line: Int = IntPair.getFirst(touchHandler!!.memoryPosition)
                 val column: Int = IntPair.getSecond(touchHandler!!.memoryPosition)
-                // Compute new scroll position
+
                 val row: Int =
                     (layout!! as WordwrapLayout).findRow(line, column)
                 val afterScrollY: Float =
@@ -3414,8 +2638,8 @@ open class CodeEditor @JvmOverloads constructor(
                 scroller.startScroll(0, afterScrollY.toInt(), 0, 0, 0)
                 scroller.abortAnimation()
             }
-            // IMPORTANT restart input after clearing the busy flag
-            // otherwise, the connection may fallback to inactive mode
+
+
             this.layoutBusy = false
             restartInput()
             postInvalidate()
@@ -3429,28 +2653,12 @@ open class CodeEditor @JvmOverloads constructor(
         dispatchEvent(LayoutStateChangeEvent(this, busy))
     }
 
-    /**
-     * Check whether the editor is actually editable. This is not only related to user
-     * property 'editable', but also editor states. When the editor is busy at initializing
-     * its layout!! or awaiting the result of format, it is also not editable.
-     * 
-     * 
-     * Do not modify the text externally in editor when this method returns false.
-     * 
-     * @return Whether the editor is editable, actually.
-     * @see CodeEditor.setEditable
-     * @see CodeEditor.setLayoutBusy
-     * @see .isFormatting
-     */
 
 
-    /**
-     * Set whether text can be edited
-     * 
-     * @param editable Editable
-     */
 
-    
+
+
+
     fun isBlockLineEnabled(): Boolean {
         return blockLineEnabled
     }
@@ -3460,23 +2668,17 @@ open class CodeEditor @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * Begin a rejection on composing texts
-     */
+
     fun beginComposingTextRejection() {
         rejectComposingCount++
     }
 
-    /**
-     * If the editor accepts composing text now, according to composing text rejection count
-     */
+
     fun acceptsComposingText(): Boolean {
         return rejectComposingCount == 0
     }
 
-    /**
-     * End a rejection on composing texts
-     */
+
     fun endComposingTextRejection() {
         rejectComposingCount--
         if (rejectComposingCount < 0) {
@@ -3484,26 +2686,18 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Check if there is a mouse inside editor, hovering
-     */
+
     fun hasMouseHovering(): Boolean {
         return mouseHover
     }
 
-    /**
-     * Check if there is a mouse inside editor with any button pressed
-     */
+
     fun hasMousePressed(): Boolean {
         return mouseButtonPressed
     }
 
     val isInMouseMode: Boolean
-        /**
-         * Check if editor is in mouse mode.
-         * 
-         * @see DirectAccessprops!!.mouseMode
-         */
+
         get() {
             when (props!!.mouseMode) {
                 DirectAccessProps.MOUSE_MODE_ALWAYS -> {
@@ -3514,14 +2708,12 @@ open class CodeEditor @JvmOverloads constructor(
                     return false
                 }
             }
-            // MOUSE_MODE_AUTO
+
             return hasMouseHovering() || hasMousePressed()
         }
 
     internal val selectingTarget: CharPosition
-        /**
-         * Get the target cursor to move when shift is pressed
-         */
+
         get() {
             if (cursor!!.left().equals(selectionAnchor)) {
                 return cursor!!.right()
@@ -3530,12 +2722,10 @@ open class CodeEditor @JvmOverloads constructor(
             }
         }
 
-    /**
-     * Make sure the moving selection is visible
-     */
+
     protected fun ensureSelectingTargetVisible() {
         if (cursor!!.left().equals(selectionAnchor)) {
-            // Ensure right selection visible
+
             ensureSelectionVisible()
         } else {
             ensurePositionVisible(cursor!!.leftLine, cursor!!.leftColumn)
@@ -3548,11 +2738,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Move or extend selection, according to `extend` param.
-     * 
-     * @param extend True if you want to extend selection.
-     */
+
     fun moveOrExtendSelection(@NonNull movement: SelectionMovement, extend: Boolean) {
         if (extend) {
             extendSelection(movement)
@@ -3561,9 +2747,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Extend the selection, based on the selection anchor (select text)
-     */
+
     fun extendSelection(@NonNull movement: SelectionMovement) {
         ensureSelectionAnchorAvailable()
         val sel: CharPosition = movement.getPositionAfterMovement(this, this.selectingTarget)
@@ -3583,9 +2767,7 @@ open class CodeEditor @JvmOverloads constructor(
         ensureSelectingTargetVisible()
     }
 
-    /**
-     * Move the selection. Selected text will be de-selected.
-     */
+
     fun moveSelection(@NonNull movement: SelectionMovement) {
         if (cursor!!.isSelected()) {
             if (movement === SelectionMovement.LEFT) {
@@ -3620,44 +2802,22 @@ open class CodeEditor @JvmOverloads constructor(
         setSelection(sel.line, sel.column, SelectionChangeEvent.CAUSE_KEYBOARD_OR_CODE)
     }
 
-    /**
-     * Move selection to given position
-     * 
-     * @param line   The line to move
-     * @param column The column to move
-     */
+
     fun setSelection(line: Int, column: Int) {
         setSelection(line, column, SelectionChangeEvent.CAUSE_UNKNOWN)
     }
 
-    /**
-     * Move selection to given position
-     * 
-     * @param line   The line to move
-     * @param column The column to move
-     */
+
     fun setSelection(line: Int, column: Int, cause: Int) {
         setSelection(line, column, true, cause)
     }
 
-    /**
-     * Move selection to given position
-     * 
-     * @param line          The line to move
-     * @param column        The column to move
-     * @param makeItVisible Make the character visible
-     */
+
     fun setSelection(line: Int, column: Int, makeItVisible: Boolean) {
         setSelection(line, column, makeItVisible, SelectionChangeEvent.CAUSE_UNKNOWN)
     }
 
-    /**
-     * Move selection to given position
-     * 
-     * @param line          The line to move
-     * @param column        The column to move
-     * @param makeItVisible Make the character visible
-     */
+
     fun setSelection(line: Int, column: Int, makeItVisible: Boolean, cause: Int) {
         var column = column
         _cursorAnimator!!.markStartPos()
@@ -3678,7 +2838,7 @@ open class CodeEditor @JvmOverloads constructor(
             _cursorAnimator!!.start()
         }
 
-        // Update cursor anchor
+
         selectionAnchor = cursor!!.right()
 
         renderContext?.invalidateRenderNodes()
@@ -3690,21 +2850,12 @@ open class CodeEditor @JvmOverloads constructor(
         onSelectionChanged(cause)
     }
 
-    /**
-     * Select all text
-     */
+
     fun selectAll() {
         setSelectionRegion(0, 0, this.lineCount - 1, text.getColumnCount(this.lineCount - 1))
     }
 
-    /**
-     * Set selection region with a call to [CodeEditor.ensureSelectionVisible]
-     * 
-     * @param lineLeft    Line left
-     * @param columnLeft  Column Left
-     * @param lineRight   Line right
-     * @param columnRight Column right
-     */
+
     fun setSelectionRegion(
         lineLeft: Int, columnLeft: Int, lineRight: Int,
         columnRight: Int, cause: Int
@@ -3712,14 +2863,7 @@ open class CodeEditor @JvmOverloads constructor(
         setSelectionRegion(lineLeft, columnLeft, lineRight, columnRight, true, cause)
     }
 
-    /**
-     * Set selection region with a call to [CodeEditor.ensureSelectionVisible]
-     * 
-     * @param lineLeft    Line left
-     * @param columnLeft  Column Left
-     * @param lineRight   Line right
-     * @param columnRight Column right
-     */
+
     fun setSelectionRegion(
         lineLeft: Int, columnLeft: Int, lineRight: Int,
         columnRight: Int
@@ -3727,15 +2871,7 @@ open class CodeEditor @JvmOverloads constructor(
         setSelectionRegion(lineLeft, columnLeft, lineRight, columnRight, true, SelectionChangeEvent.CAUSE_UNKNOWN)
     }
 
-    /**
-     * Set selection region
-     * 
-     * @param lineLeft         Line left
-     * @param columnLeft       Column Left
-     * @param lineRight        Line right
-     * @param columnRight      Column right
-     * @param makeRightVisible Whether to make right cursor visible
-     */
+
     fun setSelectionRegion(
         lineLeft: Int, columnLeft: Int, lineRight: Int,
         columnRight: Int, makeRightVisible: Boolean
@@ -3750,15 +2886,7 @@ open class CodeEditor @JvmOverloads constructor(
         )
     }
 
-    /**
-     * Set selection region
-     * 
-     * @param lineLeft         Line left
-     * @param columnLeft       Column Left
-     * @param lineRight        Line right
-     * @param columnRight      Column right
-     * @param makeRightVisible Whether to make right cursor visible
-     */
+
     fun setSelectionRegion(
         lineLeft: Int, columnLeft: Int, lineRight: Int,
         columnRight: Int, makeRightVisible: Boolean, cause: Int
@@ -3808,7 +2936,7 @@ open class CodeEditor @JvmOverloads constructor(
         updateSelection()
         renderContext?.invalidateRenderNodes()
 
-        // Update selection anchor
+
         if (!cursor!!.left().equals(selectionAnchor) && !cursor!!.right().equals(selectionAnchor)) {
             selectionAnchor = cursor!!.right()
         }
@@ -3827,13 +2955,9 @@ open class CodeEditor @JvmOverloads constructor(
         onSelectionChanged(cause)
     }
 
-    /**
-     * Get system clipboard manager used by editor
-     */
 
-    /**
-     * Paste text from clip board
-     */
+
+
     fun pasteText() {
         try {
             var clip: ClipData? = null
@@ -3847,9 +2971,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Paste external text into editor
-     */
+
     fun pasteText(@Nullable text: CharSequence?) {
         if (text != null && inputConnection != null) {
             inputConnection!!.commitText(text, 1)
@@ -3860,15 +2982,8 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Copy text to clipboard.
-     * 
-     * @param shouldCopyLine State whether the editor should select whole line if
-     * cursor is not in selection mode.
-     */
-    /**
-     * Copy text to clipboard.
-     */
+
+
     @JvmOverloads
     fun copyText(shouldCopyLine: Boolean = true) {
         if (cursor!!.isSelected()) {
@@ -3882,9 +2997,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Copy the given text region to clipboard, and follow editor's IPC properties.
-     */
+
     protected fun copyTextToClipboard(@NonNull text: CharSequence, start: Int, end: Int) {
         if (end < start) {
             return
@@ -3916,9 +3029,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Copies the current line to clipboard.
-     */
+
     private fun copyLine() {
         val cursor: Cursor = cursor
         if (cursor.isSelected()) {
@@ -3931,9 +3042,7 @@ open class CodeEditor @JvmOverloads constructor(
         copyText(false)
     }
 
-    /**
-     * Copy text to clipboard and delete them
-     */
+
     fun cutText() {
         if (cursor!!.isSelected()) {
             copyText()
@@ -3944,9 +3053,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Copy the current line to clipboard and delete it.
-     */
+
     fun cutLine() {
         val cursor: Cursor = cursor
         if (cursor.isSelected()) {
@@ -3962,7 +3069,7 @@ open class CodeEditor @JvmOverloads constructor(
         if (line!! + 1 == this.lineCount) {
             val columnCount: Int = text.getColumnCount(line)
             if (columnCount == 0) {
-                // copy line separator
+
                 copyText(false)
                 return
             }
@@ -3977,10 +3084,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Duplicates the current line.
-     * Does not selects the duplicated line.
-     */
+
     fun duplicateLine() {
         val cursor: Cursor = cursor
         if (cursor.isSelected()) {
@@ -3993,27 +3097,14 @@ open class CodeEditor @JvmOverloads constructor(
         duplicateSelection("\n", false)
     }
 
-    /**
-     * Copies the current selection and pastes it at the right selection handle.
-     * 
-     * @param selectDuplicate Whether to select the duplicated content.
-     */
-    /**
-     * Copies the current selection and pastes it at the right selection handle,
-     * then selects the duplicated content.
-     */
+
+
     @JvmOverloads
     fun duplicateSelection(selectDuplicate: Boolean = true) {
         duplicateSelection("", selectDuplicate)
     }
 
-    /**
-     * Copies the current selection, add the `prefix` to it
-     * and pastes it at the right selection handle.
-     * 
-     * @param prefix          The prefix for the selected content.
-     * @param selectDuplicate Whether to select the duplicated content.
-     */
+
     fun duplicateSelection(prefix: String?, selectDuplicate: Boolean) {
         val cursor: Cursor = cursor
         if (!cursor.isSelected()) {
@@ -4035,20 +3126,13 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Selects the word at the left selection handle.
-     */
+
     fun selectCurrentWord() {
         val left: CharPosition? = cursor.left()
         selectWord(left!!.line, left.column)
     }
 
-    /**
-     * Selects the word at the given character position.
-     * 
-     * @param line   The line.
-     * @param column The column.
-     */
+
     fun selectWord(line: Int, column: Int) {
         val range: TextRange = getWordRange(line, column)
         val start: CharPosition? = range.getStart()
@@ -4056,72 +3140,36 @@ open class CodeEditor @JvmOverloads constructor(
         setSelectionRegion(start!!.line, start.column, end!!.line, end.column, SelectionChangeEvent.CAUSE_LONG_PRESS)
     }
 
-    /**
-     * @see .getWordRange
-     */
+
     fun getWordRange(line: Int, column: Int): TextRange {
         return getWordRange(line, column, props!!.useICULibToSelectWords)
     }
 
-    /**
-     * Get the range of the word at given character position.
-     * 
-     * @param line   The line.
-     * @param column The column.
-     * @param useIcu Whether to use the ICU library to get word edges.
-     * @return The word range.
-     */
+
     fun getWordRange(line: Int, column: Int, useIcu: Boolean): TextRange {
         return Chars.getWordRange(text, line, column, useIcu)
     }
 
-    /**
-     * @return The text displaying.
-     * **Changes to this object are expected to be done in main thread
-     * due to editor limitations, while the object can be read concurrently.**
-     * 
-     * @see CodeEditor.setText
-     * @see CodeEditor.setText
-     */
 
 
-    /**
-     * Set the text to be displayed.
-     * With no extra arguments.
-     * 
-     * @param text the new text you want to display
-     */
+
+
     fun setText(@Nullable text: CharSequence?) {
         setText(text, true, null)
     }
 
-    /**
-     * Get extra argument set by [CodeEditor.setText]
-     */
+
     @NonNull
     fun getExtraArguments(): Bundle? {
         return extraArguments
     }
 
-    /**
-     * Sets the text to be displayed.
-     * 
-     * @param text           the new text you want to display
-     * @param extraArguments Extra arguments for the document. This [Bundle] object is passed
-     * to all languages and plugins in editor.
-     */
+
     fun setText(@Nullable text: CharSequence?, @Nullable extraArguments: Bundle?) {
         setText(text, true, extraArguments)
     }
 
-    /**
-     * Sets the text to be displayed.
-     * 
-     * @param text               the new text you want to display
-     * @param reuseContentObject If the given `text` is an instance of [Content], reuse it.
-     * @param extraArguments     Extra arguments for the document. This [Bundle] object is passed
-     * to all languages and plugins in editor.
-     */
+
     fun setText(
         @Nullable text: CharSequence?, reuseContentObject: Boolean,
         @Nullable extraArguments: Bundle?
@@ -4178,11 +3226,7 @@ open class CodeEditor @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * Set the editor's text size in sp unit. This value must be greater than 0
-     * 
-     * @param textSize the editor's text size in **Sp** units.
-     */
+
     fun setTextSize(textSize: Float) {
         val context: Context? = getContext()
         val res: Resources
@@ -4196,30 +3240,16 @@ open class CodeEditor @JvmOverloads constructor(
         this.textSizePx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, textSize, res.displayMetrics)
     }
 
-    /**
-     * Render ASCII Function characters
-     */
 
 
 
-    /**
-     * Subscribe event of the given type.
-     * 
-     * @see EventManager.subscribeEvent
-     */
+
+
     fun <T : Event> subscribeEvent(eventType: Class<T>, receiver: EventReceiver<T>): SubscriptionReceipt<T> {
         return eventManager!!.subscribeEvent(eventType, receiver)
     }
 
-    /**
-     * Subscribe event of the given type, without [io.github.abc15018045126.sora.event.Unsubscribe].
-     * 
-     * @param eventType The type of event to subscribe.
-     * @param receiver  The receiver to be called when event is dispatched.
-     * @param <T>       Type of event.
-     * @return A receipt that can be used to unsubscribe.
-     * @see EventManager.subscribeEvent
-     */
+
     fun <T : Event> subscribeAlways(
         eventType: Class<T>,
         receiver: EventManager.NoUnsubscribeReceiver<T>
@@ -4227,21 +3257,12 @@ open class CodeEditor @JvmOverloads constructor(
         return eventManager!!.subscribeAlways(eventType, receiver)
     }
 
-    /**
-     * Dispatch the given event
-     * 
-     * @see EventManager.dispatchEvent
-     */
+
     fun <T : Event> dispatchEvent(event: T): Int {
         return eventManager!!.dispatchEvent(event)
     }
 
-    /**
-     * Create a new [EventManager] instance that can be used to subscribe events in editor,
-     * as a child instance of editor.
-     * 
-     * @return Child EventManager instance
-     */
+
     @NonNull
     fun createSubEventManager(): EventManager {
         return EventManager(eventManager)
@@ -4250,21 +3271,12 @@ open class CodeEditor @JvmOverloads constructor(
 
 
     val isFormatting: Boolean
-        /**
-         * Check whether the editor is currently performing a format operation
-         * 
-         * @return whether the editor is currently formatting
-         */
+
         get() = editorLanguage!!.formatter.isRunning()
 
     @get:NonNull
     val textPaint: Paint
-        /**
-         * Get the paint of the editor
-         * You should not change text size and other attributes that are related to text measuring by the object
-         * 
-         * @return The paint which is used by the editor now
-         */
+
         get() = renderer.paint
 
     val otherPaint: Paint
@@ -4273,23 +3285,12 @@ open class CodeEditor @JvmOverloads constructor(
     val graphPaint: Paint
         get() = renderer.getPaintGraph()
 
-    /**
-     * Move selection to line start with scrolling
-     * 
-     * @param line Line index to jump
-     */
+
     fun jumpToLine(line: Int) {
         setSelection(line, 0)
     }
 
-    /**
-     * Mark current selection position as a point of cursor range.
-     * When user taps to select another point in text, the text between the marked point and
-     * newly chosen point is selected.
-     * 
-     * @see .isInLongSelect
-     * @see .endLongSelect
-     */
+
     fun beginLongSelect() {
         if (!isEditable) {
             return
@@ -4301,21 +3302,16 @@ open class CodeEditor @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * Marks long select mode is end.
-     * This does nothing but set the flag to false.
-     */
+
     fun endLongSelect() {
         isInLongSelect = false
     }
 
 
-    //-------------------------------------------------------------------------------
-    //-------------------------IME Interaction---------------------------------------
-    //-------------------------------------------------------------------------------
-    /**
-     * Rerun analysis forcibly
-     */
+
+
+
+
     fun rerunAnalysis() {
         if (editorLanguage != null) {
             editorLanguage!!.analyzeManager.rerun()
@@ -4324,10 +3320,7 @@ open class CodeEditor @JvmOverloads constructor(
 
     @get:Nullable
     val styles: Styles?
-        /**
-         * Get analyze result.
-         * **Do not make changes to it or read concurrently**
-         */
+
         get() = textStyles
 
     @UiThread
@@ -4359,21 +3352,17 @@ open class CodeEditor @JvmOverloads constructor(
     val highlightTexts: HighlightTextContainer?
         get() = highlightTextContainer
 
-    /**
-     * Hide auto complete window if shown
-     */
+
     fun hideAutoCompleteWindow() {
         if (completionWindow != null) {
             completionWindow!!.hide()
         }
     }
 
-    /**
-     * Display soft input method for self
-     */
+
     fun showSoftInput() {
         if (isEditable && isEnabled()) {
-            // Note that we always try to get focused at this time.
+
             if (isInTouchMode() && !isFocused()) {
                 requestFocusFromTouch()
             }
@@ -4386,21 +3375,12 @@ open class CodeEditor @JvmOverloads constructor(
         invalidate()
     }
 
-    /**
-     * Hide soft input
-     */
+
     fun hideSoftInput() {
         inputMethodManager!!.hideSoftInputFromWindow(windowToken, 0)
     }
 
-    /**
-     * Check whether the soft keyboard is enabled for this editor. Unlike [.isSoftKeyboardEnabled],
-     * this method also checks whether a hardware keyboard is connected.
-     * 
-     * @return Whether the editor should show soft keyboard.
-     * @see .isSoftKeyboardEnabled
-     * @see .isDisableSoftKbdIfHardKbdAvailable
-     */
+
     protected fun checkSoftInputEnabled(): Boolean {
         if (this.isDisableSoftKbdIfHardKbdAvailable
             && KeyboardUtils.isHardKeyboardConnected(getContext())
@@ -4411,20 +3391,12 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     var isSoftKeyboardEnabled: Boolean
-        /**
-         * Returns whether the soft keyboard is enabled.
-         * 
-         * @return Whether the soft keyboard is enabled.
-         */
+
         get() = this.isSoftKbdEnabled
-        /**
-         * Set whether the soft keyboard is enabled for this editor. Set to `true` by default.
-         * 
-         * @param isEnabled Whether the soft keyboard is enabled.
-         */
+
         set(isEnabled) {
             if (isSoftKbdEnabled == isEnabled) {
-                // no need to do anything
+
                 return
             }
 
@@ -4434,21 +3406,12 @@ open class CodeEditor @JvmOverloads constructor(
         }
 
     var isDisableSoftKbdIfHardKbdAvailable: Boolean
-        /**
-         * Returns whether the soft keyboard should be enabled if hardware keyboard is connected.
-         * 
-         * @return Whether the soft keyboard should be enabled if hardware keyboard is connected.
-         */
+
         get() = isDisableSoftKbdOnHardKbd
-        /**
-         * Set whether the soft keyboard should be disabled for this editor if a hardware keyboard is
-         * connected to the device. Set to `true` by default.
-         * 
-         * @param isDisabled Whether the soft keyboard should be enabled if hardware keyboard is connected.
-         */
+
         set(isDisabled) {
             if (isDisableSoftKbdOnHardKbd == isDisabled) {
-                // no need to do anything
+
                 return
             }
 
@@ -4457,9 +3420,7 @@ open class CodeEditor @JvmOverloads constructor(
             restartInput()
         }
 
-    /**
-     * Send current selection position to input method
-     */
+
     internal fun updateSelection() {
         if (props!!.disallowSuggestions) {
             val index: Int? =
@@ -4477,15 +3438,13 @@ open class CodeEditor @JvmOverloads constructor(
                 candidatesStart = inputConnection!!.composingText.startIndex
                 candidatesEnd = inputConnection!!.composingText.endIndex
             } catch (e: IndexOutOfBoundsException) {
-                // Ignored
+
             }
         }
         inputMethodManager!!.updateSelection(this, cursor!!.left, cursor!!.right, candidatesStart, candidatesEnd)
     }
 
-    /**
-     * Update request result for monitoring request
-     */
+
     protected fun updateExtractedText() {
         if (extractingTextRequest != null) {
             val text: ExtractedText? = extractText(extractingTextRequest!!)
@@ -4493,12 +3452,10 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    //-------------------------------------------------------------------------------
-    //------------------------Internal Callbacks-------------------------------------
-    //-------------------------------------------------------------------------------
-    /**
-     * Set request needed to update when editor updates selection
-     */
+
+
+
+
     internal fun setExtracting(@Nullable request: ExtractedTextRequest?) {
         if (props!!.disallowSuggestions) {
             extractingTextRequest = null
@@ -4507,9 +3464,7 @@ open class CodeEditor @JvmOverloads constructor(
         extractingTextRequest = request
     }
 
-    /**
-     * Extract text in editor for input method
-     */
+
     internal fun extractText(@NonNull request: ExtractedTextRequest): ExtractedText? {
         if (props!!.disallowSuggestions || props!!.disableTextExtracting) {
             return null
@@ -4524,7 +3479,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
         if (startOffset + request.hintMaxChars < selBegin) {
             startOffset = selBegin - request.hintMaxChars / 2
-            startOffset = kotlin.math.min(startOffset, selBegin) // Ensure not negative
+            startOffset = kotlin.math.min(startOffset, selBegin)
         }
         text.text = inputConnection!!.getTextRegion(startOffset, startOffset + request.hintMaxChars, request.flags)
         text.startOffset = startOffset
@@ -4536,33 +3491,24 @@ open class CodeEditor @JvmOverloads constructor(
         return text
     }
 
-    /**
-     * Notify input method that text has been changed for external reason
-     */
+
     fun notifyIMEExternalCursorChange() {
         updateExtractedText()
         updateSelection()
         updateCursorAnchor()
-        // Restart if composing
+
         if (inputConnection!!.composingText.isComposing()) {
             restartInput()
         }
     }
 
-    /**
-     * Restart the input connection.
-     * Do not call this method randomly. Please refer to documentation first.
-     * 
-     * @see InputConnection
-     */
+
     fun restartInput() {
         inputConnection?.reset()
         inputMethodManager?.restartInput(this)
     }
 
-    /**
-     * Send cursor position in text and on screen to input method
-     */
+
     fun updateCursor() {
         updateCursorAnchor()
         updateExtractedText()
@@ -4571,15 +3517,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Release some resources held by editor.
-     * This will stop completion threads and destroy using [Language] object.
-     * Also it prevents future editor tasks (such as posted Runnable) to be executed.
-     * 
-     * 
-     * You are expected to call this method when the editor instance is no longer used, especially when
-     * your activity is to be destroyed. Invoking this method repeatedly will not generated errors.
-     */
+
     fun release() {
         hideEditorWindows()
         if (!this.isReleased) {
@@ -4597,7 +3535,7 @@ open class CodeEditor @JvmOverloads constructor(
             editorLanguage = EmptyLanguage()
         }
 
-        // avoid access to language related after releasing
+
         textStyles = null
         diagnostics = null
         styleDelegate!!.reset()
@@ -4609,9 +3547,7 @@ open class CodeEditor @JvmOverloads constructor(
         colorScheme.detachEditor(this)
     }
 
-    /**
-     * Hide all built-in windows of the editor
-     */
+
     fun hideEditorWindows() {
         completionWindow?.cancelCompletion()
         completionWindow?.hide()
@@ -4620,49 +3556,35 @@ open class CodeEditor @JvmOverloads constructor(
         diagnosticTooltip?.dismiss()
     }
 
-    /**
-     * Called by ColorScheme to notify invalidate
-     * 
-     * @param type Color type changed
-     */
+
     fun onColorUpdated(type: Int) {
         dispatchEvent(ColorSchemeUpdateEvent(this))
         renderContext?.invalidateRenderNodes()
         invalidate()
     }
 
-    /**
-     * Called by color scheme to init colors
-     */
+
     fun onColorFullUpdate() {
         dispatchEvent(ColorSchemeUpdateEvent(this))
         renderContext?.invalidateRenderNodes()
         invalidate()
     }
 
-    /**
-     * Get using [InputMethodManager]
-     */
 
-    /**
-     * Called by [EditorInputConnection]
-     */
+
+
     internal fun onCloseConnection() {
         setExtracting(null)
         invalidate()
     }
 
-    /**
-     * This method is called once when the editor is created.
-     */
+
     @NonNull
     protected fun onCreateRenderer(): EditorRenderer {
         return EditorRenderer(this)
     }
 
-    /**
-     * Called when the text is edited or [CodeEditor.setSelection] is called
-     */
+
     protected fun onSelectionChanged(cause: Int) {
         var oldLeft: CharPosition? = null
         var oldRight: CharPosition? = null
@@ -4675,9 +3597,7 @@ open class CodeEditor @JvmOverloads constructor(
         this.lastSelectedTextRange = this.cursorRange
     }
 
-    /**
-     * Release active edge effects on thumbs up
-     */
+
     @UnsupportedUserUsage
     open fun releaseEdgeEffects() {
 
@@ -4685,16 +3605,16 @@ open class CodeEditor @JvmOverloads constructor(
         edgeEffectVertical!!.onRelease()
     }
 
-    //-------------------------------------------------------------------------------
-    //-------------------------Override methods--------------------------------------
-    //-------------------------------------------------------------------------------
-    
+
+
+
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
         renderer.draw(canvas)
 
-        // Update magnifier
+
         if ((lastCursorState != cursorBlink?.visibility ?: false || !touchHandler!!.getScroller()
                 .isFinished) && touchHandler!!.editorMagnifier.isShowing()
         ) {
@@ -4703,7 +3623,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    
+
     override fun createAccessibilityNodeInfo(): AccessibilityNodeInfo? {
         val info: AccessibilityNodeInfo? =
             super.createAccessibilityNodeInfo()
@@ -4744,7 +3664,7 @@ open class CodeEditor @JvmOverloads constructor(
         return info
     }
 
-    
+
     override fun onInitializeAccessibilityEvent(event: AccessibilityEvent) {
         super.onInitializeAccessibilityEvent(event)
         val maxScrollY = this.scrollMaxY
@@ -4753,7 +3673,7 @@ open class CodeEditor @JvmOverloads constructor(
         event.setMaxScrollY(maxScrollY)
     }
 
-    
+
     override fun performAccessibilityAction(action: Int, arguments: Bundle?): Boolean {
         when (action) {
             AccessibilityNodeInfo.ACTION_COPY -> {
@@ -4806,7 +3726,7 @@ open class CodeEditor @JvmOverloads constructor(
         return io.github.abc15018045126.sora.widget.CodeEditor::class.java.getName()
     }
 
-    
+
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         val x = event.getX().toInt()
         when (event.getAction()) {
@@ -4831,12 +3751,12 @@ open class CodeEditor @JvmOverloads constructor(
         return super.dispatchTouchEvent(event)
     }
 
-    
+
     override fun onCheckIsTextEditor(): Boolean {
         return isEnabled() && isEditable
     }
 
-    
+
     override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection? {
         if (!isEditable || !isEnabled()) {
             return null
@@ -4851,8 +3771,8 @@ open class CodeEditor @JvmOverloads constructor(
         outAttrs.initialSelEnd = if (cursor != null) cursor.right else 0
         outAttrs.initialCapsMode = inputConnection!!.getCursorCapsMode(0)
 
-        // Prevent fullscreen when the screen height is too small
-        // Especially in landscape mode
+
+
         if (!props!!.allowFullscreen) {
             outAttrs.imeOptions = EditorInfo.IME_FLAG_NO_EXTRACT_UI or EditorInfo.IME_FLAG_NO_FULLSCREEN
         }
@@ -4864,7 +3784,7 @@ open class CodeEditor @JvmOverloads constructor(
         return inputConnection
     }
 
-    
+
     override fun onResolvePointerIcon(event: MotionEvent, pointerIndex: Int): PointerIcon {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             if (event.isFromSource(InputDevice.SOURCE_MOUSE)) {
@@ -4910,7 +3830,7 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    
+
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (!isEnabled()) {
             return false
@@ -4938,17 +3858,17 @@ open class CodeEditor @JvmOverloads constructor(
         return (res3 || res2 || res)
     }
 
-    
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         return keyEventHandler.onKeyDown(keyCode, event)
     }
 
-    
+
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
         return keyEventHandler.onKeyUp(keyCode, event)
     }
 
-    
+
     override fun onKeyMultiple(keyCode: Int, repeatCount: Int, event: KeyEvent): Boolean {
         return keyEventHandler.onKeyMultiple(keyCode, repeatCount, event)
     }
@@ -4965,7 +3885,7 @@ open class CodeEditor @JvmOverloads constructor(
         return super.onKeyMultiple(keyCode, repeatCount, event)
     }
 
-    
+
     protected override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         var widthMeasureSpec = widthMeasureSpec
         var heightMeasureSpec = heightMeasureSpec
@@ -4989,7 +3909,7 @@ open class CodeEditor @JvmOverloads constructor(
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 
-    
+
     override fun onDragEvent(event: DragEvent): Boolean {
         when (event.getAction()) {
             DragEvent.ACTION_DRAG_STARTED -> {
@@ -5000,9 +3920,9 @@ open class CodeEditor @JvmOverloads constructor(
                 val pos = getPointPositionOnScreen(event.getX(), event.getY())
                 val line: Int = IntPair.getFirst(pos)
                 val column: Int = IntPair.getSecond(pos)
-               // if ((touchHandler!!.dispatchEditorMotionEvent(::LongPressEvent, text.indexer.getCharPosition(line, column), event) and InterceptTarget.TARGET_EDITOR) != 0) {
+
             return true
-        // }
+
         if ((!props!!.reselectOnLongPress && cursor.isSelected())) {
              return true
             }
@@ -5024,7 +3944,7 @@ open class CodeEditor @JvmOverloads constructor(
                 pasteText(ClipDataUtils.clipDataToString(event.getClipData()))
                 requestFocus()
                 postInvalidate()
-                // Call super for notifying listeners
+
                 super.onDragEvent(event)
                 return true
             }
@@ -5032,7 +3952,7 @@ open class CodeEditor @JvmOverloads constructor(
         return super.onDragEvent(event)
     }
 
-    
+
     protected override fun onCreateContextMenu(menu: ContextMenu?) {
         super.onCreateContextMenu(menu)
         val pos = touchHandler!!.lastContextClickPosition
@@ -5049,7 +3969,7 @@ open class CodeEditor @JvmOverloads constructor(
         )
     }
 
-    
+
     protected override fun onConfigurationChanged(newConfig: Configuration?) {
         super.onConfigurationChanged(newConfig)
         touchHandler!!.resetMouse()
@@ -5057,7 +3977,7 @@ open class CodeEditor @JvmOverloads constructor(
         mouseHover = mouseButtonPressed
     }
 
-    
+
     override fun onGenericMotionEvent(event: MotionEvent): Boolean {
         if (event.isFromSource(InputDevice.SOURCE_MOUSE)) {
             if (event.getAction() === MotionEvent.ACTION_HOVER_ENTER) {
@@ -5101,7 +4021,7 @@ open class CodeEditor @JvmOverloads constructor(
         return super.onGenericMotionEvent(event)
     }
 
-    
+
     protected override fun onSizeChanged(w: Int, h: Int, oldWidth: Int, oldHeight: Int) {
         super.onSizeChanged(w, h, oldWidth, oldHeight)
         renderer.onSizeChanged(w, h)
@@ -5124,20 +4044,20 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    
+
     protected override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         dispatchEvent(EditorAttachStateChangeEvent(this, false))
         cursorBlink?.let { removeCallbacks(it) }
     }
 
-    
+
     protected override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         dispatchEvent(EditorAttachStateChangeEvent(this, true))
     }
 
-    
+
     protected override fun onFocusChanged(
         gainFocus: Boolean, direction: Int,
         @Nullable previouslyFocusedRect: Rect?
@@ -5230,14 +4150,7 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
 
-    /**
-     * Post the given action to message queue. Run the action if editor is not released.
-     * 
-     * @param action The Runnable to be executed.
-     * @return Returns true if the Runnable was successfully placed in to the message queue.
-     * Returns false on failure, usually because the looper processing the message queue is exiting.
-     * @see View.post
-     */
+
     public fun postInLifecycle(action: Runnable): Boolean {
 
         return EditorHandler.post({
@@ -5248,15 +4161,7 @@ open class CodeEditor @JvmOverloads constructor(
         })
     }
 
-    /**
-     * Post the given action to message queue. Run the action if editor is not released.
-     * 
-     * @param action      The Runnable to be executed.
-     * @param delayMillis The delay (in milliseconds) until the Runnable will be executed.
-     * @return Returns true if the Runnable was successfully placed in to the message queue.
-     * Returns false on failure, usually because the looper processing the message queue is exiting.
-     * @see View.postDelayed
-     */
+
     public fun postDelayedInLifecycle(action: Runnable, delayMillis: Long): Boolean {
 
         return EditorHandler.postDelayed({
@@ -5267,13 +4172,13 @@ open class CodeEditor @JvmOverloads constructor(
         }, delayMillis)
     }
 
-    
+
     override fun beforeReplace(@NonNull content: Content) {
         waitForNextChange = true
         layout!!.beforeReplace(content)
     }
 
-    
+
     override fun afterInsert(
         @NonNull content: Content, startLine: Int, startColumn: Int, endLine: Int,
         endColumn: Int, @NonNull insertedContent: CharSequence
@@ -5284,7 +4189,7 @@ open class CodeEditor @JvmOverloads constructor(
         val start = text.indexer.getCharPosition(startLine, startColumn)
         val end = text.indexer.getCharPosition(endLine, endColumn)
 
-        // Update spans
+
         val textStyles = this.textStyles
         val diagnostics = this.diagnostics
         val inlayHints = this.inlayHints
@@ -5324,11 +4229,11 @@ open class CodeEditor @JvmOverloads constructor(
         waitForNextChange = false
         ensureSelectionVisible()
 
-        // Notify input method
+
         updateCursor()
     }
 
-    
+
     override fun afterDelete(
         @NonNull content: Content, startLine: Int, startColumn: Int, endLine: Int,
         endColumn: Int, @NonNull deletedContent: CharSequence
@@ -5385,7 +4290,7 @@ open class CodeEditor @JvmOverloads constructor(
         }
     }
 
-    
+
     override fun beforeModification(@NonNull content: Content) {
         if (props!!.checkModificationThread && isAttachedToWindow) {
             val handler = getHandler()
@@ -5399,7 +4304,7 @@ open class CodeEditor @JvmOverloads constructor(
         lastAnchorIsSelLeft = cursor!!.left() == selectionAnchor
     }
 
-    
+
     override fun onFormatSucceed(@NonNull applyContent: CharSequence, @Nullable cursorRange: TextRange?) {
         postInLifecycle(Runnable {
             val line: Int = cursor!!.leftLine
@@ -5429,7 +4334,7 @@ open class CodeEditor @JvmOverloads constructor(
             this.scroller!!.forceFinished(true)
             this.scroller!!.startScroll(x, y, 0, 0, 0)
             this.scroller!!.abortAnimation()
-            // Ensure the scroll offset is valid
+
             touchHandler!!.scrollBy(0f, 0f)
             inputConnection!!.reset()
             restartInput()
@@ -5437,7 +4342,7 @@ open class CodeEditor @JvmOverloads constructor(
         })
     }
 
-    
+
     override fun onFormatFail(throwable: Throwable?) {
         postInLifecycle(Runnable {
             Toast.makeText(getContext(), "Format:" + throwable, Toast.LENGTH_SHORT).show()
@@ -5446,27 +4351,16 @@ open class CodeEditor @JvmOverloads constructor(
     }
 
     companion object {
-        /**
-         * The default text size when creating the editor object. Unit is sp.
-         */
+
         const val DEFAULT_TEXT_SIZE: Int = 18
 
-        /**
-         * The default line info text size when creating the editor object. Unit is sp.
-         */
+
         const val DEFAULT_LINE_INFO_TEXT_SIZE: Int = 21
 
-        /**
-         * The default cursor blinking period
-         */
+
         const val DEFAULT_CURSOR_BLINK_PERIOD: Int = 500
 
-        /**
-         * Draw whitespace characters before line content start
-         * **Whitespace here only means space and tab**
-         * 
-         * @see .setNonPrintablePaintingFlags
-         */
+
         const val FLAG_DRAW_WHITESPACE_LEADING: Int = 1
         const val FLAG_DRAW_WHITESPACE_INNER: Int = 1 shl 1
         const val FLAG_DRAW_WHITESPACE_TRAILING: Int = 1 shl 2
@@ -5479,27 +4373,17 @@ open class CodeEditor @JvmOverloads constructor(
         const val ACTION_MODE_NONE: Int = 0
         const val ACTION_MODE_SEARCH_TEXT: Int = 1
         const val ACTION_MODE_SELECT_TEXT: Int = 2
-        
+
         @JvmField
         val logger: Logger? = Logger.instance("CodeEditor")
 
-        /**
-         * Digits for line number measuring
-         */
+
         const val NUMBER_DIGITS = "0 1 2 3 4 5 6 7 8 9"
         const val LOG_TAG = "CodeEditor"
         const val COPYRIGHT =
             "sora-editor\nCopyright (C) abc15018045126 roses2020@qq.com\nThis project is distributed under the LGPL v2.1 license"
 
-        /**
-         * Checks whether this region has visible region on screen
-         * 
-         * @param begin The start line of code block
-         * @param end   The end line of code block
-         * @param first The first visible line on screen
-         * @param last  The last visible line on screen
-         * @return Whether this block can be seen
-         */
+
         fun hasVisibleRegion(begin: Int, end: Int, first: Int, last: Int): Boolean {
             return (end > first && begin < last)
         }

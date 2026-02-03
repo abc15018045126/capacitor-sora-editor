@@ -7,11 +7,7 @@ import io.github.abc15018045126.sora.widget.style.CursorAnimator
 
 import io.github.abc15018045126.sora.widget.layout.Layout
 
-/**
- * Fade-in/Fade-out cursor animation
- *
- * @author Dmitry Rubtsov
- */
+
 class FadeCursorAnimator(private val editor: CodeEditor) : CursorAnimator, ValueAnimator.AnimatorUpdateListener {
 
     private val duration: Long = 200

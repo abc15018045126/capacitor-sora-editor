@@ -2,11 +2,7 @@ package io.github.abc15018045126.sora.text.bidi
 
 import io.github.abc15018045126.sora.util.IntPair
 
-/**
- * Manages directions in a text segment
- *
- * @author abc15018045126
- */
+
 class Directions(private var runs: LongArray, private var length: Int) : IDirections {
 
     fun setData(runs: LongArray, length: Int) {

@@ -6,11 +6,7 @@ import io.github.abc15018045126.sora.widget.style.CursorAnimator
 
 import io.github.abc15018045126.sora.widget.layout.Layout
 
-/**
- * Default cursor animation implementation
- *
- * @author abc15018045126
- */
+
 class MoveCursorAnimator(private val editor: CodeEditor) : CursorAnimator, ValueAnimator.AnimatorUpdateListener {
 
     private val duration: Long = 120

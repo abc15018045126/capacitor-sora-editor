@@ -10,12 +10,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
-/**
- * Base layout implementation of [Layout].
- * It provides some convenient methods to editor instance and text measuring.
- *
- * @author abc15018045126
- */
+
 abstract class AbstractLayout(
     @JvmField protected var editor: CodeEditor?,
     @JvmField protected var text: Content?
@@ -52,7 +47,7 @@ abstract class AbstractLayout(
 
     override fun beforeReplace(content: Content) {
     }
-    
+
     override fun beforeModification(content: Content) {
     }
 

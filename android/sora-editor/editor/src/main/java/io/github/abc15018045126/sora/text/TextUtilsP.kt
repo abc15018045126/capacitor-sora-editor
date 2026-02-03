@@ -1,18 +1,4 @@
-/*
- * Copyright (C) 2006 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 package io.github.abc15018045126.sora.text
 
 import android.icu.lang.UCharacter
@@ -20,21 +6,19 @@ import android.icu.lang.UProperty
 import android.os.Build
 import androidx.annotation.RequiresApi
 
-/**
- * Taken from {@link android.text.method.BaseKeyListener}
- */
+
 object TextUtilsP {
 
     private const val LINE_FEED: Int = 0x0A
     private const val CARRIAGE_RETURN: Int = 0x0D
 
-    // Returns true if the given code point is a variation selector.
+
     @RequiresApi(api = Build.VERSION_CODES.N)
     private fun isVariationSelector(codepoint: Int): Boolean {
         return UCharacter.hasBinaryProperty(codepoint, UProperty.VARIATION_SELECTOR)
     }
 
-    // Returns the start offset to be deleted by a backspace key from the given offset.
+
     @JvmStatic
     @RequiresApi(api = Build.VERSION_CODES.P)
     fun getOffsetForBackspaceKey(text: CharSequence, offset: Int): Int {
@@ -42,46 +26,46 @@ object TextUtilsP {
             return 0
         }
 
-        // Initial state
+
         val STATE_START = 0
 
-        // The offset is immediately before line feed.
+
         val STATE_LF = 1
 
-        // The offset is immediately before a KEYCAP.
+
         val STATE_BEFORE_KEYCAP = 2
-        // The offset is immediately before a variation selector and a KEYCAP.
+
         val STATE_BEFORE_VS_AND_KEYCAP = 3
 
-        // The offset is immediately before an emoji modifier.
+
         val STATE_BEFORE_EMOJI_MODIFIER = 4
-        // The offset is immediately before a variation selector and an emoji modifier.
+
         val STATE_BEFORE_VS_AND_EMOJI_MODIFIER = 5
 
-        // The offset is immediately before a variation selector.
+
         val STATE_BEFORE_VS = 6
 
-        // The offset is immediately before an emoji.
+
         val STATE_BEFORE_EMOJI = 7
-        // The offset is immediately before a ZWJ that were seen before a ZWJ emoji.
+
         val STATE_BEFORE_ZWJ = 8
-        // The offset is immediately before a variation selector and a ZWJ that were seen before a
-        // ZWJ emoji.
+
+
         val STATE_BEFORE_VS_AND_ZWJ = 9
 
-        // The number of following RIS code points is odd.
+
         val STATE_ODD_NUMBERED_RIS = 10
-        // The number of following RIS code points is even.
+
         val STATE_EVEN_NUMBERED_RIS = 11
 
-        // The offset is in emoji tag sequence.
+
         val STATE_IN_TAG_SEQUENCE = 12
 
-        // The state machine has been stopped.
+
         val STATE_FINISHED = 13
 
-        var deleteCharCount = 0  // Char count to be deleted by backspace.
-        var lastSeenVSCharCount = 0  // Char count of previous variation selector.
+        var deleteCharCount = 0
+        var lastSeenVSCharCount = 0
 
         var state = STATE_START
 
@@ -119,7 +103,7 @@ object TextUtilsP {
                 }
                 STATE_ODD_NUMBERED_RIS -> {
                     if (AndroidEmoji.isRegionalIndicatorSymbol(codePoint)) {
-                        deleteCharCount += 2 /* Char count of RIS */
+                        deleteCharCount += 2
                         state = STATE_EVEN_NUMBERED_RIS
                     } else {
                         state = STATE_FINISHED
@@ -127,7 +111,7 @@ object TextUtilsP {
                 }
                 STATE_EVEN_NUMBERED_RIS -> {
                     if (AndroidEmoji.isRegionalIndicatorSymbol(codePoint)) {
-                        deleteCharCount -= 2 /* Char count of RIS */
+                        deleteCharCount -= 2
                         state = STATE_ODD_NUMBERED_RIS
                     } else {
                         state = STATE_FINISHED
@@ -189,7 +173,7 @@ object TextUtilsP {
                 }
                 STATE_BEFORE_ZWJ -> {
                     if (AndroidEmoji.isEmoji(codePoint)) {
-                        deleteCharCount += Character.charCount(codePoint) + 1  // +1 for ZWJ.
+                        deleteCharCount += Character.charCount(codePoint) + 1
                         state = if (AndroidEmoji.isEmojiModifier(codePoint))
                             STATE_BEFORE_EMOJI_MODIFIER else STATE_BEFORE_EMOJI
                     } else if (isVariationSelector(codePoint)) {
@@ -201,7 +185,7 @@ object TextUtilsP {
                 }
                 STATE_BEFORE_VS_AND_ZWJ -> {
                     if (AndroidEmoji.isEmoji(codePoint)) {
-                        // +1 for ZWJ.
+
                         deleteCharCount += lastSeenVSCharCount + 1 + Character.charCount(codePoint)
                         lastSeenVSCharCount = 0
                         state = STATE_BEFORE_EMOJI
@@ -211,17 +195,17 @@ object TextUtilsP {
                 }
                 STATE_IN_TAG_SEQUENCE -> {
                     if (AndroidEmoji.isTagSpecChar(codePoint)) {
-                        deleteCharCount += 2 /* Char count of emoji tag spec character. */
-                        // Keep the same state.
+                        deleteCharCount += 2
+
                     } else if (AndroidEmoji.isEmoji(codePoint)) {
                         deleteCharCount += Character.charCount(codePoint)
                         state = STATE_FINISHED
                     } else {
-                        // Couldn't find tag_base character. Delete the last tag_term character.
-                        deleteCharCount = 2  // for U+E007F
+
+                        deleteCharCount = 2
                         state = STATE_FINISHED
                     }
-                    // TODO: Need handle emoji variation selectors. Issue 35224297
+
                 }
                 else -> throw IllegalArgumentException("state $state is unknown")
             }

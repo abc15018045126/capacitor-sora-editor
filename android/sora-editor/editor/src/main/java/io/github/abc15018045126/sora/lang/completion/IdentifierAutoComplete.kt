@@ -14,22 +14,11 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 
-/**
- * Identifier auto-completion.
- *
- * You can use it to provide identifiers, but you can't update the given [CompletionPublisher]
- * if it is used. If you have to mix the result, then you should call [CompletionPublisher.setComparator]
- * with null first. Otherwise, your completion list may be corrupted. And in that case, you must do the sorting
- * work by yourself and then add your items.
- *
- * @author abc15018045126
- */
+
 class IdentifierAutoComplete {
 
     companion object {
-        /**
-         * @deprecated Use [Comparators]
-         */
+
         @Deprecated("")
         private val COMPARATOR = Comparator<CompletionItem> { p1, p2 ->
             val cmp1 = asString(p1.desc).compareTo(asString(p2.desc))
@@ -72,12 +61,7 @@ class IdentifierAutoComplete {
         return keywords
     }
 
-    /**
-     * Make completion items for the given arguments.
-     * Provide the required arguments passed by [io.github.abc15018045126.sora.lang.Language.requireAutoComplete]
-     *
-     * @param prefix The prefix to make completions for.
-     */
+
     fun requireAutoComplete(
         reference: ContentReference,
         position: CharPosition,
@@ -162,12 +146,7 @@ class IdentifierAutoComplete {
         return result
     }
 
-    /**
-     * Make completion items for the given arguments.
-     * Provide the required arguments passed by [io.github.abc15018045126.sora.lang.Language.requireAutoComplete]
-     *
-     * @param prefix The prefix to make completions for.
-     */
+
     @Deprecated("")
     fun requireAutoComplete(
         prefix: String,
@@ -179,32 +158,14 @@ class IdentifierAutoComplete {
         publisher.addItems(createCompletionItemList(prefix, userIdentifiers))
     }
 
-    /**
-     * Interface for saving identifiers
-     *
-     * @author abc15018045126
-     * @see IdentifierAutoComplete.DisposableIdentifiers
-     */
+
     interface Identifiers {
 
-        /**
-         * Filter identifiers with the given prefix
-         *
-         * @param prefix The prefix to filter
-         * @param dest   Result list
-         */
+
         fun filterIdentifiers(prefix: String, dest: MutableList<String>)
     }
 
-    /**
-     * This object is used only once. In other words, the object is generated every time the
-     * text changes, and is abandoned when next time the text change.
-     *
-     * In this case, the frequent allocation of memory is unavoidable.
-     * And also, this class is not thread-safe.
-     *
-     * @author abc15018045126
-     */
+
     class DisposableIdentifiers : Identifiers {
 
         companion object {
@@ -224,16 +185,12 @@ class IdentifierAutoComplete {
             identifiers.add(identifier)
         }
 
-        /**
-         * Start building the identifiers
-         */
+
         fun beginBuilding() {
             cache = HashMap()
         }
 
-        /**
-         * Free memory and finish building
-         */
+
         fun finishBuilding() {
             cache?.clear()
             cache = null

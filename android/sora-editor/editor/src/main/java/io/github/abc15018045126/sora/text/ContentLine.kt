@@ -7,10 +7,7 @@ import io.github.abc15018045126.sora.text.bidi.TextBidi
 import io.github.abc15018045126.sora.util.ShareableData
 import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * [ContentLine] represents a single line of text in the editor.
- * It provides efficient text manipulation methods and supports RTL/Bidi content.
- */
+
 class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableData<ContentLine> {
 
     internal var value: CharArray
@@ -25,7 +22,7 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
         set(value) {
             _lineSeparator = value
         }
-    
+
     val lineSeparatorSafe: LineSeparator
         get() = _lineSeparator ?: LineSeparator.NONE
 
@@ -55,7 +52,7 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
             length = 0
             value = CharArray(32)
         } else {
-            // Used by subSequence or copy to delay initialization of value or use provided array
+
             value = CharArray(0)
         }
     }

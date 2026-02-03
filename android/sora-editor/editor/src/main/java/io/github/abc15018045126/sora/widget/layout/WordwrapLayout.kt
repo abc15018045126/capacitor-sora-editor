@@ -18,16 +18,7 @@ import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * Wordwrap layout for editor
- *
- * This layout will not let character displayed outside the editor's width
- *
- * However, using this can be power-costing because we will have to recreate this layout in various
- * conditions, such as when the line number increases and its width grows or when the text size has changed
- *
- * @author Rose
- */
+
 class WordwrapLayout(
     editor: CodeEditor,
     text: Content?,
@@ -53,8 +44,8 @@ class WordwrapLayout(
             0f
         }
         width = (editor.width - editor.measureTextRegionOffset() - editor.extraMarginRight - miniGraphWidth * 2).toInt()
-        
-        // Fix initial wrap flicker: break first few lines synchronously if width is known
+
+
         if (width > 0 && text != null && text.lineCount > 0 && (rowTable?.isEmpty() ?: true)) {
             val previewLines = if (editor.forceSyncBreakLines || oldLayout == null) min(text.lineCount, editor.getInitialPreviewLines()) else 0
             val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }
@@ -68,20 +59,20 @@ class WordwrapLayout(
             updateYOffsets(0)
             editor.forceSyncBreakLines = false
         }
-        
+
         breakAllLines()
     }
 
     private fun breakAllLines() {
         val text = this.text ?: return
         val editor = this.editor ?: return
-        
+
         if (width <= 0) {
             editor.setLayoutBusy(false)
             return
         }
 
-        // For small files, do all work synchronously to avoid any flicker
+
         if (text.lineCount <= 200) {
             val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }
             rt.clear()
@@ -208,10 +199,7 @@ class WordwrapLayout(
         }
     }
 
-    /**
-     * Refresh cached heights and y-offsets of all rows.
-     * Use this when font size is changed during scaling to avoid overlapping text.
-     */
+
     fun refreshHeights() {
         val rt = rowTable ?: return
         val editor = this.editor ?: return
@@ -420,20 +408,20 @@ class WordwrapLayout(
             val rt = rowTable
             val lineCount = text?.lineCount ?: 0
             if (lineCount == 0) return 0
-            
+
             if (rt == null || rt.isEmpty()) {
                 return (editor?.logicalRowHeight ?: 0) * lineCount
             }
-            
+
             val lastRegion = rt.last()
             if (lastRegion.line < lineCount - 1) {
-                // Calculation in progress, estimate total height to "adapt" scrollbar
+
                 val processedLines = lastRegion.line + 1
                 val currentHeight = lastRegion.yOffset + lastRegion.height
                 val avgLineHeight = if (processedLines > 0) currentHeight.toDouble() / processedLines else editor?.logicalRowHeight?.toDouble() ?: 0.0
                 return (currentHeight + (lineCount - processedLines) * avgLineHeight).toInt()
             }
-            
+
             return lastRegion.yOffset + lastRegion.height
         }
 

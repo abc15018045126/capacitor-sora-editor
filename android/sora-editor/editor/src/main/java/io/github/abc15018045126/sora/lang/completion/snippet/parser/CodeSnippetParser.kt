@@ -80,7 +80,7 @@ class CodeSnippetParser private constructor(
     private fun parse() {
         token = tokenizer.nextToken()
         while (parseInternal()) {
-            //empty
+
         }
     }
 
@@ -163,7 +163,7 @@ class CodeSnippetParser private constructor(
             val variableName = text
             var defaultValue: String? = null
             if (accept(TokenType.Colon)) {
-                // ${name:xxx}
+
                 val sb = StringBuilder()
                 while (!accept(TokenType.CurlyClose)) {
                     if (accept(TokenType.Backslash)) {
@@ -183,7 +183,7 @@ class CodeSnippetParser private constructor(
                 }
                 return VariableItem(-1, variableName, sb.toString())
             } else if (accept(TokenType.Forwardslash)) {
-                // ${name/regexp/format/options}
+
                 val transform = Transform()
                 if (parseTransform(transform)) {
                     return VariableItem(-1, variableName, null, transform)
@@ -191,10 +191,10 @@ class CodeSnippetParser private constructor(
                 backTo(backup)
                 return null
             } else if (accept(TokenType.CurlyClose)) {
-                // ${name}
+
                 return VariableItem(-1, variableName, "")
             } else {
-                // missing token
+
                 backTo(backup)
                 return null
             }
@@ -211,7 +211,7 @@ class CodeSnippetParser private constructor(
             if (text != null) {
             val idText = text
             if (accept(TokenType.Colon)) {
-                // ${1:xxx}
+
                 val elements = ArrayList<PlaceHolderElement>()
                 while (!accept(TokenType.CurlyClose)) {
                     if (accept(TokenType.Backslash)) {
@@ -248,7 +248,7 @@ class CodeSnippetParser private constructor(
                 val id = idText.toInt()
                 builder.addComplexPlaceholder(id, elements)
             } else if (accept(TokenType.Pipe)) {
-                // ${1|one,two,three|}
+
                 val choices = ArrayList<String>()
                 while (true) {
                     if (parseChoiceElement(choices)) {
@@ -265,7 +265,7 @@ class CodeSnippetParser private constructor(
                     return false
                 }
             } else if (accept(TokenType.Forwardslash)) {
-                // ${1/regexp/format/options}
+
                 val transform = Transform()
                 if (parseTransform(transform)) {
                     builder.addPlaceholder(idText.toInt(), transform)
@@ -274,10 +274,10 @@ class CodeSnippetParser private constructor(
                 backTo(backup)
                 return false
             } else if (accept(TokenType.CurlyClose)) {
-                // ${1}
+
                 builder.addPlaceholder(idText.toInt())
             } else {
-                // missing token
+
                 backTo(backup)
                 return false
             }
@@ -291,7 +291,7 @@ class CodeSnippetParser private constructor(
     private fun parseSimpleVariableName(): String? {
         val backup = token
         if (accept(TokenType.Dollar)) {
-            // Check for : $VARIABLE_NAME
+
             val v = _accept(TokenType.VariableName)
             if (v != null) {
                 return v
@@ -328,10 +328,10 @@ class CodeSnippetParser private constructor(
     }
 
     private fun parseTransform(transform: Transform): Boolean {
-        // ...<regex>/<format>/<options>}
+
         val backup = token
 
-        // (1) /regex
+
         val regexValue = StringBuilder()
         while (!accept(TokenType.Forwardslash)) {
             if (accept(TokenType.Backslash)) {
@@ -351,7 +351,7 @@ class CodeSnippetParser private constructor(
             return false
         }
 
-        // (2) /format
+
         val list = ArrayList<FormatString>()
         while (!accept(TokenType.Forwardslash)) {
             if (accept(TokenType.Backslash)) {
@@ -376,7 +376,7 @@ class CodeSnippetParser private constructor(
             return false
         }
 
-        // (3) /option
+
         val regexOptions = StringBuilder()
         while (!accept(TokenType.CurlyClose)) {
             if (token.type != TokenType.EOF) {
@@ -421,14 +421,14 @@ class CodeSnippetParser private constructor(
         if (complex) {
             if (accept(TokenType.Colon)) {
                 if (accept(TokenType.Forwardslash)) {
-                    // ${1:/upcase}
+
                     if (_accept(TokenType.VariableName).also { text = it } != null && accept(TokenType.CurlyClose)) {
                         format.shorthand = text
                         formatStrings.add(format)
                         return true
                     }
                 } else if (accept(TokenType.Plus)) {
-                    // ${1:+<if>}
+
                     val ifValue = until(TokenType.CurlyClose)
                     if (ifValue != null) {
                         accept(TokenType.CurlyClose)
@@ -468,7 +468,7 @@ class CodeSnippetParser private constructor(
             backTo(backup)
             return false
         } else {
-            // $1
+
             formatStrings.add(format)
             return true
         }
@@ -520,7 +520,7 @@ class CodeSnippetParser private constructor(
         private fun appendPlaceholderElement(elements: ArrayList<PlaceHolderElement>, t: String) {
             if (elements.isNotEmpty()) {
                 if (elements[elements.size - 1] is PlainPlaceholderElement) {
-                    // merge with the last plain placeholder element
+
                     val plain = elements[elements.size - 1] as PlainPlaceholderElement
                     plain.text = plain.text + t
                     return

@@ -11,11 +11,7 @@ import io.github.abc15018045126.sora.event.CreateContextMenuEvent
 import io.github.abc15018045126.sora.event.subscribeAlways
 import io.github.abc15018045126.sora.widget.CodeEditor
 
-/**
- * Add context menu items for editor
- *
- * @author abc15018045126
- */
+
 open class EditorContextMenuCreator(val editor: CodeEditor) : EditorBuiltinComponent {
 
     val eventManager = editor.createSubEventManager()

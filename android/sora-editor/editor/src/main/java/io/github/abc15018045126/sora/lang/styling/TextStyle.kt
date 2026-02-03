@@ -1,63 +1,39 @@
 package io.github.abc15018045126.sora.lang.styling
 
-/**
- * Utility class for text style related operations
- *
- * @author abc15018045126
- */
+
 object TextStyle {
 
     const val COLOR_ID_BIT_COUNT = 19
     const val FOREGROUND_BITS = (1L shl COLOR_ID_BIT_COUNT) - 1
     const val BACKGROUND_BITS = FOREGROUND_BITS shl COLOR_ID_BIT_COUNT
 
-    /**
-     * Bold text style
-     */
+
     const val BOLD_BIT = 1L shl COLOR_ID_BIT_COUNT * 2
 
-    /**
-     * Italic text style
-     */
+
     const val ITALICS_BIT = BOLD_BIT shl 1
 
-    /**
-     * Show a strikethrough
-     */
+
     const val STRIKETHROUGH_BIT = ITALICS_BIT shl 1
 
-    /**
-     * Edit texts in the region will not cause auto-completion to work
-     */
+
     const val NO_COMPLETION_BIT = STRIKETHROUGH_BIT shl 1
 
-    /**
-     * Convenient method
-     *
-     * @see .makeStyle
-     */
+
     @JvmStatic
     fun makeStyle(foregroundColorId: Int): Long {
         checkColorId(foregroundColorId)
         return foregroundColorId.toLong()
     }
 
-    /**
-     * Convenient method
-     *
-     * @see .makeStyle
-     */
+
     @JvmStatic
     fun makeStyle(foregroundColorId: Int, noCompletion: Boolean): Long {
         checkColorId(foregroundColorId)
         return foregroundColorId.toLong() or if (noCompletion) NO_COMPLETION_BIT else 0
     }
 
-    /**
-     * Convenient method
-     *
-     * @see .makeStyle
-     */
+
     @JvmStatic
     fun makeStyle(
         foregroundColorId: Int, backgroundColorId: Int, bold: Boolean,
@@ -66,16 +42,7 @@ object TextStyle {
         return makeStyle(foregroundColorId, backgroundColorId, bold, italic, strikeThrough, false)
     }
 
-    /**
-     * Make a TextStyle with the given style arguments
-     *
-     * Note: colorId must be less than 20 bits
-     *
-     * @see .BOLD_BIT
-     * @see .ITALICS_BIT
-     * @see .STRIKETHROUGH_BIT
-     * @see .NO_COMPLETION_BIT
-     */
+
     @JvmStatic
     fun makeStyle(
         foregroundColorId: Int, backgroundColorId: Int, bold: Boolean,

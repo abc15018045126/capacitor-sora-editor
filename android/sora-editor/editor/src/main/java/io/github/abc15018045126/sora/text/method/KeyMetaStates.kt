@@ -5,16 +5,10 @@ import android.text.method.MetaKeyKeyListener
 import android.view.KeyEvent
 import io.github.abc15018045126.sora.widget.CodeEditor
 
-/**
- * Handles key events such as SHIFT
- *
- * @author abc15018045126
- */
+
 class KeyMetaStates(private val editor: CodeEditor) : MetaKeyKeyListener() {
 
-    /**
-     * Dummy text used for Android original APIs
-     */
+
     private val dest: Editable = Editable.Factory.getInstance().newEditable("")
     var isCtrlPressed = false
         private set

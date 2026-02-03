@@ -1,10 +1,6 @@
 package io.github.abc15018045126.sora.widget.schemes
 
-/**
- * ColorScheme for editor
- * picked from Visual Studio 2019
- * Thanks to liyujiang-gzu (GitHub @liyujiang-gzu)
- */
+
 class SchemeVS2019 : EditorColorScheme(true) {
 
     override fun applyDefault() {

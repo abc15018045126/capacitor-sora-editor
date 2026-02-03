@@ -3,11 +3,7 @@ package io.github.abc15018045126.sora.lang.styling
 import io.github.abc15018045126.sora.lang.styling.span.SpanExtAttrs
 import io.github.abc15018045126.sora.widget.schemes.EditorColorScheme
 
-/**
- * Update spans on text change event
- *
- * @author abc15018045126
- */
+
 object MappedSpanUpdater {
 
     @JvmStatic
@@ -19,12 +15,12 @@ object MappedSpanUpdater {
         endColumn: Int
     ) {
         var lineCount = endLine - startLine - 1
-        // Remove unrelated lines
+
         while (lineCount > 0) {
             SpanFactory.recycleAll(map.removeAt(startLine + 1))
             lineCount--
         }
-        // Clean up start line
+
         val startLineSpans = map[startLine]
         var index = startLineSpans.size - 1
         while (index > 0) {
@@ -35,7 +31,7 @@ object MappedSpanUpdater {
                 break
             }
         }
-        // Shift end line
+
         val endLineSpans = map.removeAt(startLine + 1)
         for (i in endLineSpans.indices) {
             endLineSpans[i].shiftColumnBy(startColumn - endColumn)
@@ -61,29 +57,29 @@ object MappedSpanUpdater {
         val spanList = map[line]
         var startIndex = findSpanIndexFor(spanList, 0, startCol)
         if (startIndex == -1) {
-            // No span is to be updated
+
             return
         }
         var endIndex = findSpanIndexFor(spanList, startIndex, endCol)
         if (endIndex == -1) {
             endIndex = spanList.size
         }
-        // Remove spans inside delete text
+
         val removeCount = endIndex - startIndex
         for (i in 0 until removeCount) {
             spanList.removeAt(startIndex).recycle()
         }
-        // Shift spans
+
         val delta = endCol - startCol
         while (startIndex < spanList.size) {
             spanList[startIndex].shiftColumnBy(-delta)
             startIndex++
         }
-        // Ensure there is span
+
         if (spanList.isEmpty() || spanList[0].column != 0) {
             spanList.add(0, SpanFactory.obtainNoExt(0, EditorColorScheme.TEXT_NORMAL.toLong()))
         }
-        // Remove spans with length 0
+
         var i = 0
         while (i + 1 < spanList.size) {
             if (spanList[i].column >= spanList[i + 1].column) {
@@ -105,12 +101,12 @@ object MappedSpanUpdater {
             return
         }
         val originIndex = index
-        // Shift spans after insert position
+
         val delta = endCol - startCol
         while (index < spanList.size) {
             spanList[index++].shiftColumnBy(delta)
         }
-        // Add extra span for line start
+
         if (originIndex == 0) {
             val first = spanList[0]
             if (first.column == EditorColorScheme.TEXT_NORMAL && first.hasSpanExt(SpanExtAttrs.EXT_UNDERLINE_COLOR)) {
@@ -129,7 +125,7 @@ object MappedSpanUpdater {
         endLine: Int,
         endColumn: Int
     ) {
-        // Find extended span
+
         val startLineSpans = map[startLine]
         var extendedSpanIndex = findSpanIndexFor(startLineSpans, 0, startColumn)
         if (extendedSpanIndex == -1) {
@@ -144,7 +140,7 @@ object MappedSpanUpdater {
         } else {
             extendedSpan = startLineSpans[extendedSpanIndex]
         }
-        // Create map lines for new lines
+
         for (i in 0 until endLine - startLine) {
             val list = mutableListOf<Span>()
             val newSpan = extendedSpan.copy()
@@ -152,7 +148,7 @@ object MappedSpanUpdater {
             list.add(newSpan)
             map.add(startLine + 1, list)
         }
-        // Add original spans to new line
+
         val endLineSpans = map[endLine]
         var idx = extendedSpanIndex
         while (idx < startLineSpans.size) {

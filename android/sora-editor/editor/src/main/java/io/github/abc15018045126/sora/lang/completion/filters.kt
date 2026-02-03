@@ -1,26 +1,4 @@
-/*******************************************************************************
- *    sora-editor - the awesome code editor for Android
- *    https://github.com/abc15018045126/sora-editor
- *    Copyright (C) 2020-2024  abc15018045126
- *
- *     This library is free software; you can redistribute it and/or
- *     modify it under the terms of the GNU Lesser General Public
- *     License as published by the Free Software Foundation; either
- *     version 2.1 of the License, or (at your option) any later version.
- *
- *     This library is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *     Lesser General Public License for more details.
- *
- *     You should have received a copy of the GNU Lesser General Public
- *     License along with this library; if not, write to the Free Software
- *     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
- *     USA
- *
- *     Please contact abc15018045126 by email 2073412493@qq.com if you need
- *     additional information or have any questions
- ******************************************************************************/
+
 @file:JvmName("Filters")
 
 package io.github.abc15018045126.sora.lang.completion
@@ -28,15 +6,15 @@ package io.github.abc15018045126.sora.lang.completion
 import io.github.abc15018045126.sora.util.CharCode
 import io.github.abc15018045126.sora.util.MyCharacter
 
-// Migrating from vscode
-// https://github.com/microsoft/vscode/blob/main/src/vs/base/common/filters.ts
+
+
 
 private const val MAX_LEN = 32
 
 private data class Scratch(
     val minWordMatchPosArray: IntArray = IntArray(2 * MAX_LEN),
     val maxWordMatchPosArray: IntArray = IntArray(2 * MAX_LEN),
-    val diag: Array<IntArray> = Array(MAX_LEN) { IntArray(MAX_LEN) }, // the length of a contiguous diagonal match
+    val diag: Array<IntArray> = Array(MAX_LEN) { IntArray(MAX_LEN) },
     val table: Array<IntArray> = Array(MAX_LEN) { IntArray(MAX_LEN) },
     val arrows: Array<IntArray> = Array(MAX_LEN) { IntArray(MAX_LEN) },
 ) {
@@ -230,15 +208,7 @@ fun isWhitespaceAtPos(value: String, index: Int): Boolean {
     }
 }
 
-/**
- * An array representing a fuzzy match.
- *
- * 0. the score
- * 1. the offset at which matching started
- * 2. `<match_pos_N>`
- * 3. `<match_pos_1>`
- * 4. `<match_pos_0>` etc
- */
+
 class FuzzyScore(
     var score: Int,
     val wordStart: Int,
@@ -246,9 +216,7 @@ class FuzzyScore(
 ) {
 
     companion object {
-        /**
-         * No matches and value `-100`
-         */
+
         @JvmStatic
         val default: FuzzyScore = FuzzyScore(-100, 0)
 
@@ -334,9 +302,9 @@ fun fuzzyScore(
         val tableMatrix = this.table
         val arrowsMatrix = this.arrows
 
-        // Run a simple check if the characters of pattern occur
-        // (in order) at all in word. If that isn't the case we
-        // stop because no match will be possible
+
+
+
         if (!this.isPatternInWord(
                 patternLow,
                 patternStart,
@@ -350,8 +318,8 @@ fun fuzzyScore(
             return@withScratch null
         }
 
-        // Find the max matching word position for each pattern position
-        // NOTE: the min matching word position was filled in above, in the `isPatternInWord` call
+
+
         this.fillInMaxWordMatchPos(
             patternLen,
             wordLen,
@@ -368,10 +336,10 @@ fun fuzzyScore(
 
         val hasStrongFirstMatch = booleanArrayOf(false)
 
-        // There will be a match, fill in tables
+
         while (patternPos < patternLen) {
 
-            // Reduce search space to possible matching word positions and to possible access from next row
+
             val minWordMatchPos = minWordPositions[patternPos]
             val maxWordMatchPos = maxWordPositions[patternPos]
             val nextMaxWordMatchPos =
@@ -402,20 +370,20 @@ fun fuzzyScore(
 
                 val canComeLeft = wordPos > minWordMatchPos
                 val leftScore =
-                    if (canComeLeft) tableMatrix[row][column - 1] + (if (diagMatrix[row][column - 1] > 0) -5 else 0) else 0 // penalty for a gap start
+                    if (canComeLeft) tableMatrix[row][column - 1] + (if (diagMatrix[row][column - 1] > 0) -5 else 0) else 0
 
                 val canComeLeftLeft =
                     wordPos > minWordMatchPos + 1 && diagMatrix[row][column - 1] > 0
                 val leftLeftScore =
-                    if (canComeLeftLeft) tableMatrix[row][column - 2] + (if (diagMatrix[row][column - 2] > 0) -5 else 0) else 0 // penalty for a gap start
+                    if (canComeLeftLeft) tableMatrix[row][column - 2] + (if (diagMatrix[row][column - 2] > 0) -5 else 0) else 0
 
                 if (canComeLeftLeft && (!canComeLeft || leftLeftScore >= leftScore) && (!canComeDiag || leftLeftScore >= diagScore)) {
-                    // always prefer choosing left left to jump over a diagonal because that means a match is earlier in the word
+
                     tableMatrix[row][column] = leftLeftScore
                     arrowsMatrix[row][column] = Arrow.LeftLeft
                     diagMatrix[row][column] = 0
                 } else if (canComeLeft && (!canComeDiag || leftScore >= diagScore)) {
-                    // always prefer choosing left since that means a match is earlier in the word
+
                     tableMatrix[row][column] = leftScore
                     arrowsMatrix[row][column] = Arrow.Left
                     diagMatrix[row][column] = 0
@@ -446,7 +414,7 @@ fun fuzzyScore(
         var maxMatchColumn = 0
 
         while (row >= 1) {
-            // Find the column where we go diagonally up
+
             var diagColumn = column
             do {
                 val arrow = arrowsMatrix[row][diagColumn]
@@ -455,34 +423,34 @@ fun fuzzyScore(
                 } else if (arrow == Arrow.Left) {
                     diagColumn -= 1
                 } else {
-                    // found the diagonal
+
                     break
                 }
             } while (diagColumn >= 1)
 
-            // Overturn the "forwards" decision if keeping the "backwards" diagonal would give a better match
+
             if (
-                backwardsDiagLength > 1 // only if we would have a contiguous match of 3 characters
-                && patternLow[patternStart + row - 1] == wordLow[wordStart + column - 1] // only if we can do a contiguous match diagonally
+                backwardsDiagLength > 1
+                && patternLow[patternStart + row - 1] == wordLow[wordStart + column - 1]
                 && !isUpperCaseAtPos(
                     diagColumn + wordStart - 1,
                     word,
                     wordLow
-                ) // only if the forwards chose diagonal is not an uppercase
-                && backwardsDiagLength + 1 > diagMatrix[row][diagColumn] // only if our contiguous match would be longer than the "forwards" contiguous match
+                )
+                && backwardsDiagLength + 1 > diagMatrix[row][diagColumn]
             ) {
                 diagColumn = column
             }
 
             if (diagColumn == column) {
-                // this is a contiguous match
+
                 backwardsDiagLength++
             } else {
                 backwardsDiagLength = 1
             }
 
             if (maxMatchColumn == 0) {
-                // remember the last matched column
+
                 maxMatchColumn = diagColumn
             }
 
@@ -492,12 +460,12 @@ fun fuzzyScore(
         }
 
         if (wordLen == patternLen && options?.boostFullMatch == true) {
-            // the word matches the pattern with all characters!
-            // giving the score a total match boost (to come up ahead other words)
+
+
             result.score += 2
         }
 
-        // Add 1 penalty for each skipped character in the word
+
         val skippedCharsCount = maxMatchColumn - patternLen
         result.score -= skippedCharsCount
 
@@ -519,8 +487,8 @@ internal fun doScore(
     var score = 1
     var isGapLocation = false
     if (wordPos == patternPos - patternStart) {
-        // common prefix: `foobar <-> foobaz`
-        //                            ^^^^^
+
+
         score = if (pattern[patternPos] == word[wordPos]) 7 else 5
 
     } else if (isUpperCaseAtPos(wordPos, word, wordLow) && (wordPos == 0 || !isUpperCaseAtPos(
@@ -529,8 +497,8 @@ internal fun doScore(
             wordLow
         ))
     ) {
-        // hitting upper-case: `foo <-> forOthers`
-        //                              ^^ ^
+
+
         score = if (pattern[patternPos] == word[wordPos]) 7 else 5
         isGapLocation = true
 
@@ -539,12 +507,12 @@ internal fun doScore(
             wordPos - 1
         ))
     ) {
-        // hitting a separator: `. <-> foo.bar`
-        //                                ^
+
+
         score = 5
     } else if (isSeparatorAtPos(wordLow, wordPos - 1) || isWhitespaceAtPos(wordLow, wordPos - 1)) {
-        // post separator: `foo <-> bar_foo`
-        //                              ^^^
+
+
         score = 5
         isGapLocation = true
     }
@@ -560,26 +528,26 @@ internal fun doScore(
         ) || isWhitespaceAtPos(wordLow, wordPos - 1)
     }
 
-    //
-    if (patternPos == patternStart) { // first character in pattern
+
+    if (patternPos == patternStart) {
         if (wordPos > wordStart) {
-            // the first pattern character would match a word character that is not at the word start
-            // so introduce a penalty to account for the gap preceding this match
+
+
             score -= if (isGapLocation) 3 else 5
         }
     } else {
         if (newMatchStart) {
-            // this would be the beginning of a new match (i.e. there would be a gap before this location)
+
             score += if (isGapLocation) 2 else 0
         } else {
-            // this is part of a contiguous match, so give it a slight bonus, but do so only if it would not be a preferred gap location
+
             score += if (isGapLocation) 0 else 1
         }
     }
 
     if (wordPos + 1 == wordLen) {
-        // we always penalize gaps, but this gives unfair advantages to a match that would match the last character in the word
-        // so pretend there is a gap after the last character in the word to normalize things
+
+
         score -= if (isGapLocation) 3 else 5
     }
 
@@ -650,17 +618,17 @@ internal fun fuzzyScoreWithPermutations(
     )
 
     if (top != null && !aggressive) {
-        // when using the original pattern yield a result we`
-        // return it unless we are aggressive and try to find
-        // a better alignment, e.g. `cno` -> `^co^ns^ole` or `^c^o^nsole`.
+
+
+
         return top
     }
 
     if (pattern.length >= 3) {
-        // When the pattern is long enough then try a few (max 7)
-        // permutations of the pattern to find a better match. The
-        // permutations only swap neighbouring characters, e.g
-        // `cnoso` becomes `conso`, `cnsoo`, `cnoos`.
+
+
+
+
         val tries = 7.coerceAtMost(pattern.length - 1)
 
         var movingPatternPos = patternPos + 1
@@ -678,7 +646,7 @@ internal fun fuzzyScoreWithPermutations(
                     options ?: FuzzyScoreOptions.default
                 )
                 if (candidate != null) {
-                    candidate.score -= 3 // permutation penalty
+                    candidate.score -= 3
                     if (top == null || candidate.score > top.score) {
                         top = candidate
                     }

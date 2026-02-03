@@ -1,29 +1,17 @@
 package io.github.abc15018045126.sora.text
 
-/**
- * Line separator types
- *
- * @author abc15018045126
- */
+
 enum class LineSeparator(val content: String) {
-    /**
-     * Line Feed
-     */
+
     LF("\n"),
 
-    /**
-     * Carriage Return
-     */
+
     CR("\r"),
 
-    /**
-     * Carriage Return and Line Feed
-     */
+
     CRLF("\r\n"),
 
-    /**
-     * Unknown or no line separator
-     */
+
     NONE("");
 
     val length: Int

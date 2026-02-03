@@ -20,9 +20,9 @@ open class WordBreakerIcu(text: ContentLine) : WordBreaker {
 
     override fun getOptimizedBreakPoint(start: Int, end: Int): Int {
         var resultEnd = end
-        // Merging trailing whitespaces is not supported by editor, so force to break here
+
         if (resultEnd > 0 && !Character.isWhitespace(chars[resultEnd - 1]) && !wrappingIterator.isBoundary(resultEnd)) {
-            // Break text at last boundary
+
             val lastBoundary = wrappingIterator.preceding(resultEnd)
             if (lastBoundary != BreakIterator.DONE) {
                 val suggestedNext = max(start, min(resultEnd, lastBoundary))

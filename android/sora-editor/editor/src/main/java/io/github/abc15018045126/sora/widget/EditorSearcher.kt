@@ -18,19 +18,7 @@ import io.github.abc15018045126.sora.util.regex.RegexBackrefParser
 import io.github.abc15018045126.sora.util.regex.RegexBackrefToken
 import java.util.regex.Pattern
 
-/**
- * Search text in editor.
- * Note that editor searches text in another thread, so results may not be available immediately. Also,
- * the searcher does not match empty text. For example, you will never match a single empty
- * line by regex '^.*$'. What's more, zero-length pattern is not permitted.
- * The searcher updates its search results automatically when editor text is changed, even after [CodeEditor.setText]
- * is invoked. So be careful that the search result is changing and [PublishSearchResultEvent] is
- * re-triggered when search result is available for changed text.
- *
- * @see PublishSearchResultEvent
- * @see SearchOptions
- * @author abc15018045126
- */
+
 open class EditorSearcher(private val editor: CodeEditor) {
 
     @JvmField
@@ -44,10 +32,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
     internal var currentThread: Thread? = null
 
 
-    /**
-     * Search results. Note that it is naturally sorted by start index (and also end index).
-     * No overlapping region is permitted.
-     */
+
     @JvmField
     internal var lastResults: LongArrayList? = null
 
@@ -62,25 +47,13 @@ open class EditorSearcher(private val editor: CodeEditor) {
         }
     }
 
-    /**
-     * Search text with the given pattern and options. If you use [SearchOptions.TYPE_REGULAR_EXPRESSION],
-     * the pattern will be your regular expression.
-     *
-     * [stopSearch] should be called if you want to stop, instead of invoking this method with nulls.
-     *
-     * Note that, the result is not immediately available because we search texts in another thread to
-     * avoid lags in main thread. If you want to be notified when the results is available, refer to
-     * [PublishSearchResultEvent]. Also be careful that, the event is also triggered when [stopSearch]
-     * is called.
-     * @throws IllegalArgumentException if pattern length is zero
-     * @throws java.util.regex.PatternSyntaxException if pattern is invalid when regex is enabled.
-     */
+
     fun search(pattern: String, options: SearchOptions) {
         if (pattern.isEmpty()) {
             throw IllegalArgumentException("pattern length must be > 0")
         }
         if (options.type == SearchOptions.TYPE_REGULAR_EXPRESSION) {
-            // Pre-check
+
             Pattern.compile(pattern)
         }
         currentPattern = pattern
@@ -89,9 +62,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
         editor.postInvalidate()
     }
 
-    /**
-     * Execute current match task. Cancel any previous tasks.
-     */
+
     private fun executeMatch() {
         if (currentThread != null && currentThread!!.isAlive) {
             currentThread!!.interrupt()
@@ -105,9 +76,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
         }
     }
 
-    /**
-     * Stop searching.
-     */
+
     fun stopSearch() {
         if (currentThread != null && currentThread!!.isAlive) {
             currentThread!!.interrupt()
@@ -119,9 +88,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
         editor.dispatchEvent(PublishSearchResultEvent(editor))
     }
 
-    /**
-     * Check if any search is in progress
-     */
+
     fun hasQuery(): Boolean {
         return currentPattern != null
     }
@@ -132,11 +99,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
         }
     }
 
-    /**
-     * Find current selected region in search results and return the index in search result.
-     * Or `-1` if result is not available or the current selected region is not in result.
-     * @throws IllegalStateException if no search is in progress
-     */
+
     val currentMatchedPositionIndex: Int
         get() {
             checkState()
@@ -159,10 +122,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
             return -1
         }
 
-    /**
-     * Get item count of search result. Or `0` if result is not available or no item is found.
-     * @throws IllegalStateException if no search is in progress
-     */
+
     val matchedPositionCount: Int
         get() {
             checkState()
@@ -173,12 +133,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
             return result?.size ?: 0
         }
 
-    /**
-     * Goto next matched position based on cursor position.
-     * @see isCyclicJumping
-     * @return if any jumping action is performed
-     * @throws IllegalStateException if no search is in progress
-     */
+
     fun gotoNext(): Boolean {
         checkState()
         if (isResultValid()) {
@@ -207,12 +162,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
         return false
     }
 
-    /**
-     * Goto last matched position based on cursor position.
-     * @see isCyclicJumping
-     * @return if any jumping action is performed
-     * @throws IllegalStateException if no search is in progress
-     */
+
     fun gotoPrevious(): Boolean {
         checkState()
         if (isResultValid()) {
@@ -247,21 +197,12 @@ open class EditorSearcher(private val editor: CodeEditor) {
         return false
     }
 
-    /**
-     * Check if selected region is exactly a search result
-     * @throws IllegalStateException if no search is in progress
-     */
+
     fun isMatchedPositionSelected(): Boolean {
         return currentMatchedPositionIndex > -1
     }
 
-    /**
-     * Replace currently selected region if the region is exactly a match of searching pattern.
-     * Otherwise, attempt to jump to next matched position.
-     *
-     * @param replacement The text for replacement
-     * @throws IllegalStateException if no search is in progress
-     */
+
     fun replaceCurrentMatch(replacement: String) {
         if (!editor.isEditable) {
             return
@@ -299,12 +240,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
         }
     }
 
-    /**
-     * Replace all matched position. Note that after invoking this, a blocking [ProgressDialog]
-     * is shown until the action is done (either succeeded or failed).
-     * @param replacement The text for replacement
-     * @throws IllegalStateException if no search is in progress
-     */
+
     @JvmOverloads
     fun replaceAll(replacement: String, whenSucceeded: Runnable? = null) {
         if (!editor.isEditable) {
@@ -413,28 +349,20 @@ open class EditorSearcher(private val editor: CodeEditor) {
     }
 
 
-    /**
-     * Search options for [EditorSearcher.search]
-     */
+
     class SearchOptions @JvmOverloads constructor(
         @field:IntRange(from = 1, to = 3) @get:IntRange(from = 1, to = 3) val type: Int,
         val caseInsensitive: Boolean,
         val regexBackrefGrammar: RegexBackrefGrammar? = null
     ) {
         companion object {
-            /**
-             * Normal text searching
-             */
+
             const val TYPE_NORMAL = 1
 
-            /**
-             * Text searching by whole word
-             */
+
             const val TYPE_WHOLE_WORD = 2
 
-            /**
-             * Use regular expression for text searching
-             */
+
             const val TYPE_REGULAR_EXPRESSION = 3
         }
 
@@ -450,9 +378,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
         }
     }
 
-    /**
-     * Run for regex matching
-     */
+
     private inner class SearchRunnable(
         content: Content,
         private val options: SearchOptions,
@@ -485,7 +411,7 @@ open class EditorSearcher(private val editor: CodeEditor) {
                 }
                 SearchOptions.TYPE_WHOLE_WORD -> {
                     patternStr = "\\b" + Pattern.quote(patternStr) + "\\b"
-                    // fall-through
+
                     val regex = Pattern.compile(
                         patternStr,
                         (if (ignoreCase) Pattern.CASE_INSENSITIVE else 0) or Pattern.MULTILINE

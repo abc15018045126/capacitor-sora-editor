@@ -17,12 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 import kotlin.math.min
 
-/**
- * Layout implementation of editor
- * This layout is never broke unless there is actually a newline character
- *
- * @author Rose
- */
+
 class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(editor, text) {
 
     private val reuseCount = AtomicInteger(0)
@@ -158,7 +153,7 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
         val editor = this.editor ?: return
         val widthMaintainer = this.widthMaintainer ?: return
         val inlineElementsWidths = this.inlineElementsWidths ?: return
-        
+
         for (i in startLine..endLine) {
             if (i == startLine) {
                 if (endLine == startLine) {

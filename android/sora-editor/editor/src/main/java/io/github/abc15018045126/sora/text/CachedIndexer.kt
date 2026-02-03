@@ -6,19 +6,7 @@ import java.util.Collections
 import kotlin.math.abs
 import kotlin.math.max
 
-/**
- * Indexer Impl for Content with cache.
- *
- * Range Space of line:
- * [0, columnCount)                            -> Text Content on Line
- * [columnCount, columnCount + lineSepLength)  -> Line Separator for Line
- *
- * Merged Range: [0, columnCount + lineSepLength)
- *
- * Specially, the text end position is valid but not actually readable.
- *
- * @author Rose
- */
+
 class CachedIndexer internal constructor(private val content: Content) : Indexer, ContentListener {
     private val startPosition = CharPosition().toBOF()
     private val endPosition = CharPosition()
@@ -34,31 +22,19 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         updateEnd()
     }
 
-    /**
-     * If the querying index is larger than the switch
-     * We will add its result to cache
-     *
-     * @param s Switch
-     */
+
     fun setThresholdIndex(s: Int) {
         thresholdIndex = s
     }
 
-    /**
-     * Update the end position
-     */
+
     private fun updateEnd() {
         endPosition.index = content.length
         endPosition.line = content.lineCount - 1
         endPosition.column = content.getColumnCount(endPosition.line)
     }
 
-    /**
-     * Get the nearest cache for the given index
-     *
-     * @param index Querying index
-     * @return Nearest cache
-     */
+
     @Synchronized
     private fun findNearestByIndex(index: Int): CharPosition {
         var minDistance = index
@@ -85,12 +61,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         return nearestCharPosition
     }
 
-    /**
-     * Get the nearest cache for the given line
-     *
-     * @param line Querying line
-     * @return Nearest cache
-     */
+
     @Synchronized
     private fun findNearestByLine(line: Int): CharPosition {
         var minDistance = line
@@ -117,12 +88,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         return nearestCharPosition
     }
 
-    /**
-     * From the given position to find forward in text
-     *
-     * @param start Given position
-     * @param index Querying index
-     */
+
     @VisibleForTesting
     fun findIndexForward(start: CharPosition, index: Int, dest: CharPosition) {
         if (start.index > index) {
@@ -131,7 +97,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         var workLine = start.line
         var workColumn = start.column
         var workIndex = start.index
-        //Move the column to the line end
+
         run {
             val sepLen = content.lines[workLine].lineSeparatorSafe.length
             val addition = if (sepLen > 0) sepLen - 1 else 0
@@ -155,12 +121,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         dest.index = index
     }
 
-    /**
-     * From the given position to find backward in text
-     *
-     * @param start Given position
-     * @param index Querying index
-     */
+
     @VisibleForTesting
     fun findIndexBackward(start: CharPosition, index: Int, dest: CharPosition) {
         if (start.index < index) {
@@ -178,7 +139,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
                 val addition = if (sepLen > 0) sepLen - 1 else 0
                 workColumn = line.length + addition
             } else {
-                // Reached the start of text,we have to use findIndexForward() as this method can not handle it
+
                 findIndexForward(startPosition, index, dest)
                 return
             }
@@ -193,13 +154,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         dest.index = index
     }
 
-    /**
-     * From the given position to find forward in text
-     *
-     * @param start  Given position
-     * @param line   Querying line
-     * @param column Querying column
-     */
+
     @VisibleForTesting
     fun findLiCoForward(start: CharPosition, line: Int, column: Int, dest: CharPosition) {
         if (start.line > line) {
@@ -208,7 +163,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         var workLine = start.line
         var workIndex = start.index
         run {
-            //Make index to left of line
+
             workIndex = workIndex - start.column
         }
         while (workLine < line) {
@@ -222,13 +177,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         findInLine(dest, line, column)
     }
 
-    /**
-     * From the given position to find backward in text
-     *
-     * @param start  Given position
-     * @param line   Querying line
-     * @param column Querying column
-     */
+
     @VisibleForTesting
     fun findLiCoBackward(start: CharPosition, line: Int, column: Int, dest: CharPosition) {
         if (start.line < line) {
@@ -237,7 +186,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         var workLine = start.line
         var workIndex = start.index
         run {
-            //Make index to the left of line
+
             workIndex = workIndex - start.column
         }
         while (workLine > line) {
@@ -251,13 +200,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         findInLine(dest, line, column)
     }
 
-    /**
-     * From the given position to find in this line
-     *
-     * @param pos    Given position
-     * @param line   Querying line
-     * @param column Querying column
-     */
+
     private fun findInLine(pos: CharPosition, line: Int, column: Int) {
         if (pos.line != line) {
             throw IllegalArgumentException("can not find other lines with findInLine()")
@@ -266,11 +209,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         pos.column = column
     }
 
-    /**
-     * Add new cache
-     *
-     * @param pos New cache
-     */
+
     @Synchronized
     private fun push(pos: CharPosition) {
         if (maxCacheCount <= 0) {
@@ -352,7 +291,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
 
     @UnsupportedUserUsage
     override fun beforeReplace(content: Content) {
-        //Do nothing
+
     }
 
     @Synchronized
