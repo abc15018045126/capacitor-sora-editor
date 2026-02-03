@@ -100,6 +100,8 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
     @JvmField
     var metricsText: AndroidPaint.FontMetricsInt? = null
 
+    private val sharedTextRow = TextRow()
+
     @Nullable
     private var horizontalScrollbarThumbDrawable: Drawable? = null
 
@@ -336,6 +338,12 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
 
     @UnsupportedUserUsage
     fun createTextRow(rowIndex: Int): TextRow {
+        val tr = TextRow()
+        updateTextRow(tr, rowIndex)
+        return tr
+    }
+
+    private fun updateTextRow(tr: TextRow, rowIndex: Int) {
         val styles = editor.styles
         val spanMap =
             if (styles != null) styles.spans else null
@@ -346,7 +354,6 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
             editor.layout!!.getRowAt(rowIndex)
         val line =
             content!!.getLine(row.lineIndex)
-        val tr: TextRow = TextRow()
         val cache =
             editor.renderContext!!.cache.queryMeasureCache(row.lineIndex)
         var widths =
@@ -361,10 +368,9 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
             content!!.getLineDirections(row.lineIndex),
             paintGeneral,
             widths,
-            createTextRowParams()!!
+            createTextRowParams()
         )
         applySelectedTextRange(tr, row.lineIndex)
-        return tr
     }
 
     private fun applySelectedTextRange(tr: TextRow, lineIndex: Int) {
@@ -1370,6 +1376,8 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
 
         // Step 1 - Draw background of rows
 
+        val trParams = createTextRowParams()
+
         // Pre-draw animated current line background
         if (editor.cursorAnimator.isRunning() && editor.isHighlightCurrentLine && editor.isEditable
             && (editor.props!!.cursorLineBgOverlapBehavior === CURSOR_LINE_BG_OVERLAP_CURSOR || editor.props!!.cursorLineBgOverlapBehavior === CURSOR_LINE_BG_OVERLAP_MIXED)
@@ -1459,7 +1467,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
 
                 // Draw matched text background
                 if (matchedPositions.size > 0) {
-                    val tr: TextRow = createTextRow(row)
+                    updateTextRow(sharedTextRow, row)
                     for (i in 0 until matchedPositions.size) {
                         val position =
                             matchedPositions.get(i)
@@ -1470,7 +1478,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                         drawRowRegionBackground(
                             canvas,
                             row,
-                            tr,
+                            sharedTextRow,
                             start,
                             end,
                             rowInf.startColumn,
@@ -1489,8 +1497,9 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                         override fun accept(key: Long, value: Long): Any? {
                             val start = IntPair.getFirst(key)
                             val end = IntPair.getSecond(key)
+                            updateTextRow(sharedTextRow, finalRow)
                             drawRowRegionBackground(
-                                canvas, finalRow, tr, start, end, rowInf.startColumn,
+                                canvas, finalRow, sharedTextRow, start, end, rowInf.startColumn,
                                 rowInf.endColumn, IntPair.getFirst(value), IntPair.getSecond(value)
                             )
                             return null
@@ -1520,8 +1529,9 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                             editor.colorScheme.getColor(EditorColorScheme.SELECTED_TEXT_BORDER)
                         )
                     } else if (selectionStart < selectionEnd) {
+                        updateTextRow(sharedTextRow, row)
                         drawRowRegionBackground(
-                            canvas, row, null, selectionStart, selectionEnd, rowInf.startColumn, rowInf.endColumn,
+                            canvas, row, sharedTextRow, selectionStart, selectionEnd, rowInf.startColumn, rowInf.endColumn,
                             editor.colorScheme.getColor(EditorColorScheme.SELECTED_TEXT_BACKGROUND),
                             editor.colorScheme.getColor(EditorColorScheme.SELECTED_TEXT_BORDER)
                         )
@@ -1641,8 +1651,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
             // Draw text here
             if (!editor.isHardwareAcceleratedDrawAllowed || editor.touchHandler!!.isScaling || !canvas.isHardwareAccelerated || editor.isWordwrap || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || (rowInf.endColumn - rowInf.startColumn > 128 && !editor.props!!.cacheRenderNodeForLongLines) /* Save memory */) {
                 // Draw without hardware acceleration
-                val tr: TextRow = TextRow()
-                tr.set(
+                sharedTextRow.set(
                     lineBuf!!,
                     rowInf.startColumn,
                     rowInf.endColumn,
@@ -1651,9 +1660,9 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     getLineDirections(line)!!,
                     paintGeneral,
                     lineCache,
-                    createTextRowParams()
+                    trParams
                 )
-                applySelectedTextRange(tr, line)
+                applySelectedTextRange(sharedTextRow, line)
 
                 canvas.save()
                 canvas.translate(-offsetCopy, (editor.getRowTop(row) - editor.offsetY).toFloat())
@@ -1665,7 +1674,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 val beginOffset: Float = max(0f, offsetCopy)
                 val endOffset: Float = beginOffset + editor.width
                 val result =
-                    tr.draw(canvas, beginOffset, endOffset)
+                    sharedTextRow.draw(canvas, beginOffset, endOffset)
                 canvas.restore()
 
                 val exhausted = IntPair.getFirst(result) == 1
@@ -1691,8 +1700,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
 
             // Draw non-printable characters
             if (circleRadius != 0f && (leadingWhitespaceEnd != columnCount || (nonPrintableFlags and io.github.abc15018045126.sora.widget.CodeEditor.Companion.FLAG_DRAW_WHITESPACE_FOR_EMPTY_LINE) !== 0)) {
-                val tr: TextRow = TextRow()
-                tr.set(
+                sharedTextRow.set(
                     lineBuf!!,
                     rowInf.startColumn,
                     rowInf.endColumn,
@@ -1701,18 +1709,19 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     getLineDirections(line)!!,
                     paintGeneral,
                     lineCache,
-                    createTextRowParams()
+                    trParams
                 )
                 canvas.save()
-                canvas.translate(paintingOffset, (editor.getRowTopOfText(row) - editor.offsetY).toFloat())
-                bufferedDrawPoints.setOffsets(paintingOffset, (editor.getRowTopOfText(row) - editor.offsetY).toFloat())
+                val topOfText = (editor.getRowTopOfText(row) - editor.offsetY).toFloat()
+                canvas.translate(paintingOffset, topOfText)
+                bufferedDrawPoints.setOffsets(paintingOffset, topOfText)
                 val beginOffset: Float = max(0f, paintingOffset)
                 val endOffset: Float = beginOffset + editor.width
                 val wsLeadingEnd = leadingWhitespaceEnd
                 val wsTrailingStart = trailingWhitespaceStart
 
                 paintOther.setColor(editor.colorScheme.getColor(EditorColorScheme.NON_PRINTABLE_CHAR))
-                tr.iterateDrawTextRegions(
+                sharedTextRow.iterateDrawTextRegions(
                     rowInf.startColumn, rowInf.endColumn, canvas, beginOffset, endOffset, false,
                     object : TextRow.DrawTextConsumer {
                         override fun drawText(
@@ -1731,7 +1740,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                             if ((nonPrintableFlags and io.github.abc15018045126.sora.widget.CodeEditor.Companion.FLAG_DRAW_WHITESPACE_LEADING) != 0) {
                                 drawWhitespaces(
                                     _canvas!!,
-                                    tr,
+                                    sharedTextRow,
                                     text!!,
                                     index,
                                     count,
@@ -1747,7 +1756,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                             if ((nonPrintableFlags and io.github.abc15018045126.sora.widget.CodeEditor.Companion.FLAG_DRAW_WHITESPACE_INNER) != 0) {
                                 drawWhitespaces(
                                     _canvas!!,
-                                    tr,
+                                    sharedTextRow,
                                     text!!,
                                     index,
                                     count,
@@ -1763,7 +1772,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                             if ((nonPrintableFlags and io.github.abc15018045126.sora.widget.CodeEditor.Companion.FLAG_DRAW_WHITESPACE_TRAILING) != 0) {
                                 drawWhitespaces(
                                     _canvas!!,
-                                    tr,
+                                    sharedTextRow,
                                     text!!,
                                     index,
                                     count,
@@ -1788,7 +1797,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                                 if ((nonPrintableFlags and 14) == 0) {
                                     drawWhitespaces(
                                         _canvas!!,
-                                        tr,
+                                        sharedTextRow,
                                         text!!,
                                         index,
                                         count,
@@ -1804,7 +1813,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                                     if ((nonPrintableFlags and io.github.abc15018045126.sora.widget.CodeEditor.Companion.FLAG_DRAW_WHITESPACE_LEADING) == 0) {
                                         drawWhitespaces(
                                             _canvas!!,
-                                            tr,
+                                            sharedTextRow,
                                             text!!,
                                             index,
                                             count,
@@ -1820,7 +1829,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                                     if ((nonPrintableFlags and io.github.abc15018045126.sora.widget.CodeEditor.Companion.FLAG_DRAW_WHITESPACE_INNER) == 0) {
                                         drawWhitespaces(
                                             _canvas!!,
-                                            tr,
+                                            sharedTextRow,
                                             text!!,
                                             index,
                                             count,
@@ -1836,7 +1845,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                                     if ((nonPrintableFlags and io.github.abc15018045126.sora.widget.CodeEditor.Companion.FLAG_DRAW_WHITESPACE_TRAILING) == 0) {
                                         drawWhitespaces(
                                             _canvas!!,
-                                            tr,
+                                            sharedTextRow,
                                             text!!,
                                             index,
                                             count,
@@ -1865,8 +1874,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 val paintEnd: Int = Math.min(Math.max(composingEnd, rowInf.startColumn), rowInf.endColumn)
 
                 if (paintStart < paintEnd) {
-                    val tr: TextRow = TextRow()
-                    tr.set(
+                    sharedTextRow.set(
                         lineBuf!!,
                         rowInf.startColumn,
                         rowInf.endColumn,
@@ -1875,12 +1883,12 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                         content!!.getLineDirections(line),
                         paintGeneral,
                         lineCache,
-                        createTextRowParams()
+                        trParams
                     )
                     tmpRect.top = (editor.getRowBottom(row) - editor.offsetY).toFloat()
                     tmpRect.bottom = tmpRect.top + editor.logicalRowHeight.toFloat() * 0.06f
                     val finalOffset = paintingOffset
-                    tr.iterateBackgroundRegions(paintStart, paintEnd, false, false, object : TextRow.BackgroundRegionConsumer {
+                    sharedTextRow.iterateBackgroundRegions(paintStart, paintEnd, false, false, object : TextRow.BackgroundRegionConsumer {
                         override fun handleRegion(left: Float, right: Float): Boolean {
                             tmpRect.left = finalOffset + left
                             tmpRect.right = finalOffset + right
@@ -2192,7 +2200,7 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                 for (i in visStartRow..visEndRow) {
                     val row =
                         editor.layout!!.getRowAt(i)
-                    val tr: TextRow = createTextRow(i)
+                    updateTextRow(sharedTextRow, i)
                     val startColumn: Int = if (i == startRow) start.column else row.startColumn
                     val endColumn: Int = if (i == endRow) end.column else row.endColumn
                     val finalOffset: Float
@@ -2204,13 +2212,13 @@ class EditorRenderer(@NonNull editor: CodeEditor) {
                     if (startColumn == endColumn) {
                         // Make it always visible
                         val startX =
-                            finalOffset + tr.getCursorOffsetForIndex(startColumn)
+                            finalOffset + sharedTextRow.getCursorOffsetForIndex(startColumn)
                         val endX =
                             startX + paintGeneral.measureText("a")
                         drawDiagnosticIndicator(canvas, style, i, startX, endX)
                     } else {
                         val rowIndex = i
-                        tr.iterateBackgroundRegions(startColumn, endColumn, false, false, object : TextRow.BackgroundRegionConsumer {
+                        sharedTextRow.iterateBackgroundRegions(startColumn, endColumn, false, false, object : TextRow.BackgroundRegionConsumer {
                             override fun handleRegion(left: Float, right: Float): Boolean {
                                 if (right > 0f) drawDiagnosticIndicator(
                                     canvas,
