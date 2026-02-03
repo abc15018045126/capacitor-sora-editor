@@ -26,116 +26,52 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
     private var measurer: SingleCharacterWidths? = null
 
     init {
-        measurer = SingleCharacterWidths(editor.tabWidth)
-        measurer?.isHandleFunctionCharacters = editor.isRenderFunctionCharacters
-        widthMaintainer = BlockIntList()
-        inlineElementsWidths = BlockIntList()
-        measureAllLines(widthMaintainer!!, inlineElementsWidths!!)
+        measurer = SingleCharacterWidths(editor.tabWidth).apply { isHandleFunctionCharacters = editor.isRenderFunctionCharacters }
+        widthMaintainer = BlockIntList(); inlineElementsWidths = BlockIntList(); measureAllLines(widthMaintainer!!, inlineElementsWidths!!)
     }
 
-    private fun measureAllLines(widthMaintainer: BlockIntList, inlineElementsWidths: BlockIntList) {
-        val text = this.text ?: return
-        val editor = this.editor ?: return
-        val shadowPaint = Paint(editor.isRenderFunctionCharacters)
-        shadowPaint.set(editor.textPaint)
-        shadowPaint.onAttributeUpdate()
-        val reuseCountLocal = reuseCount.get()
-        val measurerLocal = measurer
-        val monitor = TaskMonitor(1, object : TaskMonitor.Callback {
+    private fun measureAllLines(wm: BlockIntList, im: BlockIntList) {
+        val text = text ?: return; val editor = editor ?: return; val p = Paint(editor.isRenderFunctionCharacters).apply { set(editor.textPaint); onAttributeUpdate() }
+        val rCnt = reuseCount.get(); val m = measurer; val monitor = TaskMonitor(1, object : TaskMonitor.Callback {
             override fun onCompleted(results: Array<Any?>, cancelledCount: Int) {
-                val currentEditor = this@LineBreakLayout.editor
-                if (currentEditor == null || cancelledCount > 0) {
-                    return
-                }
+                val curEditor = this@LineBreakLayout.editor ?: return; if (cancelledCount > 0) return
                 io.github.abc15018045126.sora.util.EditorHandler.post {
-                    if (currentEditor.isReleased) return@post
-                    if (this@LineBreakLayout.editor !== currentEditor || reuseCountLocal != reuseCount.get()) {
-                        return@post
-                    }
-                    currentEditor.setLayoutBusy(false)
-                    val touch: io.github.abc15018045126.sora.widget.EditorTouchEventHandler = currentEditor.touchHandler!!
-                    touch.scrollBy(0f, 0f)
-
+                    if (curEditor.isReleased || this@LineBreakLayout.editor !== curEditor || rCnt != reuseCount.get()) return@post
+                    curEditor.setLayoutBusy(false); curEditor.touchHandler!!.scrollBy(0f, 0f)
                 }
-
             }
-        })
-        val task = object : LayoutTask<Void?>(monitor) {
+        }); val task = object : LayoutTask<Void?>(monitor) {
             override fun compute(): Void? {
-                widthMaintainer.lock.lock()
-                try {
-                    text.runReadActionsOnLines(0, text.lineCount - 1, object : Content.ContentLineConsumer2 {
-                        override fun accept(index: Int, line: ContentLine, abortFlag: Content.ContentLineConsumer2.AbortFlag) {
-                            val width = measurerLocal?.measureText(line, 0, line.length, shadowPaint)?.toInt() ?: 0
-                            val inlineElementsWidth = measureInlayHints(getInlayHints(index), shadowPaint)
-                            if (shouldRun()) {
-                                widthMaintainer.add(width + inlineElementsWidth)
-                                inlineElementsWidths.add(inlineElementsWidth)
-                            } else {
-                                abortFlag.set = true
-                            }
-                        }
-                    })
-                } finally {
-                    widthMaintainer.lock.unlock()
-                }
-                return null
+                wm.lock.lock(); try { text.runReadActionsOnLines(0, text.lineCount - 1, object : Content.ContentLineConsumer2 {
+                    override fun accept(index: Int, line: ContentLine, flag: Content.ContentLineConsumer2.AbortFlag) {
+                        val w = m?.measureText(line, 0, line.length, p)?.toInt() ?: 0; val iw = measureInlayHints(getInlayHints(index), p)
+                        if (shouldRun()) { wm.add(w + iw); im.add(iw) } else flag.set = true
+                    }
+                }) } finally { wm.lock.unlock() }; return null
             }
-
-            override fun shouldRun(): Boolean {
-                return super.shouldRun() && reuseCount.get() == reuseCountLocal
-            }
-        }
-        editor.setLayoutBusy(true)
-        submitTask(task)
+            override fun shouldRun() = super.shouldRun() && reuseCount.get() == rCnt
+        }; editor.setLayoutBusy(true); submitTask(task)
     }
 
     private fun measureInlayHints(inlayHints: List<InlayHint>, paint: Paint): Int {
-        val editor = this.editor ?: return 0
-        var width = 0f
-        for (inlayHint in inlayHints) {
-            val renderer = editor.getInlayHintRendererForType(inlayHint.type) ?: continue
-            val w = renderer.measure(
-                inlayHint,
-                paint,
-                editor.renderer.createTextRowParams().toInlayHintRenderParams()
-            )
-            width += w
-        }
-        return width.toInt()
+        val editor = editor ?: return 0; var w = 0f
+        for (h in inlayHints) editor.getInlayHintRendererForType(h.type)?.let { w += it.measure(h, paint, editor.renderer.createTextRowParams().toInlayHintRenderParams()) }
+        return w.toInt()
     }
 
-    private fun measureLineAndUpdateInlineWidths(lineIndex: Int, useAdd: Boolean = false): Int {
-        val text = this.text ?: return 0
-        val editor = this.editor ?: return 0
-        val line = text.getLine(lineIndex)
-        val inlayHintsWidth = measureInlayHints(getInlayHints(lineIndex), editor.textPaint)
-        if (useAdd) {
-            inlineElementsWidths?.add(lineIndex, inlayHintsWidth)
-        } else {
-            inlineElementsWidths?.set(lineIndex, inlayHintsWidth)
-        }
-        return (measurer?.measureText(line, 0, line.length, editor.textPaint)?.toInt() ?: 0) + inlayHintsWidth
+    private fun measureLineAndUpdateInlineWidths(idx: Int, useAdd: Boolean = false): Int {
+        val text = text ?: return 0; val editor = editor ?: return 0; val line = text.getLine(idx); val iw = measureInlayHints(getInlayHints(idx), editor.textPaint)
+        if (useAdd) inlineElementsWidths?.add(idx, iw) else inlineElementsWidths?.set(idx, iw)
+        return (measurer?.measureText(line, 0, line.length, editor.textPaint)?.toInt() ?: 0) + iw
     }
 
-    private fun measureTextRegion(lineIndex: Int, start: Int, end: Int): Int {
-        val text = this.text ?: return 0
-        val editor = this.editor ?: return 0
-        val line = text.getLine(lineIndex)
-        return measurer?.measureText(line, start, end, editor.textPaint)?.toInt() ?: 0
-    }
+    private fun measureTextRegion(idx: Int, start: Int, end: Int) = (measurer?.measureText(text?.getLine(idx), start, end, editor?.textPaint)?.toInt() ?: 0)
 
-    override fun obtainRowIterator(initialRow: Int, preloadedLines: SparseArray<ContentLine>?): RowIterator {
-        return LineBreakLayoutRowItr(this, text!!, initialRow, preloadedLines)
-    }
+    override fun obtainRowIterator(initialRow: Int, preloadedLines: SparseArray<ContentLine>?): RowIterator = LineBreakLayoutRowItr(this, text!!, initialRow, preloadedLines)
 
     override fun invalidateLines(range: StyleUpdateRange) {
-        val text = this.text ?: return
-        val itr = range.lineIndexIterator(text.lineCount - 1)
-        while (itr.hasNext()) {
-            val line = itr.nextInt()
-            widthMaintainer?.set(line, measureLineAndUpdateInlineWidths(line))
-        }
+        val text = text ?: return; val itr = range.lineIndexIterator(text.lineCount - 1)
+        while (itr.hasNext()) { val line = itr.nextInt(); widthMaintainer?.set(line, measureLineAndUpdateInlineWidths(line)) }
     }
 
     override val rowCount: Int
