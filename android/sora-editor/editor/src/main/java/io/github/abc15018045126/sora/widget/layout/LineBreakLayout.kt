@@ -32,7 +32,7 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
 
     private fun measureAllLines(wm: BlockIntList, im: BlockIntList) {
         val text = text ?: return; val editor = editor ?: return; val p = Paint(editor.isRenderFunctionCharacters).apply { set(editor.textPaint); onAttributeUpdate() }
-        val rCnt = reuseCount.get(); val m = measurer; val monitor = TaskMonitor(1, object : TaskMonitor.Callback {
+        val rCnt = reuseCount.get(); val m = measurer ?: return; val monitor = TaskMonitor(1, object : TaskMonitor.Callback {
             override fun onCompleted(results: Array<Any?>, cancelledCount: Int) {
                 val curEditor = this@LineBreakLayout.editor ?: return; if (cancelledCount > 0) return
                 io.github.abc15018045126.sora.util.EditorHandler.post {
@@ -44,7 +44,7 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
             override fun compute(): Void? {
                 wm.lock.lock(); try { text.runReadActionsOnLines(0, text.lineCount - 1, object : Content.ContentLineConsumer2 {
                     override fun accept(index: Int, line: ContentLine, flag: Content.ContentLineConsumer2.AbortFlag) {
-                        val w = m?.measureText(line, 0, line.length, p)?.toInt() ?: 0; val iw = measureInlayHints(getInlayHints(index), p)
+                        val w = m.measureText(line, 0, line.length, p).toInt(); val iw = measureInlayHints(getInlayHints(index), p)
                         if (shouldRun()) { wm.add(w + iw); im.add(iw) } else flag.set = true
                     }
                 }) } finally { wm.lock.unlock() }; return null
@@ -60,12 +60,15 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
     }
 
     private fun measureLineAndUpdateInlineWidths(idx: Int, useAdd: Boolean = false): Int {
-        val text = text ?: return 0; val editor = editor ?: return 0; val line = text.getLine(idx); val iw = measureInlayHints(getInlayHints(idx), editor.textPaint)
+        val text = text ?: return 0; val editor = editor ?: return 0; val line = text.getLine(idx); val paint = editor.textPaint; val iw = measureInlayHints(getInlayHints(idx), paint)
         if (useAdd) inlineElementsWidths?.add(idx, iw) else inlineElementsWidths?.set(idx, iw)
-        return (measurer?.measureText(line, 0, line.length, editor.textPaint)?.toInt() ?: 0) + iw
+        return (measurer?.measureText(line, 0, line.length, paint)?.toInt() ?: 0) + iw
     }
 
-    private fun measureTextRegion(idx: Int, start: Int, end: Int) = (measurer?.measureText(text?.getLine(idx), start, end, editor?.textPaint)?.toInt() ?: 0)
+    private fun measureTextRegion(idx: Int, start: Int, end: Int): Int {
+        val editor = editor ?: return 0; val paint = editor.textPaint; val m = measurer ?: return 0
+        return text?.getLine(idx)?.let { m.measureText(it, start, end, paint).toInt() } ?: 0
+    }
 
     override fun obtainRowIterator(initialRow: Int, preloadedLines: SparseArray<ContentLine>?): RowIterator = LineBreakLayoutRowItr(this, text!!, initialRow, preloadedLines)
 
@@ -77,225 +80,57 @@ class LineBreakLayout(editor: CodeEditor, text: Content?) : AbstractLayout(edito
     override val rowCount: Int
         get() = text?.lineCount ?: 0
 
-    override fun afterInsert(
-        content: Content,
-        startLine: Int,
-        startColumn: Int,
-        endLine: Int,
-        endColumn: Int,
-        insertedContent: CharSequence
-    ) {
-        super.afterInsert(content, startLine, startColumn, endLine, endColumn, insertedContent)
-        val editor = this.editor ?: return
-        val widthMaintainer = this.widthMaintainer ?: return
-        val inlineElementsWidths = this.inlineElementsWidths ?: return
-
+    override fun afterInsert(content: Content, startLine: Int, startColumn: Int, endLine: Int, endColumn: Int, insertedContent: CharSequence) {
+        super.afterInsert(content, startLine, startColumn, endLine, endColumn, insertedContent); val editor = editor ?: return; val wm = widthMaintainer ?: return; val im = inlineElementsWidths ?: return
         for (i in startLine..endLine) {
             if (i == startLine) {
-                if (endLine == startLine) {
-                    val oldInlayWidths = inlineElementsWidths.get(i)
-                    val newInlayWidths = measureInlayHints(getInlayHints(i), editor.textPaint)
-                    inlineElementsWidths.set(i, newInlayWidths)
-                    widthMaintainer.set(i, widthMaintainer.get(i) + measureTextRegion(i, startColumn, endColumn) + (newInlayWidths - oldInlayWidths))
-                } else {
-                    widthMaintainer.set(i, measureLineAndUpdateInlineWidths(i))
-                }
-            } else {
-                widthMaintainer.add(i, measureLineAndUpdateInlineWidths(i, true))
-            }
+                if (endLine == startLine) { val old = im.get(i); val new = measureInlayHints(getInlayHints(i), editor.textPaint); im.set(i, new); wm.set(i, wm.get(i) + measureTextRegion(i, startColumn, endColumn) + (new - old)) }
+                else wm.set(i, measureLineAndUpdateInlineWidths(i))
+            } else wm.add(i, measureLineAndUpdateInlineWidths(i, true))
         }
     }
 
-    override fun afterDelete(
-        content: Content,
-        startLine: Int,
-        startColumn: Int,
-        endLine: Int,
-        endColumn: Int,
-        deletedContent: CharSequence
-    ) {
-        super.afterDelete(content, startLine, startColumn, endLine, endColumn, deletedContent)
-        val editor = this.editor ?: return
-        val widthMaintainer = this.widthMaintainer ?: return
-        val inlineElementsWidths = this.inlineElementsWidths ?: return
-
-        if (startLine < endLine) {
-            widthMaintainer.removeRange(startLine + 1, endLine + 1)
-            inlineElementsWidths.removeRange(startLine + 1, endLine + 1)
-        }
-        if (startLine == endLine) {
-            val oldInlayWidths = inlineElementsWidths.get(startLine)
-            val newInlayWidths = measureInlayHints(getInlayHints(startLine), editor.textPaint)
-            inlineElementsWidths.set(startLine, newInlayWidths)
-            widthMaintainer.set(startLine, widthMaintainer.get(startLine)
-                    - (measurer?.measureText(deletedContent, 0, endColumn - startColumn, editor.textPaint)?.toInt() ?: 0)
-                    + (newInlayWidths - oldInlayWidths))
-        } else {
-            widthMaintainer.set(startLine, measureLineAndUpdateInlineWidths(startLine))
-        }
+    override fun afterDelete(content: Content, startLine: Int, startColumn: Int, endLine: Int, endColumn: Int, deletedContent: CharSequence) {
+        super.afterDelete(content, startLine, startColumn, endLine, endColumn, deletedContent); val editor = editor ?: return; val wm = widthMaintainer ?: return; val im = inlineElementsWidths ?: return
+        if (startLine < endLine) { wm.removeRange(startLine + 1, endLine + 1); im.removeRange(startLine + 1, endLine + 1) }
+        if (startLine == endLine) { val old = im.get(startLine); val new = measureInlayHints(getInlayHints(startLine), editor.textPaint); im.set(startLine, new); val m = measurer ?: return; wm.set(startLine, wm.get(startLine) - m.measureText(deletedContent, 0, endColumn - startColumn, editor.textPaint).toInt() + (new - old)) }
+        else wm.set(startLine, measureLineAndUpdateInlineWidths(startLine))
     }
 
-    override fun getRowAt(rowIndex: Int): Row {
-        val row = Row()
-        row.lineIndex = rowIndex
-        row.startColumn = 0
-        row.isLeadingRow = true
-        row.isTrailingRow = true
-        row.endColumn = text?.getColumnCount(rowIndex) ?: 0
-        row.inlayHints = getInlayHints(rowIndex)
-        return row
-    }
-
-    override fun getRowIndexForPosition(index: Int): Int {
-        val editor = this.editor ?: return 0
-        return editor.text.indexer.getCharPosition(index).line
-    }
-
-    override fun destroyLayout() {
-        super.destroyLayout()
-        widthMaintainer = null
-        inlineElementsWidths = null
-        measurer = null
-    }
-
-    override fun getLineNumberForRow(row: Int): Int {
-        val lineCount = text?.lineCount ?: 1
-        return max(0, min(row, lineCount - 1))
-    }
-
-    override val layoutWidth: Int
-        get() {
-            val widthMaintainer = this.widthMaintainer ?: return Int.MAX_VALUE / 10
-            return if (widthMaintainer.size() == 0) Int.MAX_VALUE / 10 else widthMaintainer.max
-        }
-
-    override val layoutHeight: Int
-        get() = (text?.lineCount ?: 0) * (editor?.logicalRowHeight ?: 0)
-
-    override fun getRowTop(row: Int): Int {
-        return row * (editor?.logicalRowHeight ?: 0)
-    }
-
-    override fun getRowBottom(row: Int): Int {
-        return (row + 1) * (editor?.logicalRowHeight ?: 0)
-    }
-
-    override fun getRowIndexForY(y: Float): Int {
-        val rh = editor?.logicalRowHeight ?: 1
-        return (y / rh).toInt()
-    }
+    override fun getRowAt(rowIndex: Int) = Row().apply { lineIndex = rowIndex; startColumn = 0; isLeadingRow = true; isTrailingRow = true; endColumn = text?.getColumnCount(rowIndex) ?: 0; inlayHints = getInlayHints(rowIndex) }
+    override fun getRowIndexForPosition(index: Int) = editor?.text?.indexer?.getCharPosition(index)?.line ?: 0
+    override fun destroyLayout() { super.destroyLayout(); widthMaintainer = null; inlineElementsWidths = null; measurer = null }
+    override fun getLineNumberForRow(row: Int) = max(0, min(row, (text?.lineCount ?: 1) - 1))
+    override val layoutWidth: Int get() = widthMaintainer?.let { if (it.size() == 0) Int.MAX_VALUE / 10 else it.max } ?: (Int.MAX_VALUE / 10)
+    override val layoutHeight: Int get() = (text?.lineCount ?: 0) * (editor?.logicalRowHeight ?: 0)
+    override fun getRowTop(row: Int) = row * (editor?.logicalRowHeight ?: 0)
+    override fun getRowBottom(row: Int) = (row + 1) * (editor?.logicalRowHeight ?: 0)
+    override fun getRowIndexForY(y: Float) = (y / (editor?.logicalRowHeight ?: 1)).toInt()
 
     override fun getCharPositionForLayoutOffset(xOffset: Float, yOffset: Float): Long {
-        val editor = this.editor ?: return 0
-        val text = this.text ?: return 0
-        val lineCount = text.lineCount
-        val line = min(lineCount - 1, max((yOffset / editor.rowHeight).toInt(), 0))
-        val tr = editor.renderer.createTextRow(line)
-        val res = tr.getIndexForCursorOffset(xOffset)
-        return IntPair.pack(line, res)
+        val editor = editor ?: return 0; val line = min((text?.lineCount ?: 1) - 1, max((yOffset / editor.rowHeight).toInt(), 0))
+        return IntPair.pack(line, editor.renderer.createTextRow(line).getIndexForCursorOffset(xOffset))
     }
 
     override fun getCharLayoutOffset(line: Int, column: Int, array: FloatArray?): FloatArray {
-        var dest = array
-        if (dest == null || dest.size < 2) {
-            dest = FloatArray(2)
-        }
-        val editor = this.editor ?: return dest
-        dest[0] = editor.getRowBottom(line).toFloat()
-        val tr = editor.renderer.createTextRow(line)
-        dest[1] = tr.getCursorOffsetForIndex(column)
-        return dest
+        val dest = array ?: FloatArray(2); val editor = editor ?: return dest; dest[0] = editor.getRowBottom(line).toFloat(); dest[1] = editor.renderer.createTextRow(line).getCursorOffsetForIndex(column); return dest
     }
 
-    override fun getRowCountForLine(line: Int): Int {
-        return 1
-    }
-
-    override fun getDownPosition(line: Int, column: Int): Long {
-        val text = this.text ?: return 0
-        val c_line = text.lineCount
-        return if (line + 1 >= c_line) {
-            IntPair.pack(line, text.getColumnCount(line))
-        } else {
-            val c_column = text.getColumnCount(line + 1)
-            val newColumn = if (column > c_column) c_column else column
-            IntPair.pack(line + 1, newColumn)
-        }
-    }
-
-    override fun getUpPosition(line: Int, column: Int): Long {
-        val text = this.text ?: return 0
-        if (line - 1 < 0) {
-            return IntPair.pack(0, 0)
-        }
-        val c_column = text.getColumnCount(line - 1)
-        val newColumn = if (column > c_column) c_column else column
-        return IntPair.pack(line - 1, newColumn)
-    }
+    override fun getRowCountForLine(line: Int) = 1
+    override fun getDownPosition(line: Int, column: Int): Long { val text = text ?: return 0; return if (line + 1 >= text.lineCount) IntPair.pack(line, text.getColumnCount(line)) else { val cols = text.getColumnCount(line + 1); IntPair.pack(line + 1, min(column, cols)) } }
+    override fun getUpPosition(line: Int, column: Int): Long { val text = text ?: return 0; if (line - 1 < 0) return IntPair.pack(0, 0); val cols = text.getColumnCount(line - 1); return IntPair.pack(line - 1, min(column, cols)) }
 
     fun reuse(text: Content) {
-        val editor = this.editor ?: return
-        this.text = text
-        reuseCount.getAndIncrement()
-        measurer = SingleCharacterWidths(editor.tabWidth)
-        measurer?.isHandleFunctionCharacters = editor.isRenderFunctionCharacters
-        try {
-            val wm = widthMaintainer
-            if (wm != null && wm.lock.tryLock(5, TimeUnit.MILLISECONDS)) {
-                wm.lock.unlock()
-                wm.clear()
-                inlineElementsWidths?.clear()
-                measureAllLines(wm, inlineElementsWidths!!)
-            } else {
-                widthMaintainer = BlockIntList()
-                inlineElementsWidths = BlockIntList()
-                measureAllLines(widthMaintainer!!, inlineElementsWidths!!)
-            }
-        } catch (e: InterruptedException) {
-            throw RuntimeException("Unable to wait for lock", e)
-        }
+        val editor = editor ?: return; this.text = text; reuseCount.getAndIncrement(); measurer = SingleCharacterWidths(editor.tabWidth).apply { isHandleFunctionCharacters = editor.isRenderFunctionCharacters }
+        try { val wm = widthMaintainer; if (wm != null && wm.lock.tryLock(5, TimeUnit.MILLISECONDS)) { wm.lock.unlock(); wm.clear(); inlineElementsWidths?.clear(); measureAllLines(wm, inlineElementsWidths!!) } else { widthMaintainer = BlockIntList(); inlineElementsWidths = BlockIntList(); measureAllLines(widthMaintainer!!, inlineElementsWidths!!) } }
+        catch (e: InterruptedException) { throw RuntimeException("Unable to wait for lock", e) }
     }
 
-    class LineBreakLayoutRowItr(
-        private val layout: AbstractLayout,
-        private val text: Content,
-        private val initRow: Int,
-        private val preloadedLines: SparseArray<ContentLine>?
-    ) : RowIterator {
-
-        private val result: Row = Row()
-        private var currentRow: Int = initRow
-
-        init {
-            result.isLeadingRow = true
-            result.isTrailingRow = true
-            result.startColumn = 0
-        }
-
-        override fun next(): Row {
-            if (!hasNext()) {
-                throw NoSuchElementException()
-            }
-            result.lineIndex = currentRow
-            var line = preloadedLines?.get(currentRow)
-            if (line == null) {
-                line = text.getLine(currentRow)
-            }
-            result.endColumn = line.length
-            result.inlayHints = layout.getInlayHints(result.lineIndex)
-            currentRow++
-            return result
-        }
-
-        override fun hasNext(): Boolean {
-            return currentRow >= 0 && currentRow < text.lineCount
-        }
-
-        override fun reset() {
-            currentRow = initRow
-        }
+    class LineBreakLayoutRowItr(private val layout: AbstractLayout, private val text: Content, private val initRow: Int, private val preloadedLines: SparseArray<ContentLine>?) : RowIterator {
+        private val result = Row().apply { isLeadingRow = true; isTrailingRow = true; startColumn = 0 }; private var currentRow = initRow
+        override fun next(): Row { if (!hasNext()) throw NoSuchElementException(); result.lineIndex = currentRow; val line = preloadedLines?.get(currentRow) ?: text.getLine(currentRow); result.endColumn = line.length; result.inlayHints = layout.getInlayHints(result.lineIndex); currentRow++; return result }
+        override fun hasNext() = currentRow in 0 until text.lineCount
+        override fun reset() { currentRow = initRow }
     }
-    fun findRow(line: Int): Int {
-        return line
-    }
+    fun findRow(line: Int) = line
 }
