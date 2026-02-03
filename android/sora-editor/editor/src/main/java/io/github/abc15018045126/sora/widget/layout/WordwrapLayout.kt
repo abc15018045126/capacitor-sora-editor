@@ -38,8 +38,7 @@ class WordwrapLayout(
             rowTable?.clear()
         }
         miniGraphWidth = if ((editor.nonPrintablePaintingFlags and io.github.abc15018045126.sora.widget.CodeEditor.FLAG_DRAW_SOFT_WRAP) != 0) {
-
-            editor.renderer.miniGraphWidth
+            editor.renderer.miniGraphW
         } else {
             0f
         }
