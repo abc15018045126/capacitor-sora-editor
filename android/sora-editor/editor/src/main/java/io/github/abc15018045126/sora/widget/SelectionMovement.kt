@@ -1,4 +1,3 @@
-
 package io.github.abc15018045126.sora.widget
 
 import io.github.abc15018045126.sora.annotations.UnsupportedUserUsage
@@ -11,226 +10,112 @@ import kotlin.math.ceil
 
 private typealias SelectionMovementComputeFunc = ((CodeEditor, CharPosition) -> CharPosition)
 
-
 enum class SelectionMovement(
     private val computeFunc: SelectionMovementComputeFunc,
     val basePosition: MovingBasePosition = MovingBasePosition.SELECTION_ANCHOR
 ) {
-
-    UP({ editor, pos ->
-        val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
-        val newPos = layout.getUpPosition(pos.line, pos.column)
-        editor.text.indexer.getCharPosition(IntPair.getFirst(newPos), IntPair.getSecond(newPos))
+    UP({ e, p ->
+        val res = e.layout!!.getUpPosition(p.line, p.column)
+        e.text.indexer.getCharPosition(IntPair.getFirst(res), IntPair.getSecond(res))
     }, MovingBasePosition.LEFT_SELECTION),
 
-
-    DOWN({ editor, pos ->
-        val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
-        val newPos = layout.getDownPosition(pos.line, pos.column)
-        editor.text.indexer.getCharPosition(IntPair.getFirst(newPos), IntPair.getSecond(newPos))
+    DOWN({ e, p ->
+        val res = e.layout!!.getDownPosition(p.line, p.column)
+        e.text.indexer.getCharPosition(IntPair.getFirst(res), IntPair.getSecond(res))
     }, MovingBasePosition.RIGHT_SELECTION),
 
-
-    LEFT({ editor, pos ->
-        val newPos = editor.cursor!!.getLeftOf(pos.toIntPair())
-        editor.text.indexer.getCharPosition(IntPair.getFirst(newPos), IntPair.getSecond(newPos))
+    LEFT({ e, p ->
+        val res = e.cursor!!.getLeftOf(p.toIntPair())
+        e.text.indexer.getCharPosition(IntPair.getFirst(res), IntPair.getSecond(res))
     }, MovingBasePosition.LEFT_SELECTION),
 
-
-    RIGHT({ editor, pos ->
-        val newPos = editor.cursor!!.getRightOf(pos.toIntPair())
-        editor.text.indexer.getCharPosition(IntPair.getFirst(newPos), IntPair.getSecond(newPos))
+    RIGHT({ e, p ->
+        val res = e.cursor!!.getRightOf(p.toIntPair())
+        e.text.indexer.getCharPosition(IntPair.getFirst(res), IntPair.getSecond(res))
     }, MovingBasePosition.RIGHT_SELECTION),
 
+    PREVIOUS_WORD_BOUNDARY({ e, p -> Chars.prevWordStart(p, e.text).let { e.text.indexer.getCharPosition(it.line, it.column) } }),
+    NEXT_WORD_BOUNDARY({ e, p -> Chars.nextWordEnd(p, e.text).let { e.text.indexer.getCharPosition(it.line, it.column) } }),
 
-    PREVIOUS_WORD_BOUNDARY({ editor, pos ->
-        val newPos = Chars.prevWordStart(pos, editor.text)
-        editor.text.indexer.getCharPosition(newPos.line, newPos.column)
+    PAGE_UP({ e, p ->
+        val l = e.layout!!
+        val count = ceil(e.height / e.rowHeight.toFloat()).toInt()
+        val cur = l.getRowIndexForPosition(p.index)
+        val after = Numbers.coerceIn(cur - count, 0, l.rowCount - 1)
+        val off = p.column - l.getRowAt(cur).startColumn
+        l.getRowAt(after).let { r -> e.text.indexer.getCharPosition(r.lineIndex, r.startColumn + Numbers.coerceIn(off, 0, r.endColumn - r.startColumn)) }
     }),
 
-
-    NEXT_WORD_BOUNDARY({ editor, pos ->
-        val newPos = Chars.nextWordEnd(pos, editor.text)
-        editor.text.indexer.getCharPosition(newPos.line, newPos.column)
+    PAGE_DOWN({ e, p ->
+        val l = e.layout!!
+        val count = ceil(e.height / e.rowHeight.toFloat()).toInt()
+        val cur = l.getRowIndexForPosition(p.index)
+        val after = Numbers.coerceIn(cur + count, 0, l.rowCount - 1)
+        val off = p.column - l.getRowAt(cur).startColumn
+        l.getRowAt(after).let { r -> e.text.indexer.getCharPosition(r.lineIndex, r.startColumn + Numbers.coerceIn(off, 0, r.endColumn - r.startColumn)) }
     }),
 
-
-    PAGE_UP({ editor, pos ->
-        val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
-        val rowCount = ceil(editor.height / editor.rowHeight.toFloat()).toInt()
-        val currIdx = layout.getRowIndexForPosition(pos.index)
-        val afterIdx = Numbers.coerceIn(currIdx - rowCount, 0, layout.rowCount - 1)
-        val selOffset = pos.column - layout.getRowAt(currIdx).startColumn
-        val row = layout.getRowAt(afterIdx)
-
-        val line = row.lineIndex
-        val column =
-            row.startColumn + Numbers.coerceIn(selOffset, 0, row.endColumn - row.startColumn)
-        editor.text.indexer.getCharPosition(line, column)
+    PAGE_TOP({ e, p ->
+        val l = e.layout!!
+        val cur = l.getRowIndexForPosition(p.index)
+        val off = p.column - l.getRowAt(cur).startColumn
+        l.getRowAt(e.firstVisibleRow).let { r -> e.text.indexer.getCharPosition(r.lineIndex, r.startColumn + Numbers.coerceIn(off, 0, r.endColumn - r.startColumn)) }
     }),
 
-
-    PAGE_DOWN({ editor, pos ->
-        val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
-        val rowCount = ceil(editor.height / editor.rowHeight.toFloat()).toInt()
-        val currIdx = layout.getRowIndexForPosition(pos.index)
-        val afterIdx = Numbers.coerceIn(currIdx + rowCount, 0, layout.rowCount - 1)
-        val selOffset = pos.column - layout.getRowAt(currIdx).startColumn
-        val row = layout.getRowAt(afterIdx)
-
-        val line = row.lineIndex
-        val column =
-            row.startColumn + Numbers.coerceIn(selOffset, 0, row.endColumn - row.startColumn)
-        editor.text.indexer.getCharPosition(line, column)
+    PAGE_BOTTOM({ e, p ->
+        val l = e.layout!!
+        val cur = l.getRowIndexForPosition(p.index)
+        val off = p.column - l.getRowAt(cur).startColumn
+        l.getRowAt(e.lastVisibleRow).let { r -> e.text.indexer.getCharPosition(r.lineIndex, r.startColumn + Numbers.coerceIn(off, 0, r.endColumn - r.startColumn)) }
     }),
 
-
-    PAGE_TOP({ editor, pos ->
-        val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
-        val currIdx = layout.getRowIndexForPosition(pos.index)
-        val selOffset = pos.column - layout.getRowAt(currIdx).startColumn
-        val afterIdx = editor.firstVisibleRow
-        val row = layout.getRowAt(afterIdx)
-
-        val line = row.lineIndex
-        val column =
-            row.startColumn + Numbers.coerceIn(selOffset, 0, row.endColumn - row.startColumn)
-        editor.text.indexer.getCharPosition(line, column)
+    LINE_START({ e, p ->
+        val col = if (e.props!!.enhancedHomeAndEnd) {
+            val res = TextUtils.findLeadingAndTrailingWhitespacePos(e.text.getLine(p.line))
+            val start = IntPair.getFirst(res)
+            if (p.column == start || start == e.text.getColumnCount(p.line)) 0 else start
+        } else 0
+        e.text.indexer.getCharPosition(p.line, col)
     }),
 
-
-    PAGE_BOTTOM({ editor, pos ->
-        val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
-        val currIdx = layout.getRowIndexForPosition(pos.index)
-        val selOffset = pos.column - layout.getRowAt(currIdx).startColumn
-        val afterIdx = editor.lastVisibleRow
-        val row = layout.getRowAt(afterIdx)
-
-        val line = row.lineIndex
-        val column =
-            row.startColumn + Numbers.coerceIn(selOffset, 0, row.endColumn - row.startColumn)
-        editor.text.indexer.getCharPosition(line, column)
+    LINE_END({ e, p ->
+        val total = e.text.getColumnCount(p.line)
+        val col = if (e.props!!.enhancedHomeAndEnd) {
+            val end = IntPair.getSecond(TextUtils.findLeadingAndTrailingWhitespacePos(e.text.getLine(p.line)))
+            if (p.column != end) end else total
+        } else total
+        e.text.indexer.getCharPosition(p.line, col)
     }),
 
+    TEXT_START({ _, _ -> CharPosition().toBOF() }),
+    TEXT_END({ e, _ -> e.text.indexer.getCharPosition(e.text.length) }),
 
-    LINE_START({ editor, pos ->
-        if (editor.props!!.enhancedHomeAndEnd) {
-
-            val column = IntPair.getFirst(
-                TextUtils.findLeadingAndTrailingWhitespacePos(
-                    editor.text.getLine(pos.line)
-                )
-            )
-            if (pos.column == column || column == editor.text.getColumnCount(pos.line)) {
-
-                editor.text.indexer.getCharPosition(pos.line, 0)
-            } else {
-                editor.text.indexer.getCharPosition(pos.line, column)
-            }
-        } else {
-            editor.text.indexer.getCharPosition(pos.line, 0)
-        }
+    ROW_START({ e, p ->
+        val l = e.layout!!
+        val idx = l.getRowIndexForPosition(p.index)
+        val r = l.getRowAt(idx)
+        val maxCol = if (idx + 1 == l.rowCount || l.getRowAt(idx + 1).lineIndex != r.lineIndex) r.endColumn else r.endColumn - 1
+        val col = if (e.props!!.enhancedHomeAndEnd) {
+            val start = IntPair.getFirst(TextUtils.findLeadingAndTrailingWhitespacePos(e.text.getLine(p.line), r.startColumn, maxCol))
+            if (p.column == start || start == maxCol) r.startColumn else start
+        } else r.startColumn
+        e.text.indexer.getCharPosition(p.line, col)
     }),
 
-
-    LINE_END({ editor, pos ->
-        val colNum = editor.text.getColumnCount(pos.line)
-        if (editor.props!!.enhancedHomeAndEnd) {
-
-            val column = IntPair.getSecond(
-                TextUtils.findLeadingAndTrailingWhitespacePos(
-                    editor.text.getLine(pos.line)
-                )
-            )
-            if (pos.column != column) {
-                editor.text.indexer.getCharPosition(pos.line, column)
-            } else {
-                editor.text.indexer.getCharPosition(pos.line, colNum)
-            }
-        } else {
-            editor.text.indexer.getCharPosition(pos.line, colNum)
-        }
-    }),
-
-
-    TEXT_START({ _, _ ->
-        CharPosition().toBOF()
-    }),
-
-
-    TEXT_END({ editor, _ ->
-        editor.text.indexer.getCharPosition(editor.text.length)
-    }),
-
-
-    ROW_START({ editor, pos ->
-        val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
-
-        val rowIndex = layout.getRowIndexForPosition(pos.index)
-        val row = layout.getRowAt(rowIndex)
-        val maxColumn =
-            if (rowIndex + 1 == layout.rowCount || layout.getRowAt(rowIndex + 1).lineIndex != row.lineIndex) {
-                row.endColumn
-            } else {
-                row.endColumn - 1
-            }
-        if (editor.props!!.enhancedHomeAndEnd) {
-
-            val column = IntPair.getFirst(
-                TextUtils.findLeadingAndTrailingWhitespacePos(
-                    editor.text.getLine(pos.line), row.startColumn, maxColumn
-                )
-            )
-            if (pos.column == column || column == maxColumn) {
-
-                editor.text.indexer.getCharPosition(pos.line, row.startColumn)
-            } else {
-                editor.text.indexer.getCharPosition(pos.line, column)
-            }
-        } else {
-            editor.text.indexer.getCharPosition(row.lineIndex, row.startColumn)
-        }
-    }),
-
-
-    ROW_END({ editor, pos ->
-        val layout: io.github.abc15018045126.sora.widget.layout.Layout = editor.layout!!
-
-        val rowIndex = layout.getRowIndexForPosition(pos.index)
-        val row = layout.getRowAt(rowIndex)
-        val maxColumn =
-            if (rowIndex + 1 == layout.rowCount || layout.getRowAt(rowIndex + 1).lineIndex != row.lineIndex) {
-                row.endColumn
-            } else {
-                row.endColumn - 1
-            }
-        if (editor.props!!.enhancedHomeAndEnd) {
-
-            val column = IntPair.getSecond(
-                TextUtils.findLeadingAndTrailingWhitespacePos(
-                    editor.text.getLine(pos.line), row.startColumn, maxColumn
-                )
-            )
-            if (pos.column != column) {
-                editor.text.indexer.getCharPosition(pos.line, column)
-            } else {
-                editor.text.indexer.getCharPosition(pos.line, maxColumn)
-            }
-        } else {
-            editor.text.indexer.getCharPosition(row.lineIndex, maxColumn)
-        }
+    ROW_END({ e, p ->
+        val l = e.layout!!
+        val idx = l.getRowIndexForPosition(p.index)
+        val r = l.getRowAt(idx)
+        val maxCol = if (idx + 1 == l.rowCount || l.getRowAt(idx + 1).lineIndex != r.lineIndex) r.endColumn else r.endColumn - 1
+        val col = if (e.props!!.enhancedHomeAndEnd) {
+            val end = IntPair.getSecond(TextUtils.findLeadingAndTrailingWhitespacePos(e.text.getLine(p.line), r.startColumn, maxCol))
+            if (p.column != end) end else maxCol
+        } else maxCol
+        e.text.indexer.getCharPosition(p.line, col)
     });
 
-
-    enum class MovingBasePosition {
-        LEFT_SELECTION,
-        RIGHT_SELECTION,
-        SELECTION_ANCHOR
-    }
+    enum class MovingBasePosition { LEFT_SELECTION, RIGHT_SELECTION, SELECTION_ANCHOR }
 
     @UnsupportedUserUsage
-    fun getPositionAfterMovement(editor: CodeEditor, pos: CharPosition): CharPosition {
-        return this.computeFunc(editor, pos)
-    }
+    fun getPositionAfterMovement(e: CodeEditor, p: CharPosition) = computeFunc(e, p)
 }
-

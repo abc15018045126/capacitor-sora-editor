@@ -4,151 +4,52 @@ import io.github.abc15018045126.sora.util.IntPair
 import kotlin.math.max
 import kotlin.math.min
 
-
 object TextUtils {
-
-
-    @JvmStatic
-    fun countLeadingSpacesAndTabs(text: CharSequence): Long {
-        var p = 0
-        var spaces = 0
-        var tabs = 0
-        while (p < text.length) {
-            val c = text[p]
-            if (!isWhitespace(c)) {
-                break
-            }
-            if (c == '\t') {
-                tabs += 1
-            } else {
-                spaces += 1
-            }
-            ++p
+    @JvmStatic fun countLeadingSpacesAndTabs(text: CharSequence): Long {
+        var p = 0; var s = 0; var tCount = 0
+        while (p < text.length && isWhitespace(text[p])) {
+            if (text[p] == '\t') tCount++ else s++
+            p++
         }
-
-        return IntPair.pack(spaces, tabs)
+        return IntPair.pack(s, tCount)
     }
 
+    @JvmStatic fun countLeadingSpaceCount(t: CharSequence, w: Int) = countLeadingSpacesAndTabs(t).let { IntPair.getFirst(it) + w * IntPair.getSecond(it) }
 
-    @JvmStatic
-    fun countLeadingSpaceCount(text: CharSequence, tabWidth: Int): Int {
-        val result = countLeadingSpacesAndTabs(text)
-        return IntPair.getFirst(result) + tabWidth * IntPair.getSecond(result)
+    @JvmStatic fun createIndent(size: Int, w: Int, useTab: Boolean) = buildString {
+        val s = max(0, size)
+        val t = if (useTab) s / w else 0
+        repeat(t) { append('\t') }
+        repeat(s - (if (useTab) t * w else 0)) { append(' ') }
     }
 
-
-    @JvmStatic
-    fun createIndent(indentSize: Int, tabWidth: Int, useTab: Boolean): String {
-        val size = max(0, indentSize)
-        val tab: Int
-        val space: Int
-        if (useTab) {
-            tab = size / tabWidth
-            space = size % tabWidth
-        } else {
-            tab = 0
-            space = size
-        }
-        val s = StringBuilder()
-        for (i in 0 until tab) {
-            s.append('\t')
-        }
-        for (i in 0 until space) {
-            s.append(' ')
-        }
-        return s.toString()
-    }
-
-    @JvmStatic
-    fun indexOf(text: CharSequence, pattern: CharSequence, ignoreCase: Boolean, fromIndex: Int): Int {
-        val max = text.length - pattern.length
-        val len = pattern.length
-        label@ for (i in fromIndex..max) {
-
-            for (j in 0 until len) {
-                val s = text[i + j]
-                val p = pattern[j]
-                if (!(s == p || ignoreCase && s.lowercaseChar() == p.lowercaseChar())) {
-                    continue@label
-                }
-            }
-            return i
+    @JvmStatic fun indexOf(t: CharSequence, p: CharSequence, ignore: Boolean, from: Int): Int {
+        for (i in from..t.length - p.length) {
+            if ((0 until p.length).all { j -> val sChar = t[i + j]; val pChar = p[j]; sChar == pChar || (ignore && sChar.lowercaseChar() == pChar.lowercaseChar()) }) return i
         }
         return -1
     }
 
-    @JvmStatic
-    fun lastIndexOf(text: CharSequence, pattern: CharSequence, ignoreCase: Boolean, fromIndex: Int): Int {
-        val len = pattern.length
-        val startIndex = min(fromIndex, text.length - len)
-        label@ for (i in startIndex downTo 0) {
-
-            for (j in 0 until len) {
-                val s = text[i + j]
-                val p = pattern[j]
-                if (!(s == p || ignoreCase && s.lowercaseChar() == p.lowercaseChar())) {
-                    continue@label
-                }
-            }
-            return i
+    @JvmStatic fun lastIndexOf(t: CharSequence, p: CharSequence, ignore: Boolean, from: Int): Int {
+        for (i in min(from, t.length - p.length) downTo 0) {
+            if ((0 until p.length).all { j -> val sChar = t[i + j]; val pChar = p[j]; sChar == pChar || (ignore && sChar.lowercaseChar() == pChar.lowercaseChar()) }) return i
         }
         return -1
     }
 
-    @JvmStatic
-    fun startsWith(text: CharSequence, pattern: CharSequence, ignoreCase: Boolean): Boolean {
-        if (text.length < pattern.length) {
-            return false
-        }
-        val len = pattern.length
-        for (i in 0 until len) {
-            val s = text[i]
-            val p = pattern[i]
-            if (!(s == p || ignoreCase && s.lowercaseChar() == p.lowercaseChar())) {
-                return false
-            }
-        }
-        return true
-    }
+    @JvmStatic fun startsWith(t: CharSequence, p: CharSequence, ignore: Boolean) = t.length >= p.length && (0 until p.length).all { i -> val sChar = t[i]; val pChar = p[i]; sChar == pChar || (ignore && sChar.lowercaseChar() == pChar.lowercaseChar()) }
 
-    private fun isWhitespace(ch: Char): Boolean {
-        return ch == '\t' || ch == ' '
-    }
+    private fun isWhitespace(ch: Char) = ch == '\t' || ch == ' '
 
-    @JvmStatic
-    fun padStart(src: String, padChar: Char, length: Int): String {
-        if (src.length >= length) {
-            return src
-        }
-        val sb = StringBuilder(length)
-        for (i in 0 until length - src.length) {
-            sb.append(padChar)
-        }
-        sb.append(src)
-        return sb.toString()
-    }
+    @JvmStatic fun padStart(src: String, pad: Char, len: Int) = src.padStart(len, pad)
 
+    @JvmStatic fun findLeadingAndTrailingWhitespacePos(line: ContentLine) = findLeadingAndTrailingWhitespacePos(line, 0, line.length)
 
-    @JvmStatic
-    fun findLeadingAndTrailingWhitespacePos(line: ContentLine): Long {
-        return findLeadingAndTrailingWhitespacePos(line, 0, line.length)
-    }
-
-
-    @JvmStatic
-    fun findLeadingAndTrailingWhitespacePos(line: ContentLine, start: Int, end: Int): Long {
-        val buffer = line.backingCharArray
-        var leading = start
-        var trailing = end
-        while (leading < end && isWhitespace(buffer[leading])) {
-            leading++
-        }
-
-        if (leading != end) {
-            while (trailing > 0 && isWhitespace(buffer[trailing - 1])) {
-                trailing--
-            }
-        }
-        return IntPair.pack(leading, trailing)
+    @JvmStatic fun findLeadingAndTrailingWhitespacePos(line: ContentLine, start: Int, end: Int): Long {
+        val buf = line.backingCharArray
+        var l = start; var t = end
+        while (l < end && isWhitespace(buf[l])) l++
+        if (l != end) while (t > 0 && isWhitespace(buf[t - 1])) t--
+        return IntPair.pack(l, t)
     }
 }

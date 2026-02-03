@@ -1,80 +1,40 @@
 package io.github.abc15018045126.sora.text
 
-import java.util.Objects
-
-
 open class TextReference(
-    ref: CharSequence,
+    @JvmField protected val ref: CharSequence,
     private val start: Int,
     private val end: Int
 ) : CharSequence {
-
-    private val ref: CharSequence = Objects.requireNonNull(ref)
     private var validator: Validator? = null
 
     constructor(ref: CharSequence) : this(ref, 0, ref.length)
 
     init {
-        if (start > end) {
-            throw IllegalArgumentException("start > end")
-        }
-        if (start < 0) {
-            throw StringIndexOutOfBoundsException(start)
-        }
-        if (end > ref.length) {
-            throw StringIndexOutOfBoundsException(end)
-        }
+        require(start <= end) { "start > end" }
+        if (start < 0 || end > ref.length) throw StringIndexOutOfBoundsException()
     }
 
-
-    open val reference: CharSequence
-        get() = ref
-
-    override val length: Int
-        get() {
-            validateAccess()
-            return end - start
-        }
+    open val reference get() = ref
+    override val length get() = validateAccess().let { end - start }
 
     override fun get(index: Int): Char {
-        if (index < 0 || index >= length) {
-            throw StringIndexOutOfBoundsException(index)
-        }
-        validateAccess()
-        return ref[start + index]
+        if (index !in 0 until length) throw StringIndexOutOfBoundsException(index)
+        return validateAccess().let { ref[start + index] }
     }
 
-    override fun toString(): String {
-        return ref.subSequence(start, end).toString()
+    override fun toString() = validateAccess().let { ref.subSequence(start, end).toString() }
+
+    override fun subSequence(s: Int, e: Int): CharSequence {
+        if (s !in 0 until length || e !in 0..length) throw StringIndexOutOfBoundsException()
+        return validateAccess().let { TextReference(ref, start + s, start + e).setValidator(validator) }
     }
 
-    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-        if (startIndex < 0 || startIndex >= length) {
-            throw StringIndexOutOfBoundsException(startIndex)
-        }
-        if (endIndex < 0 || endIndex > length) {
-             throw StringIndexOutOfBoundsException(endIndex)
-        }
+    open fun setValidator(v: Validator?) = apply { validator = v }
+    fun validateAccess() = validator?.validate()
 
-        validateAccess()
-        return TextReference(ref, this.start + startIndex, this.start + endIndex).setValidator(validator)
-    }
-
-    open fun setValidator(validator: Validator?): TextReference {
-        this.validator = validator
-        return this
-    }
-
-    fun validateAccess() {
-        validator?.validate()
-    }
-
-    fun interface Validator {
-        fun validate()
-    }
-
+    fun interface Validator { fun validate() }
     class ValidateFailedException : RuntimeException {
         constructor()
-        constructor(message: String?) : super(message)
+        constructor(msg: String?) : super(msg)
     }
 }

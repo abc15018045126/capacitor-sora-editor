@@ -2,61 +2,17 @@ package io.github.abc15018045126.sora.text
 
 import java.text.CharacterIterator
 
-
 class CharSequenceIterator(private val src: CharSequence) : CharacterIterator {
+    private var index = 0
 
-    private var index: Int = 0
-
-    override fun first(): Char {
-        index = 0
-        return current()
-    }
-
-    override fun last(): Char {
-        index = src.length - 1
-        if (index < 0) {
-            index = 0
-        }
-        return current()
-    }
-
-    override fun current(): Char {
-        return if (index == endIndex) CharacterIterator.DONE else src[index]
-    }
-
-    override fun next(): Char {
-        index++
-        return current()
-    }
-
-    override fun previous(): Char {
-        index--
-        if (index < 0) {
-            index = 0
-        }
-        return current()
-    }
-
-    override fun setIndex(i: Int): Char {
-        index = i
-        return current()
-    }
-
-    override fun getBeginIndex(): Int {
-        return 0
-    }
-
-    override fun getEndIndex(): Int {
-        return src.length
-    }
-
-    override fun getIndex(): Int {
-        return index
-    }
-
-    override fun clone(): Any {
-        val another = CharSequenceIterator(src)
-        another.index = index
-        return another
-    }
+    override fun first() = setIndex(0)
+    override fun last() = setIndex((src.length - 1).coerceAtLeast(0))
+    override fun current() = if (index == src.length) CharacterIterator.DONE else src[index]
+    override fun next() = setIndex(index + 1)
+    override fun previous() = setIndex((index - 1).coerceAtLeast(0))
+    override fun setIndex(i: Int) = i.also { index = it }.let { current() }
+    override fun getBeginIndex() = 0
+    override fun getEndIndex() = src.length
+    override fun getIndex() = index
+    override fun clone() = CharSequenceIterator(src).also { it.index = index }
 }

@@ -1,4 +1,3 @@
-
 package io.github.abc15018045126.sora.text
 
 import android.icu.lang.UCharacter
@@ -6,211 +5,52 @@ import android.icu.lang.UProperty
 import android.os.Build
 import androidx.annotation.RequiresApi
 
-
 object TextUtilsP {
+    private const val LF = 0x0A; private const val CR = 0x0D
 
-    private const val LINE_FEED: Int = 0x0A
-    private const val CARRIAGE_RETURN: Int = 0x0D
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun isVS(cp: Int) = UCharacter.hasBinaryProperty(cp, UProperty.VARIATION_SELECTOR)
 
-
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    private fun isVariationSelector(codepoint: Int): Boolean {
-        return UCharacter.hasBinaryProperty(codepoint, UProperty.VARIATION_SELECTOR)
-    }
-
-
-    @JvmStatic
-    @RequiresApi(api = Build.VERSION_CODES.P)
+    @JvmStatic @RequiresApi(Build.VERSION_CODES.P)
     fun getOffsetForBackspaceKey(text: CharSequence, offset: Int): Int {
-        if (offset <= 1) {
-            return 0
-        }
-
-
-        val STATE_START = 0
-
-
-        val STATE_LF = 1
-
-
-        val STATE_BEFORE_KEYCAP = 2
-
-        val STATE_BEFORE_VS_AND_KEYCAP = 3
-
-
-        val STATE_BEFORE_EMOJI_MODIFIER = 4
-
-        val STATE_BEFORE_VS_AND_EMOJI_MODIFIER = 5
-
-
-        val STATE_BEFORE_VS = 6
-
-
-        val STATE_BEFORE_EMOJI = 7
-
-        val STATE_BEFORE_ZWJ = 8
-
-
-        val STATE_BEFORE_VS_AND_ZWJ = 9
-
-
-        val STATE_ODD_NUMBERED_RIS = 10
-
-        val STATE_EVEN_NUMBERED_RIS = 11
-
-
-        val STATE_IN_TAG_SEQUENCE = 12
-
-
-        val STATE_FINISHED = 13
-
-        var deleteCharCount = 0
-        var lastSeenVSCharCount = 0
-
-        var state = STATE_START
-
-        var tmpOffset = offset
+        if (offset <= 1) return 0
+        val S_START=0; val S_LF=1; val S_BK=2; val S_BVSK=3; val S_BEM=4; val S_BVSEM=5; val S_BVS=6; val S_BE=7; val S_BZWJ=8; val S_BVSZWJ=9; val S_ORIS=10; val S_ERIS=11; val S_ITS=12; val S_FIN=13
+        var del = 0; var vsCount = 0; var state = S_START; var tmp = offset
         do {
-            val codePoint = Character.codePointBefore(text, tmpOffset)
-            tmpOffset -= Character.charCount(codePoint)
-
+            val cp = Character.codePointBefore(text, tmp); tmp -= Character.charCount(cp)
             when (state) {
-                STATE_START -> {
-                    deleteCharCount = Character.charCount(codePoint)
-                    if (codePoint == LINE_FEED) {
-                        state = STATE_LF
-                    } else if (isVariationSelector(codePoint)) {
-                        state = STATE_BEFORE_VS
-                    } else if (AndroidEmoji.isRegionalIndicatorSymbol(codePoint)) {
-                        state = STATE_ODD_NUMBERED_RIS
-                    } else if (AndroidEmoji.isEmojiModifier(codePoint)) {
-                        state = STATE_BEFORE_EMOJI_MODIFIER
-                    } else if (codePoint == AndroidEmoji.COMBINING_ENCLOSING_KEYCAP) {
-                        state = STATE_BEFORE_KEYCAP
-                    } else if (AndroidEmoji.isEmoji(codePoint)) {
-                        state = STATE_BEFORE_EMOJI
-                    } else if (codePoint == AndroidEmoji.CANCEL_TAG) {
-                        state = STATE_IN_TAG_SEQUENCE
-                    } else {
-                        state = STATE_FINISHED
+                S_START -> {
+                    del = Character.charCount(cp)
+                    state = when {
+                        cp == LF -> S_LF
+                        isVS(cp) -> S_BVS
+                        AndroidEmoji.isRegionalIndicatorSymbol(cp) -> S_ORIS
+                        AndroidEmoji.isEmojiModifier(cp) -> S_BEM
+                        cp == AndroidEmoji.COMBINING_ENCLOSING_KEYCAP -> S_BK
+                        AndroidEmoji.isEmoji(cp) -> S_BE
+                        cp == AndroidEmoji.CANCEL_TAG -> S_ITS
+                        else -> S_FIN
                     }
                 }
-                STATE_LF -> {
-                    if (codePoint == CARRIAGE_RETURN) {
-                        ++deleteCharCount
-                    }
-                    state = STATE_FINISHED
+                S_LF -> { if (cp == CR) del++; state = S_FIN }
+                S_ORIS -> if (AndroidEmoji.isRegionalIndicatorSymbol(cp)) { del += 2; state = S_ERIS } else state = S_FIN
+                S_ERIS -> if (AndroidEmoji.isRegionalIndicatorSymbol(cp)) { del -= 2; state = S_ORIS } else state = S_FIN
+                S_BK -> if (isVS(cp)) { vsCount = Character.charCount(cp); state = S_BVSK } else { if (AndroidEmoji.isKeycapBase(cp)) del += Character.charCount(cp); state = S_FIN }
+                S_BVSK -> { if (AndroidEmoji.isKeycapBase(cp)) del += vsCount + Character.charCount(cp); state = S_FIN }
+                S_BEM -> if (isVS(cp)) { vsCount = Character.charCount(cp); state = S_BVSEM } else if (AndroidEmoji.isEmojiModifierBase(cp)) { del += Character.charCount(cp); state = S_BE } else state = S_FIN
+                S_BVSEM -> { if (AndroidEmoji.isEmojiModifierBase(cp)) del += vsCount + Character.charCount(cp); state = S_FIN }
+                S_BVS -> if (AndroidEmoji.isEmoji(cp)) { del += Character.charCount(cp); state = S_BE } else { if (!isVS(cp) && UCharacter.getCombiningClass(cp) == 0) del += Character.charCount(cp); state = S_FIN }
+                S_BE -> state = if (cp == AndroidEmoji.ZERO_WIDTH_JOINER) S_BZWJ else S_FIN
+                S_BZWJ -> if (AndroidEmoji.isEmoji(cp)) { del += Character.charCount(cp) + 1; state = if (AndroidEmoji.isEmojiModifier(cp)) S_BEM else S_BE } else if (isVS(cp)) { vsCount = Character.charCount(cp); state = S_BVSZWJ } else state = S_FIN
+                S_BVSZWJ -> { if (AndroidEmoji.isEmoji(cp)) { del += vsCount + 1 + Character.charCount(cp); vsCount = 0; state = S_BE } else state = S_FIN }
+                S_ITS -> when {
+                    AndroidEmoji.isTagSpecChar(cp) -> del += 2
+                    AndroidEmoji.isEmoji(cp) -> { del += Character.charCount(cp); state = S_FIN }
+                    else -> { del = 2; state = S_FIN }
                 }
-                STATE_ODD_NUMBERED_RIS -> {
-                    if (AndroidEmoji.isRegionalIndicatorSymbol(codePoint)) {
-                        deleteCharCount += 2
-                        state = STATE_EVEN_NUMBERED_RIS
-                    } else {
-                        state = STATE_FINISHED
-                    }
-                }
-                STATE_EVEN_NUMBERED_RIS -> {
-                    if (AndroidEmoji.isRegionalIndicatorSymbol(codePoint)) {
-                        deleteCharCount -= 2
-                        state = STATE_ODD_NUMBERED_RIS
-                    } else {
-                        state = STATE_FINISHED
-                    }
-                }
-                STATE_BEFORE_KEYCAP -> {
-                    if (isVariationSelector(codePoint)) {
-                        lastSeenVSCharCount = Character.charCount(codePoint)
-                        state = STATE_BEFORE_VS_AND_KEYCAP
-                    } else {
-                        if (AndroidEmoji.isKeycapBase(codePoint)) {
-                            deleteCharCount += Character.charCount(codePoint)
-                        }
-                        state = STATE_FINISHED
-                    }
-                }
-                STATE_BEFORE_VS_AND_KEYCAP -> {
-                    if (AndroidEmoji.isKeycapBase(codePoint)) {
-                        deleteCharCount += lastSeenVSCharCount + Character.charCount(codePoint)
-                    }
-                    state = STATE_FINISHED
-                }
-                STATE_BEFORE_EMOJI_MODIFIER -> {
-                    if (isVariationSelector(codePoint)) {
-                        lastSeenVSCharCount = Character.charCount(codePoint)
-                        state = STATE_BEFORE_VS_AND_EMOJI_MODIFIER
-                    } else if (AndroidEmoji.isEmojiModifierBase(codePoint)) {
-                        deleteCharCount += Character.charCount(codePoint)
-                        state = STATE_BEFORE_EMOJI
-                    } else {
-                        state = STATE_FINISHED
-                    }
-                }
-                STATE_BEFORE_VS_AND_EMOJI_MODIFIER -> {
-                    if (AndroidEmoji.isEmojiModifierBase(codePoint)) {
-                        deleteCharCount += lastSeenVSCharCount + Character.charCount(codePoint)
-                    }
-                    state = STATE_FINISHED
-                }
-                STATE_BEFORE_VS -> {
-                    if (AndroidEmoji.isEmoji(codePoint)) {
-                        deleteCharCount += Character.charCount(codePoint)
-                        state = STATE_BEFORE_EMOJI
-                    } else {
-                        if (!isVariationSelector(codePoint) &&
-                            UCharacter.getCombiningClass(codePoint) == 0
-                        ) {
-                            deleteCharCount += Character.charCount(codePoint)
-                        }
-                        state = STATE_FINISHED
-                    }
-                }
-                STATE_BEFORE_EMOJI -> {
-                    if (codePoint == AndroidEmoji.ZERO_WIDTH_JOINER) {
-                        state = STATE_BEFORE_ZWJ
-                    } else {
-                        state = STATE_FINISHED
-                    }
-                }
-                STATE_BEFORE_ZWJ -> {
-                    if (AndroidEmoji.isEmoji(codePoint)) {
-                        deleteCharCount += Character.charCount(codePoint) + 1
-                        state = if (AndroidEmoji.isEmojiModifier(codePoint))
-                            STATE_BEFORE_EMOJI_MODIFIER else STATE_BEFORE_EMOJI
-                    } else if (isVariationSelector(codePoint)) {
-                        lastSeenVSCharCount = Character.charCount(codePoint)
-                        state = STATE_BEFORE_VS_AND_ZWJ
-                    } else {
-                        state = STATE_FINISHED
-                    }
-                }
-                STATE_BEFORE_VS_AND_ZWJ -> {
-                    if (AndroidEmoji.isEmoji(codePoint)) {
-
-                        deleteCharCount += lastSeenVSCharCount + 1 + Character.charCount(codePoint)
-                        lastSeenVSCharCount = 0
-                        state = STATE_BEFORE_EMOJI
-                    } else {
-                        state = STATE_FINISHED
-                    }
-                }
-                STATE_IN_TAG_SEQUENCE -> {
-                    if (AndroidEmoji.isTagSpecChar(codePoint)) {
-                        deleteCharCount += 2
-
-                    } else if (AndroidEmoji.isEmoji(codePoint)) {
-                        deleteCharCount += Character.charCount(codePoint)
-                        state = STATE_FINISHED
-                    } else {
-
-                        deleteCharCount = 2
-                        state = STATE_FINISHED
-                    }
-
-                }
-                else -> throw IllegalArgumentException("state $state is unknown")
+                else -> throw IllegalArgumentException("state $state unknown")
             }
-        } while (tmpOffset > 0 && state != STATE_FINISHED)
-
-        return offset - deleteCharCount
+        } while (tmp > 0 && state != S_FIN)
+        return offset - del
     }
 }
