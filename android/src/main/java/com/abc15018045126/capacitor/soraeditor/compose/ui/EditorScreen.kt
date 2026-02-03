@@ -1308,15 +1308,7 @@ fun EditorSettingsScreen(
                 
                 SettingsSwitchItem("自动保存", "编辑时自动保存", uiState.autoSave) { viewModel.setAutoSave(localContext, it) }
                 SettingsSwitchItem("极速模式", "禁用动画（如光标移动）以获得更快的响应", uiState.isFastMode) { viewModel.setFastMode(localContext, it) }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("初始加载行数 (同步): ${uiState.initialPreviewLines}", modifier = Modifier.weight(1f))
-                        Text("越多加载越慢", color = Color.Red, fontSize = 10.sp)
-                    }
-                    Slider(
-                        value = uiState.initialPreviewLines.toFloat(),
-                        onValueChange = { viewModel.setInitialPreviewLines(localContext, it.toInt()) },
-                        valueRange = 0f..200f,
-                    )
+
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("字体样式", style = MaterialTheme.typography.titleMedium)

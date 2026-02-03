@@ -580,13 +580,16 @@ open class CodeEditor @JvmOverloads constructor(
 
 
     @UnsupportedUserUsage
-    open fun setTextSizePxDirect(@Px size: Float) {
+    @JvmOverloads
+    open fun setTextSizePxDirect(@Px size: Float, updateLayout: Boolean = true) {
 
         val oldTextSize = this.textSizePx
         renderer.setTextSizePxDirect(size)
         val layout = _layout
-        if (layout is io.github.abc15018045126.sora.widget.layout.WordwrapLayout) {
+        if (updateLayout && layout is io.github.abc15018045126.sora.widget.layout.WordwrapLayout) {
             layout.refreshHeights()
+        } else if (layout is io.github.abc15018045126.sora.widget.layout.WordwrapLayout) {
+            layout.updateRowHeights()
         }
         dispatchEvent(TextSizeChangeEvent(this, oldTextSize, size))
     }

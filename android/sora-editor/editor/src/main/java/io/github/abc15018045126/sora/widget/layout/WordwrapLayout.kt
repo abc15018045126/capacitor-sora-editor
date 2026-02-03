@@ -51,8 +51,6 @@ class WordwrapLayout(
         }
         updateBlockOffsets()
         
-        // Pre-measure first block for instant preview if viewport is at top
-        if (blocks.isNotEmpty()) measureBlock(blocks[0])
     }
 
     private fun updateBlockOffsets() {
@@ -153,6 +151,22 @@ class WordwrapLayout(
     fun refreshHeights() {
         blocks.forEach { it.isMeasured = false } // Invalidate all
         blocks.firstOrNull()?.let { measureBlock(it) }
+        updateBlockOffsets()
+    }
+
+    fun updateRowHeights() {
+        val editor = editor ?: return
+        val newHeight = editor.logicalRowHeight
+        blocks.forEach { b ->
+            if (!b.isMeasured) {
+                b.height = b.originalLineCount * newHeight
+            } else {
+                b.regions?.forEach { 
+                    it.height = newHeight 
+                }
+                b.height = (b.regions?.sumOf { it.height } ?: (b.rowCount * newHeight))
+            }
+        }
         updateBlockOffsets()
     }
 

@@ -1018,7 +1018,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
             val focusX = detector.focusX
             val focusY = detector.focusY
             val originHeight = editor.rowHeight
-            editor.setTextSizePxDirect(newSize)
+            editor.setTextSizePxDirect(newSize, false)
             val heightFactor = editor.rowHeight.toFloat() / originHeight
             var afterScrollY = (scroller.getCurrY().toFloat() + focusY) * heightFactor - focusY
             var afterScrollX = (scroller.getCurrX().toFloat() + focusX) * detector.scaleFactor - focusX
