@@ -4,127 +4,56 @@ import io.github.abc15018045126.sora.text.CharPosition
 import io.github.abc15018045126.sora.text.Content
 import io.github.abc15018045126.sora.text.ContentLine
 
-
 open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
-
     private val singleCharPairMaps = mutableMapOf<Char, SymbolPair?>()
     private val multipleCharByEndPairMaps = mutableMapOf<Char, MutableList<SymbolPair?>>()
 
+    fun putPair(singleCharacter: Char, symbolPair: SymbolPair?) { singleCharPairMaps[singleCharacter] = symbolPair }
+    fun putPair(charArray: CharArray, symbolPair: SymbolPair?) = multipleCharByEndPairMaps.getOrPut(charArray.last()) { mutableListOf() }.add(symbolPair)
+    fun putPair(openString: String, symbolPair: SymbolPair?) = putPair(openString.toCharArray(), symbolPair)
 
-    fun putPair(singleCharacter: Char, symbolPair: SymbolPair?) {
-        singleCharPairMaps[singleCharacter] = symbolPair
-    }
+    fun matchBestPairBySingleChar(editChar: Char): SymbolPair? = singleCharPairMaps[editChar] ?: parent?.matchBestPairBySingleChar(editChar)
 
+    fun matchBestPairList(editChar: Char): List<SymbolPair?> = (multipleCharByEndPairMaps[editChar] ?: parent?.matchBestPairList(editChar)?.toMutableList()) ?: emptyList()
 
-    fun putPair(charArray: CharArray, symbolPair: SymbolPair?) {
-        val endChar = charArray[charArray.size - 1]
-        multipleCharByEndPairMaps.getOrPut(endChar) { mutableListOf() }.add(symbolPair)
-    }
-
-
-    fun putPair(openString: String, symbolPair: SymbolPair?) {
-        putPair(openString.toCharArray(), symbolPair)
-    }
-
-    fun matchBestPairBySingleChar(editChar: Char): SymbolPair? {
-        val pair = singleCharPairMaps[editChar]
-        if (pair == null && parent != null) {
-            return parent!!.matchBestPairBySingleChar(editChar)
-        }
-        return pair
-    }
-
-    fun matchBestPairList(editChar: Char): List<SymbolPair?> {
-        var result = multipleCharByEndPairMaps[editChar]
-        if (result == null && parent != null) {
-            val parentResult = parent!!.matchBestPairList(editChar)
-            result = parentResult.toMutableList()
-        }
-        return result ?: emptyList()
-    }
-
-    fun matchBestPair(
-        editor: CodeEditor,
-        cursorPosition: CharPosition,
-        inputCharArray: CharArray?,
-        endChar: Char
-    ): SymbolPair? {
-        val content = editor.text
-
-        val singleCharPair = if (inputCharArray == null) matchBestPairBySingleChar(endChar) else null
-
-
-        if (singleCharPair != null) {
-            singleCharPair.measureCursorPosition(cursorPosition.index)
-            return singleCharPair
-        }
-
-
-        val matchList = matchBestPairList(endChar)
-
-        var matchPair: SymbolPair? = null
-        for (pair in matchList) {
-            if (pair == null || !pair.shouldReplace(editor)) {
-                continue
+    fun matchBestPair(editor: CodeEditor, cursorPosition: CharPosition, inputCharArray: CharArray?, endChar: Char): SymbolPair? {
+        if (inputCharArray == null) {
+            matchBestPairBySingleChar(endChar)?.let {
+                it.measureCursorPosition(cursorPosition.index)
+                return it
             }
+        }
+        val content = editor.text
+        for (pair in matchBestPairList(endChar)) {
+            if (pair == null || !pair.shouldReplace(editor)) continue
             val openCharArray = pair.open.toCharArray()
-
-
-            var matchFlag = 1
+            var match = true
             var insertIndex = cursorPosition.index
 
-
             if (inputCharArray == null) {
-                var arrayIndex = openCharArray.size - 2
-                while (arrayIndex >= 0) {
-                    if (insertIndex > 0) {
-                        insertIndex--
-                    }
-                    val contentChar = content.get(insertIndex)
-                    matchFlag = if (contentChar == openCharArray[arrayIndex]) matchFlag else 0
-                    arrayIndex--
+                for (i in openCharArray.lastIndex - 1 downTo 0) {
+                    if (insertIndex > 0) insertIndex--
+                    if (content.get(insertIndex) != openCharArray[i]) { match = false; break }
                 }
             } else {
-
-
-
-
-
-
-                if (inputCharArray.size > openCharArray.size) {
-                    continue
+                if (inputCharArray.size > openCharArray.size) continue
+                var pairIndex = openCharArray.lastIndex
+                for (charIndex in inputCharArray.lastIndex downTo 1) {
+                    if (inputCharArray[charIndex] != openCharArray[pairIndex--]) { match = false; break }
                 }
-
-                var pairIndex = openCharArray.size - 1
-
-                for (charIndex in inputCharArray.size - 1 downTo 1) {
-                    matchFlag = if (inputCharArray[charIndex] == openCharArray[pairIndex]) matchFlag else 0
-                    pairIndex--
-                }
-
-
-                if (matchFlag == 1 && pairIndex > 0) {
-
-
-
-
+                if (match && pairIndex > 0) {
                     insertIndex--
-
                     while (pairIndex >= 0) {
-                        matchFlag = if (content.get(insertIndex) == openCharArray[pairIndex]) matchFlag else 0
-                        insertIndex--
-                        pairIndex--
+                        if (content.get(insertIndex--) != openCharArray[pairIndex--]) { match = false; break }
                     }
                 }
             }
-
-            if (matchFlag == 1) {
-                matchPair = pair
+            if (match) {
                 pair.measureCursorPosition(insertIndex)
-                break
+                return pair
             }
         }
-        return matchPair
+        return null
     }
 
     fun removeAllPairs() {
@@ -132,63 +61,35 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
         multipleCharByEndPairMaps.clear()
     }
 
-
-    open class SymbolPair {
-        @JvmField
-        val open: String
-        @JvmField
-        val close: String
+    open class SymbolPair(
+        @JvmField val open: String,
+        @JvmField val close: String,
         private var symbolPairEx: SymbolPairEx? = null
+    ) {
         var cursorOffset = 0
             private set
         var insertOffset = 0
             private set
 
-
-        constructor(open: String, close: String) {
-            this.open = open
-            this.close = close
-        }
-
-        constructor(open: String, close: String, symbolPairEx: SymbolPairEx?) : this(open, close) {
-            this.symbolPairEx = symbolPairEx
-        }
-
         open fun shouldReplace(editor: CodeEditor): Boolean {
             val ex = symbolPairEx ?: return true
-            val content = editor.text
-            val currentLine = content.getLine(editor.cursor?.leftLine ?: 0)
-            return ex.shouldReplace(editor, currentLine, editor.cursor?.leftColumn ?: 0)
-
+            return ex.shouldReplace(editor, editor.text.getLine(editor.cursor?.leftLine ?: 0), editor.cursor?.leftColumn ?: 0)
         }
 
-        fun shouldDoAutoSurround(content: Content): Boolean {
-            val ex = symbolPairEx ?: return false
-            return ex.shouldDoAutoSurround(content)
-        }
+        fun shouldDoAutoSurround(content: Content) = symbolPairEx?.shouldDoAutoSurround(content) ?: false
 
         fun measureCursorPosition(offsetIndex: Int) {
             cursorOffset = offsetIndex + open.length
             insertOffset = offsetIndex
         }
 
-
         interface SymbolPairEx {
-
-            fun shouldReplace(editor: CodeEditor, currentLine: ContentLine, leftColumn: Int): Boolean {
-                return true
-            }
-
-
-            fun shouldDoAutoSurround(content: Content): Boolean {
-                return false
-            }
+            fun shouldReplace(editor: CodeEditor, currentLine: ContentLine, leftColumn: Int) = true
+            fun shouldDoAutoSurround(content: Content) = false
         }
 
         companion object {
-
-            @JvmField
-            val EMPTY_SYMBOL_PAIR = SymbolPair("", "")
+            @JvmField val EMPTY_SYMBOL_PAIR = SymbolPair("", "")
         }
     }
 
@@ -197,16 +98,11 @@ open class SymbolPairMatch(var parent: SymbolPairMatch? = null) {
             putPair('{', SymbolPair("{", "}"))
             putPair('(', SymbolPair("(", ")"))
             putPair('[', SymbolPair("[", "]"))
-            putPair('"', SymbolPair("\"", "\"", object : SymbolPair.SymbolPairEx {
-                override fun shouldDoAutoSurround(content: Content): Boolean {
-                    return content.cursor.isSelected()
-                }
-            }))
-            putPair('\'', SymbolPair("'", "'", object : SymbolPair.SymbolPairEx {
-                override fun shouldDoAutoSurround(content: Content): Boolean {
-                    return content.cursor.isSelected()
-                }
-            }))
+            val quoteEx = object : SymbolPair.SymbolPairEx {
+                override fun shouldDoAutoSurround(content: Content) = content.cursor.isSelected()
+            }
+            putPair('"', SymbolPair("\"", "\"", quoteEx))
+            putPair('\'', SymbolPair("'", "'", quoteEx))
         }
     }
 }
