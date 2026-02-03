@@ -1,525 +1,253 @@
 package io.github.abc15018045126.sora.text
 
-import android.os.Parcel
-import android.os.Parcelable
+import android.os.*
 import java.util.*
-
+import kotlin.math.abs
 
 class UndoManager : ContentListener, Parcelable {
-
-    private val actionStack: MutableList<ContentAction>
-    private var undoEnabled: Boolean = false
-    private var maxStackSize: Int = 0
+    private val actionStack: MutableList<ContentAction> = ArrayList()
+    private var undoEnabled = false
+    private var maxStackSize = 0
     private var insertAction: InsertAction? = null
     private var deleteAction: DeleteAction? = null
     private var targetContent: Content? = null
-    private var replaceMark: Boolean = false
-    private var stackPointer: Int = 0
-    private var ignoreModification: Boolean = false
-    private var forceNewMultiAction: Boolean = false
+    private var replaceMark = false
+    private var stackPointer = 0
+    private var ignoreModification = false
+    private var forceNewMultiAction = false
     private var memorizedCursorRange: TextRange? = null
 
-
-    constructor() {
-        actionStack = ArrayList()
-        replaceMark = false
-        insertAction = null
-        deleteAction = null
-        stackPointer = 0
-        ignoreModification = false
-    }
+    constructor()
 
     private constructor(parcel: Parcel) {
         maxStackSize = parcel.readInt()
         stackPointer = parcel.readInt()
         undoEnabled = parcel.readInt() > 0
-        val count = parcel.readInt()
-        actionStack = ArrayList(count)
-        repeat(count) {
-            actionStack.add(parcel.readParcelable<ContentAction>(UndoManager::class.java.classLoader)!!)
+        repeat(parcel.readInt()) {
+            actionStack.add(parcel.readParcelable(UndoManager::class.java.classLoader)!!)
         }
     }
 
-    override fun describeContents(): Int = 0
-
+    override fun describeContents() = 0
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeInt(maxStackSize)
         parcel.writeInt(stackPointer)
         parcel.writeInt(if (undoEnabled) 1 else 0)
         parcel.writeInt(actionStack.size)
-        for (contentAction in actionStack) {
-            parcel.writeParcelable(contentAction, flags)
-        }
+        for (a in actionStack) parcel.writeParcelable(a, flags)
     }
 
-
-    val isModifyingContent: Boolean
-        get() = ignoreModification
-
+    val isModifyingContent get() = ignoreModification
 
     fun undo(content: Content): TextRange? {
-        if (canUndo() && !isModifyingContent) {
-            ignoreModification = true
-            val action = actionStack[stackPointer - 1]
-            action.undo(content)
-            stackPointer--
-            ignoreModification = false
-            return action.cursor
-        }
-        return null
+        if (!canUndo() || isModifyingContent) return null
+        ignoreModification = true
+        val action = actionStack[--stackPointer]
+        action.undo(content)
+        ignoreModification = false
+        return action.cursor
     }
 
-
     fun redo(content: Content) {
-        if (canRedo() && !isModifyingContent) {
-            ignoreModification = true
-            actionStack[stackPointer].redo(content)
-            stackPointer++
-            ignoreModification = false
-        }
+        if (!canRedo() || isModifyingContent) return
+        ignoreModification = true
+        actionStack[stackPointer++].redo(content)
+        ignoreModification = false
     }
 
     internal fun onExitBatchEdit() {
         forceNewMultiAction = true
         if (actionStack.isNotEmpty() && actionStack.last() is MultiAction) {
-            val action = actionStack.last() as MultiAction
-            if (action.actions.size == 1) {
-                actionStack[actionStack.size - 1] = action.actions[0]
-            }
+            val a = actionStack.last() as MultiAction
+            if (a.actions.size == 1) actionStack[actionStack.lastIndex] = a.actions[0]
         }
     }
 
-
-    fun canUndo(): Boolean {
-        return isUndoEnabled && stackPointer > 0
-    }
-
-
-    fun canRedo(): Boolean {
-        return isUndoEnabled && stackPointer < actionStack.size
-    }
-
+    fun canUndo() = isUndoEnabled && stackPointer > 0
+    fun canRedo() = isUndoEnabled && stackPointer < actionStack.size
 
     var isUndoEnabled: Boolean
         get() = undoEnabled
-        set(enabled) {
-            undoEnabled = enabled
-            if (!enabled) {
-                cleanStack()
-            }
-        }
-
+        set(v) { undoEnabled = v; if (!v) cleanStack() }
 
     var maxUndoStackSize: Int
         get() = maxStackSize
-        set(maxSize) {
-            if (maxSize <= 0) {
-                throw IllegalArgumentException("max size can not be zero or smaller.")
-            }
-            maxStackSize = maxSize
-            cleanStack()
-        }
-
+        set(v) { if (v <= 0) throw IllegalArgumentException(); maxStackSize = v; cleanStack() }
 
     private fun cleanStack() {
-        if (!undoEnabled) {
-            actionStack.clear()
-            stackPointer = 0
-        } else {
-            while (stackPointer > 1 && actionStack.size > maxStackSize) {
-                actionStack.removeAt(0)
-                stackPointer--
-            }
-        }
+        if (!undoEnabled) { actionStack.clear(); stackPointer = 0 }
+        else while (stackPointer > 1 && actionStack.size > maxStackSize) { actionStack.removeAt(0); stackPointer-- }
     }
 
-
-    private fun cleanBeforePush() {
-        while (stackPointer < actionStack.size) {
-            actionStack.removeAt(actionStack.size - 1)
-        }
-    }
-
+    private fun cleanBeforePush() { while (stackPointer < actionStack.size) actionStack.removeAt(actionStack.lastIndex) }
 
     private fun pushAction(content: Content, action: ContentAction) {
         if (!isUndoEnabled) return
         cleanBeforePush()
         if (content.isInBatchEdit) {
-            if (actionStack.isEmpty()) {
-                val a = MultiAction()
-                a.addAction(action)
-                a.cursor = action.cursor
-                actionStack.add(a)
+            if (actionStack.isEmpty() || actionStack.last() !is MultiAction || forceNewMultiAction) {
+                actionStack.add(MultiAction().apply { addAction(action); cursor = action.cursor })
                 stackPointer++
-            } else {
-                val a = actionStack.last()
-                if (a is MultiAction && !forceNewMultiAction) {
-                    a.addAction(action)
-                } else {
-                    val ac = MultiAction()
-                    ac.addAction(action)
-                    ac.cursor = action.cursor
-                    actionStack.add(ac)
-                    stackPointer++
-                }
-            }
+            } else (actionStack.last() as MultiAction).addAction(action)
         } else {
-            if (actionStack.isEmpty()) {
-                actionStack.add(action)
-                stackPointer++
-            } else {
-                val last = actionStack.last()
-                if (last.canMerge(action)) {
-                    last.merge(action)
-                } else {
-                    actionStack.add(action)
-                    stackPointer++
-                }
-            }
+            if (actionStack.isNotEmpty() && actionStack.last().canMerge(action)) actionStack.last().merge(action)
+            else { actionStack.add(action); stackPointer++ }
         }
-        forceNewMultiAction = false
-        cleanStack()
+        forceNewMultiAction = false; cleanStack()
     }
 
     fun exitReplaceMode() {
-        if (replaceMark && deleteAction != null) {
-            pushAction(targetContent!!, deleteAction!!)
-        }
-        replaceMark = false
-        targetContent = null
+        if (replaceMark && deleteAction != null) pushAction(targetContent!!, deleteAction!!)
+        replaceMark = false; targetContent = null
     }
 
-    override fun beforeReplace(content: Content) {
-        if (ignoreModification) return
-        replaceMark = true
-        targetContent = content
-    }
+    override fun beforeReplace(content: Content) { if (!ignoreModification) { replaceMark = true; targetContent = content } }
 
-    override fun afterInsert(
-        content: Content, startLine: Int, startColumn: Int, endLine: Int, endColumn: Int,
-        insertedContent: CharSequence
-    ) {
+    override fun afterInsert(content: Content, sl: Int, sc: Int, el: Int, ec: Int, text: CharSequence) {
         if (ignoreModification) return
-        val ins = InsertAction().apply {
-            this.startLine = startLine
-            this.startColumn = startColumn
-            this.endLine = endLine
-            this.endColumn = endColumn
-            this.text = insertedContent
-        }
+        val ins = InsertAction().apply { startLine = sl; startColumn = sc; endLine = el; endColumn = ec; this.text = text }
         insertAction = ins
-        if (replaceMark && deleteAction != null) {
-            val rep = ReplaceAction().apply {
-                this.delete = deleteAction
-                this.insert = ins
-                this.cursor = memorizedCursorRange
-            }
-            pushAction(content, rep)
-        } else {
-            ins.cursor = memorizedCursorRange
-            pushAction(content, ins)
-        }
-        deleteAction = null
-        insertAction = null
-        replaceMark = false
+        if (replaceMark && deleteAction != null) pushAction(content, ReplaceAction().apply { delete = deleteAction; insert = ins; cursor = memorizedCursorRange })
+        else { ins.cursor = memorizedCursorRange; pushAction(content, ins) }
+        deleteAction = null; insertAction = null; replaceMark = false
     }
 
-    override fun afterDelete(
-        content: Content, startLine: Int, startColumn: Int, endLine: Int, endColumn: Int,
-        deletedContent: CharSequence
-    ) {
+    override fun afterDelete(content: Content, sl: Int, sc: Int, el: Int, ec: Int, text: CharSequence) {
         if (ignoreModification) return
-        val del = DeleteAction().apply {
-            this.endColumn = endColumn
-            this.startColumn = startColumn
-            this.endLine = endLine
-            this.startLine = startLine
-            this.text = deletedContent
-            this.cursor = memorizedCursorRange
-        }
-        deleteAction = del
-        if (!replaceMark) {
-            pushAction(content, del)
-        }
+        val del = DeleteAction().apply { startLine = sl; startColumn = sc; endLine = el; endColumn = ec; this.text = text; cursor = memorizedCursorRange }
+        deleteAction = del; if (!replaceMark) pushAction(content, del)
     }
 
     override fun beforeModification(content: Content) {
-        if (!undoEnabled || !content.isCursorCreated() || (replaceMark && deleteAction != null)) {
-            return
-        }
-        val cursor = content.cursor
-        memorizedCursorRange = cursor.getRange()
+        if (undoEnabled && content.isCursorCreated() && !(replaceMark && deleteAction != null)) memorizedCursorRange = content.cursor.getRange()
     }
-
 
     abstract class ContentAction : Parcelable {
-        @JvmField
-        @Transient
-        var cursor: TextRange? = null
-
-        abstract fun undo(content: Content)
-        abstract fun redo(content: Content)
-        abstract fun canMerge(action: ContentAction): Boolean
-        abstract fun merge(action: ContentAction)
+        @JvmField @Transient var cursor: TextRange? = null
+        abstract fun undo(c: Content)
+        abstract fun redo(c: Content)
+        abstract fun canMerge(a: ContentAction): Boolean
+        abstract fun merge(a: ContentAction)
     }
 
-
     class InsertAction : ContentAction {
-        @JvmField
-        var startLine: Int = 0
-        @JvmField
-        var endLine: Int = 0
-        @JvmField
-        var startColumn: Int = 0
-        @JvmField
-        var endColumn: Int = 0
-        @JvmField
-        @Transient
-        var createTime: Long = System.currentTimeMillis()
-        @JvmField
-        var text: CharSequence? = null
+        @JvmField var startLine = 0
+        @JvmField var endLine = 0
+        @JvmField var startColumn = 0
+        @JvmField var endColumn = 0
+        @JvmField @Transient var createTime = System.currentTimeMillis()
+        @JvmField var text: CharSequence? = null
 
         constructor()
-
-        private constructor(parcel: Parcel) {
-            startLine = parcel.readInt()
-            startColumn = parcel.readInt()
-            endLine = parcel.readInt()
-            endColumn = parcel.readInt()
-            text = parcel.readString()
+        private constructor(p: Parcel) {
+            startLine = p.readInt(); startColumn = p.readInt(); endLine = p.readInt(); endColumn = p.readInt(); text = p.readString()
         }
 
-        override fun undo(content: Content) {
-            content.delete(startLine, startColumn, endLine, endColumn)
-        }
-
-        override fun redo(content: Content) {
-            content.insert(startLine, startColumn, text!!)
-        }
-
-        override fun canMerge(action: ContentAction): Boolean {
-            if (action is InsertAction) {
-                return (action.startColumn == endColumn && action.startLine == endLine
-                        && (action.text?.length ?: 0) + (text?.length ?: 0) < 10000
-                        && Math.abs(action.createTime - createTime) < sMergeTimeLimit)
-            }
-            return false
-        }
-
-        override fun merge(action: ContentAction) {
-            if (!canMerge(action)) throw IllegalArgumentException()
-            val ac = action as InsertAction
-            endColumn = ac.endColumn
-            endLine = ac.endLine
-            val sb: StringBuilder = if (text is StringBuilder) {
-                text as StringBuilder
-            } else {
-                StringBuilder(text!!).also { text = it }
-            }
+        override fun undo(c: Content) { c.delete(startLine, startColumn, endLine, endColumn) }
+        override fun redo(c: Content) { c.insert(startLine, startColumn, text!!) }
+        override fun canMerge(a: ContentAction) = a is InsertAction && a.startColumn == endColumn && a.startLine == endLine && (a.text?.length ?: 0) + (text?.length ?: 0) < 10000 && abs(a.createTime - createTime) < sMergeTimeLimit
+        override fun merge(a: ContentAction) {
+            val ac = a as InsertAction; endColumn = ac.endColumn; endLine = ac.endLine
+            val sb = if (text is StringBuilder) text as StringBuilder else StringBuilder(text!!).also { text = it }
             sb.append(ac.text)
         }
 
-        override fun toString(): String {
-            return "InsertAction(startLine=$startLine, endLine=$endLine, startColumn=$startColumn, endColumn=$endColumn, createTime=$createTime, text=$text)"
-        }
-
-        override fun describeContents(): Int = 0
-
-        override fun writeToParcel(parcel: Parcel, flags: Int) {
-            parcel.writeInt(startLine)
-            parcel.writeInt(startColumn)
-            parcel.writeInt(endLine)
-            parcel.writeInt(endColumn)
-            parcel.writeString(text?.toString())
+        override fun describeContents() = 0
+        override fun writeToParcel(p: Parcel, f: Int) {
+            p.writeInt(startLine); p.writeInt(startColumn); p.writeInt(endLine); p.writeInt(endColumn); p.writeString(text?.toString())
         }
 
         companion object CREATOR : Parcelable.Creator<InsertAction> {
-            override fun createFromParcel(parcel: Parcel): InsertAction = InsertAction(parcel)
-            override fun newArray(size: Int): Array<InsertAction?> = arrayOfNulls(size)
+            override fun createFromParcel(p: Parcel) = InsertAction(p)
+            override fun newArray(s: Int) = arrayOfNulls<InsertAction>(s)
         }
     }
 
-
     class MultiAction : ContentAction {
-        val actions: MutableList<ContentAction> = ArrayList()
-
+        val actions = ArrayList<ContentAction>()
         constructor()
+        private constructor(p: Parcel) { repeat(p.readInt()) { actions.add(p.readParcelable(MultiAction::class.java.classLoader)!!) } }
 
-        private constructor(parcel: Parcel) {
-            val count = parcel.readInt()
-            repeat(count) {
-                actions.add(parcel.readParcelable<ContentAction>(MultiAction::class.java.classLoader)!!)
-            }
+        fun addAction(a: ContentAction) {
+            if (actions.isNotEmpty() && actions.last().canMerge(a)) actions.last().merge(a) else actions.add(a)
         }
 
-        fun addAction(action: ContentAction) {
-            if (actions.isEmpty()) {
-                actions.add(action)
-            } else {
-                val last = actions.last()
-                if (last.canMerge(action)) {
-                    last.merge(action)
-                } else {
-                    actions.add(action)
-                }
-            }
-        }
-
-        override fun undo(content: Content) {
-            for (i in actions.size - 1 downTo 0) {
-                actions[i].undo(content)
-            }
-        }
-
-        override fun redo(content: Content) {
-            for (i in actions.indices) {
-                actions[i].redo(content)
-            }
-        }
-
-        override fun canMerge(action: ContentAction): Boolean = false
-        override fun merge(action: ContentAction) = throw UnsupportedOperationException()
-        override fun describeContents(): Int = 0
-
-        override fun writeToParcel(parcel: Parcel, flags: Int) {
-            parcel.writeInt(actions.size)
-            for (action in actions) {
-                parcel.writeParcelable(action, flags)
-            }
+        override fun undo(c: Content) { for (i in actions.lastIndex downTo 0) actions[i].undo(c) }
+        override fun redo(c: Content) { for (a in actions) a.redo(c) }
+        override fun canMerge(a: ContentAction) = false
+        override fun merge(a: ContentAction) = throw UnsupportedOperationException()
+        override fun describeContents() = 0
+        override fun writeToParcel(p: Parcel, f: Int) {
+            p.writeInt(actions.size); for (a in actions) p.writeParcelable(a, f)
         }
 
         companion object CREATOR : Parcelable.Creator<MultiAction> {
-            override fun createFromParcel(parcel: Parcel): MultiAction = MultiAction(parcel)
-            override fun newArray(size: Int): Array<MultiAction?> = arrayOfNulls(size)
+            override fun createFromParcel(p: Parcel) = MultiAction(p)
+            override fun newArray(s: Int) = arrayOfNulls<MultiAction>(s)
         }
     }
 
-
     class DeleteAction : ContentAction {
-        @JvmField
-        var startLine: Int = 0
-        @JvmField
-        var endLine: Int = 0
-        @JvmField
-        var startColumn: Int = 0
-        @JvmField
-        var endColumn: Int = 0
-        @JvmField
-        @Transient
-        var createTime: Long = System.currentTimeMillis()
-        @JvmField
-        var text: CharSequence? = null
+        @JvmField var startLine = 0
+        @JvmField var endLine = 0
+        @JvmField var startColumn = 0
+        @JvmField var endColumn = 0
+        @JvmField @Transient var createTime = System.currentTimeMillis()
+        @JvmField var text: CharSequence? = null
 
         constructor()
-
-        private constructor(parcel: Parcel) {
-            startLine = parcel.readInt()
-            startColumn = parcel.readInt()
-            endLine = parcel.readInt()
-            endColumn = parcel.readInt()
-            text = parcel.readString()
+        private constructor(p: Parcel) {
+            startLine = p.readInt(); startColumn = p.readInt(); endLine = p.readInt(); endColumn = p.readInt(); text = p.readString()
         }
 
-        override fun undo(content: Content) {
-            content.insert(startLine, startColumn, text!!)
-        }
-
-        override fun redo(content: Content) {
-            content.delete(startLine, startColumn, endLine, endColumn)
-        }
-
-        override fun canMerge(action: ContentAction): Boolean {
-            if (action is DeleteAction) {
-                return (action.endColumn == startColumn && action.endLine == startLine
-                        && (action.text?.length ?: 0) + (text?.length ?: 0) < 10000
-                        && Math.abs(action.createTime - createTime) < sMergeTimeLimit)
-            }
-            return false
-        }
-
-        override fun merge(action: ContentAction) {
-            if (!canMerge(action)) throw IllegalArgumentException()
-            val ac = action as DeleteAction
-            startColumn = ac.startColumn
-            startLine = ac.startLine
-            val sb: StringBuilder = if (text is StringBuilder) {
-                text as StringBuilder
-            } else {
-                StringBuilder(text!!).also { text = it }
-            }
+        override fun undo(c: Content) { c.insert(startLine, startColumn, text!!) }
+        override fun redo(c: Content) { c.delete(startLine, startColumn, endLine, endColumn) }
+        override fun canMerge(a: ContentAction) = a is DeleteAction && a.endColumn == startColumn && a.endLine == startLine && (a.text?.length ?: 0) + (text?.length ?: 0) < 10000 && abs(a.createTime - createTime) < sMergeTimeLimit
+        override fun merge(a: ContentAction) {
+            val ac = a as DeleteAction; startColumn = ac.startColumn; startLine = ac.startLine
+            val sb = if (text is StringBuilder) text as StringBuilder else StringBuilder(text!!).also { text = it }
             sb.insert(0, ac.text)
         }
 
-        override fun toString(): String {
-            return "DeleteAction(startLine=$startLine, endLine=$endLine, startColumn=$startColumn, endColumn=$endColumn, createTime=$createTime, text=$text)"
-        }
-
-        override fun describeContents(): Int = 0
-
-        override fun writeToParcel(parcel: Parcel, flags: Int) {
-            parcel.writeInt(startLine)
-            parcel.writeInt(startColumn)
-            parcel.writeInt(endLine)
-            parcel.writeInt(endColumn)
-            parcel.writeString(text?.toString())
+        override fun describeContents() = 0
+        override fun writeToParcel(p: Parcel, f: Int) {
+            p.writeInt(startLine); p.writeInt(startColumn); p.writeInt(endLine); p.writeInt(endColumn); p.writeString(text?.toString())
         }
 
         companion object CREATOR : Parcelable.Creator<DeleteAction> {
-            override fun createFromParcel(parcel: Parcel): DeleteAction = DeleteAction(parcel)
-            override fun newArray(size: Int): Array<DeleteAction?> = arrayOfNulls(size)
+            override fun createFromParcel(p: Parcel) = DeleteAction(p)
+            override fun newArray(s: Int) = arrayOfNulls<DeleteAction>(s)
         }
     }
 
-
     class ReplaceAction : ContentAction {
-        @JvmField
-        var insert: InsertAction? = null
-        @JvmField
-        var delete: DeleteAction? = null
+        @JvmField var insert: InsertAction? = null
+        @JvmField var delete: DeleteAction? = null
 
         constructor()
-
-        private constructor(parcel: Parcel) {
-            insert = parcel.readParcelable(ReplaceAction::class.java.classLoader)
-            delete = parcel.readParcelable(ReplaceAction::class.java.classLoader)
+        private constructor(p: Parcel) {
+            insert = p.readParcelable(ReplaceAction::class.java.classLoader)
+            delete = p.readParcelable(ReplaceAction::class.java.classLoader)
         }
 
-        override fun undo(content: Content) {
-            insert?.undo(content)
-            delete?.undo(content)
-        }
-
-        override fun redo(content: Content) {
-            delete?.redo(content)
-            insert?.redo(content)
-        }
-
-        override fun canMerge(action: ContentAction): Boolean = false
-        override fun merge(action: ContentAction) = throw UnsupportedOperationException()
-
-        override fun toString(): String = "ReplaceAction(insert=$insert, delete=$delete)"
-
-        override fun describeContents(): Int = 0
-
-        override fun writeToParcel(parcel: Parcel, flags: Int) {
-            parcel.writeParcelable(insert, flags)
-            parcel.writeParcelable(delete, flags)
-        }
+        override fun undo(c: Content) { insert?.undo(c); delete?.undo(c) }
+        override fun redo(c: Content) { delete?.redo(c); insert?.redo(c) }
+        override fun canMerge(a: ContentAction) = false
+        override fun merge(a: ContentAction) = throw UnsupportedOperationException()
+        override fun describeContents() = 0
+        override fun writeToParcel(p: Parcel, f: Int) { p.writeParcelable(insert, f); p.writeParcelable(delete, f) }
 
         companion object CREATOR : Parcelable.Creator<ReplaceAction> {
-            override fun createFromParcel(parcel: Parcel): ReplaceAction = ReplaceAction(parcel)
-            override fun newArray(size: Int): Array<ReplaceAction?> = arrayOfNulls(size)
+            override fun createFromParcel(p: Parcel) = ReplaceAction(p)
+            override fun newArray(s: Int) = arrayOfNulls<ReplaceAction>(s)
         }
     }
 
     companion object {
-        @JvmStatic
-        var sMergeTimeLimit: Long = 8000L
-
-        @JvmField
-        val CREATOR: Parcelable.Creator<UndoManager> = object : Parcelable.Creator<UndoManager> {
-            override fun createFromParcel(parcel: Parcel): UndoManager = UndoManager(parcel)
-            override fun newArray(size: Int): Array<UndoManager?> = arrayOfNulls(size)
+        @JvmStatic var sMergeTimeLimit = 8000L
+        @JvmField val CREATOR = object : Parcelable.Creator<UndoManager> {
+            override fun createFromParcel(p: Parcel) = UndoManager(p)
+            override fun newArray(s: Int) = arrayOfNulls<UndoManager>(s)
         }
     }
 }

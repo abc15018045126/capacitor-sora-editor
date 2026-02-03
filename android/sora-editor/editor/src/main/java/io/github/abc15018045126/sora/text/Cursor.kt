@@ -1,205 +1,94 @@
 package io.github.abc15018045126.sora.text
 
 import io.github.abc15018045126.sora.util.IntPair
-
+import kotlin.math.*
 
 class Cursor(private val content: Content) {
-
-    private val indexer: CachedIndexer = CachedIndexer(content)
-    private var leftSel: CharPosition = CharPosition().toBOF()
-    private var rightSel: CharPosition = CharPosition().toBOF()
+    private val indexer = CachedIndexer(content)
+    private var leftSel = CharPosition().toBOF()
+    private var rightSel = CharPosition().toBOF()
     private var cache0: CharPosition? = null
     private var cache1: CharPosition? = null
     private var cache2: CharPosition? = null
-
     private var selDirection = DIRECTION_NONE
 
-
-    fun set(line: Int, column: Int) {
-        val pos = indexer.getCharPosition(line, column).fromThis()
-        leftSel = pos
-        rightSel = pos.fromThis()
+    fun set(l: Int, c: Int) {
+        leftSel = indexer.getCharPosition(l, c).fromThis()
+        rightSel = leftSel.fromThis()
     }
 
+    fun setLeft(l: Int, c: Int) { leftSel = indexer.getCharPosition(l, c).fromThis() }
+    fun setRight(l: Int, c: Int) { rightSel = indexer.getCharPosition(l, c).fromThis() }
 
-    fun setLeft(line: Int, column: Int) {
-        leftSel = indexer.getCharPosition(line, column).fromThis()
-    }
+    val leftLine get() = leftSel.line
+    val leftColumn get() = leftSel.column
+    val rightLine get() = rightSel.line
+    val rightColumn get() = rightSel.column
 
-
-    fun setRight(line: Int, column: Int) {
-        rightSel = indexer.getCharPosition(line, column).fromThis()
-    }
-
-
-    val leftLine: Int
-        get() = leftSel.line
-
-
-    val leftColumn: Int
-        get() = leftSel.column
-
-
-    val rightLine: Int
-        get() = rightSel.line
-
-
-    val rightColumn: Int
-        get() = rightSel.column
-
-
-    fun isInSelectedRegion(line: Int, column: Int): Boolean {
-
-        val startLine = leftSel.line
-        val endLine = rightSel.line
-
-        if (line < startLine || line > endLine) {
-            return false
-        }
-        if (line == startLine) {
-            if (line == endLine) {
-
-                return column >= leftSel.column && column < rightSel.column
-            }
-
-            return column >= leftSel.column
-        }
-        if (line == endLine) {
-
-            return column < rightSel.column
-        }
-
-        return true
-    }
-
-
-    val left: Int
-        get() = leftSel.index
-
-
-    val right: Int
-        get() = rightSel.index
-
-
-    fun updateCache(line: Int) {
-        indexer.getCharIndex(line, 0)
-    }
-
-
-    fun getIndexer(): CachedIndexer {
-        return indexer
-    }
-
-
-    fun isSelected(): Boolean {
-        return leftSel.index != rightSel.index
-    }
-
-
-    fun setSelectionDirection(selDirection: Int) {
-        this.selDirection = selDirection
-    }
-
-
-    fun getSelectionDirection(): Int {
-        return selDirection
-    }
-
-
-    fun getLeftOf(position: Long): Long {
-        val line = IntPair.getFirst(position)
-        val column = IntPair.getSecond(position)
-        val nColumn = TextLayoutHelper.get().getCurPosLeft(column, content.getLine(line))
-        return if (nColumn == column && column == 0) {
-            if (line == 0) {
-                0L
-            } else {
-                val cColumn = content.getColumnCount(line - 1)
-                IntPair.pack(line - 1, cColumn)
-            }
-        } else {
-            IntPair.pack(line, nColumn)
+    fun isInSelectedRegion(l: Int, c: Int): Boolean {
+        if (l < leftLine || l > rightLine) return false
+        return when (l) {
+            leftLine -> if (l == rightLine) c in leftColumn until rightColumn else c >= leftColumn
+            rightLine -> c < rightColumn
+            else -> true
         }
     }
 
+    val left get() = leftSel.index
+    val right get() = rightSel.index
 
-    fun getRightOf(position: Long): Long {
-        val line = IntPair.getFirst(position)
-        val column = IntPair.getSecond(position)
-        val cColumn = content.getColumnCount(line)
-        val nColumn = TextLayoutHelper.get().getCurPosRight(column, content.getLine(line))
-        return if (nColumn == cColumn && column == nColumn) {
-            if (line + 1 == content.lineCount) {
-                IntPair.pack(line, cColumn)
-            } else {
-                IntPair.pack(line + 1, 0)
-            }
-        } else {
-            IntPair.pack(line, nColumn)
-        }
+    fun updateCache(line: Int) { indexer.getCharIndex(line, 0) }
+    fun getIndexer() = indexer
+    fun isSelected() = leftSel.index != rightSel.index
+    fun setSelectionDirection(dir: Int) { selDirection = dir }
+    fun getSelectionDirection() = selDirection
+
+    fun getLeftOf(pos: Long): Long {
+        val l = IntPair.getFirst(pos)
+        val c = IntPair.getSecond(pos)
+        val nc = TextLayoutHelper.get().getCurPosLeft(c, content.getLine(l))
+        return if (nc == c && c == 0) {
+            if (l == 0) 0L else IntPair.pack(l - 1, content.getColumnCount(l - 1))
+        } else IntPair.pack(l, nc)
     }
 
-
-    fun left(): CharPosition {
-        return leftSel.fromThis()
+    fun getRightOf(pos: Long): Long {
+        val l = IntPair.getFirst(pos)
+        val c = IntPair.getSecond(pos)
+        val maxC = content.getColumnCount(l)
+        val nc = TextLayoutHelper.get().getCurPosRight(c, content.getLine(l))
+        return if (nc == maxC && c == nc) {
+            if (l + 1 == content.lineCount) IntPair.pack(l, maxC) else IntPair.pack(l + 1, 0)
+        } else IntPair.pack(l, nc)
     }
 
+    fun left() = leftSel.fromThis()
+    fun right() = rightSel.fromThis()
+    fun getRange() = TextRange(left(), right())
 
-    fun right(): CharPosition {
-        return rightSel.fromThis()
+    internal fun beforeInsert(sl: Int, sc: Int) { cache0 = indexer.getCharPosition(sl, sc).fromThis() }
+    internal fun beforeDelete(sl: Int, sc: Int, el: Int, ec: Int) {
+        cache1 = indexer.getCharPosition(sl, sc).fromThis()
+        cache2 = indexer.getCharPosition(el, ec).fromThis()
+    }
+    internal fun beforeReplace() = indexer.beforeReplace(content)
+
+    internal fun afterInsert(sl: Int, sc: Int, el: Int, ec: Int, text: CharSequence) {
+        indexer.afterInsert(content, sl, sc, el, ec, text)
+        val b = cache0?.index ?: 0
+        if (left >= b) leftSel = indexer.getCharPosition(left + text.length).fromThis()
+        if (right >= b) rightSel = indexer.getCharPosition(right + text.length).fromThis()
     }
 
-
-    fun getRange(): TextRange {
-        return TextRange(left(), right())
-    }
-
-
-    internal fun beforeInsert(startLine: Int, startColumn: Int) {
-        cache0 = indexer.getCharPosition(startLine, startColumn).fromThis()
-    }
-
-
-    internal fun beforeDelete(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int) {
-        cache1 = indexer.getCharPosition(startLine, startColumn).fromThis()
-        cache2 = indexer.getCharPosition(endLine, endColumn).fromThis()
-    }
-
-
-    internal fun beforeReplace() {
-        indexer.beforeReplace(content)
-    }
-
-
-    internal fun afterInsert(
-        startLine: Int, startColumn: Int, endLine: Int, endColumn: Int,
-        insertedContent: CharSequence
-    ) {
-        indexer.afterInsert(content, startLine, startColumn, endLine, endColumn, insertedContent)
-        val beginIdx = cache0?.index ?: 0
-        if (left >= beginIdx) {
-            leftSel = indexer.getCharPosition(left + insertedContent.length).fromThis()
-        }
-        if (right >= beginIdx) {
-            rightSel = indexer.getCharPosition(right + insertedContent.length).fromThis()
-        }
-    }
-
-
-    internal fun afterDelete(
-        startLine: Int, startColumn: Int, endLine: Int, endColumn: Int,
-        deletedContent: CharSequence
-    ) {
-        indexer.afterDelete(content, startLine, startColumn, endLine, endColumn, deletedContent)
-        val beginIdx = cache1?.index ?: 0
-        val endIdx = cache2?.index ?: 0
-        if (beginIdx > right) {
-            return
-        }
-        val left = left - Math.max(0, Math.min(left - beginIdx, endIdx - beginIdx))
-        val right = right - Math.max(0, Math.min(right - beginIdx, endIdx - beginIdx))
-        leftSel = indexer.getCharPosition(left).fromThis()
-        rightSel = indexer.getCharPosition(right).fromThis()
+    internal fun afterDelete(sl: Int, sc: Int, el: Int, ec: Int, text: CharSequence) {
+        indexer.afterDelete(content, sl, sc, el, ec, text)
+        val b = cache1?.index ?: 0
+        val e = cache2?.index ?: 0
+        if (b > right) return
+        val nl = left - max(0, min(left - b, e - b))
+        val nr = right - max(0, min(right - b, e - b))
+        leftSel = indexer.getCharPosition(nl).fromThis()
+        rightSel = indexer.getCharPosition(nr).fromThis()
     }
 
     companion object {
