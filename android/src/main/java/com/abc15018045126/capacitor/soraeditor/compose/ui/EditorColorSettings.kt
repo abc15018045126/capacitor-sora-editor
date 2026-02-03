@@ -178,16 +178,6 @@ fun EditorColorSettings(
                 }
             }
         }
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("编辑浮动菜单背景色", fontSize = 12.sp, color = Color.Gray)
-            val menuColors = listOf("#FFFFFFFF" to "白", "#FF333333" to "深灰", "#FFF5F5F5" to "浅灰", "#FF212121" to "黑")
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                menuColors.forEach { (c, l) -> 
-                    ColorOption(c, l, uiState.floatMenuBackgroundColor == c) { viewModel.setFloatMenuBackgroundColor(context, c) }
-                }
-            }
-        }
     }
 }
 

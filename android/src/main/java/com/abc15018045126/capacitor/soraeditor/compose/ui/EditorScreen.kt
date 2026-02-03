@@ -231,11 +231,9 @@ fun SoraEditorView(
     lineNumberColor: String = "#FF000000",
     lineDividerColor: String = "#A0888888",
     editorTextColor: String = "auto",
-    floatMenuBackgroundColor: String = "#FFFFFFFF",
-    floatMenuOrder: String = "select_all,cut,copy,paste",
-    floatMenuVisible: String = "select_all,cut,copy,paste",
-    floatMenuTriggerDoubleTap: Boolean = true,
-    floatMenuTriggerLongPress: Boolean = true
+    textActionMenuItems: List<String> = listOf("select_all", "copy", "paste", "long_select", "cut"),
+    textActionMenuHidden: List<String> = emptyList(),
+    textActionMenuBgColor: String = "auto"
 ) {
     var editorInstance by remember { mutableStateOf<CodeEditor?>(null) }
     
@@ -243,6 +241,9 @@ fun SoraEditorView(
     val isSettingTextProgrammatically = remember { mutableStateOf(false) }
     var lastAppliedFontFamily by remember { mutableStateOf("") }
     var lastAppliedHandleStyle by remember { mutableStateOf("") }
+    var lastAppliedTextActionMenuItems by remember { mutableStateOf<List<String>>(emptyList()) }
+    var lastAppliedTextActionMenuHidden by remember { mutableStateOf<List<String>>(emptyList()) }
+    var lastAppliedTextActionMenuBgColor by remember { mutableStateOf("") }
     var lastAppliedTextSize by remember { mutableStateOf(-1f) }
     var lastAppliedCursorWidth by remember { mutableStateOf(-1f) }
     var lastAppliedLineNumbers by remember { mutableStateOf<Boolean?>(null) }
@@ -257,12 +258,6 @@ fun SoraEditorView(
     var lastAppliedIsLineNumberPinned by remember { mutableStateOf<Boolean?>(null) }
     var lastAppliedLineNumberColor by remember { mutableStateOf("") }
     var lastAppliedLineDividerColor by remember { mutableStateOf("") }
-    var lastAppliedEditorTextColor by remember { mutableStateOf("") }
-    var lastAppliedFloatMenuBackgroundColor by remember { mutableStateOf("") }
-    var lastAppliedFloatMenuOrder by remember { mutableStateOf("") }
-    var lastAppliedFloatMenuVisible by remember { mutableStateOf("") }
-    var lastAppliedFloatMenuTriggerDoubleTap by remember { mutableStateOf<Boolean?>(null) }
-    var lastAppliedFloatMenuTriggerLongPress by remember { mutableStateOf<Boolean?>(null) }
 
     // Ensure we always have the latest callbacks even if factory is not re-run
     val currentOnTap by rememberUpdatedState(onTap)
@@ -546,32 +541,27 @@ fun SoraEditorView(
                 lastAppliedLineDividerColor = lineDividerColor
             }
             
-            // Apply text color
             try {
                 if (editorTextColor != "auto" && editorTextColor.isNotEmpty()) {
                     view.colorScheme.setColor(EditorColorScheme.TEXT_NORMAL, android.graphics.Color.parseColor(editorTextColor))
                 }
             } catch (e: Exception) {}
 
-            if (lastAppliedFloatMenuBackgroundColor != floatMenuBackgroundColor) {
-                view.floatMenuBackgroundColor = floatMenuBackgroundColor
-                lastAppliedFloatMenuBackgroundColor = floatMenuBackgroundColor
+            if (lastAppliedTextActionMenuItems != textActionMenuItems) {
+                view.textActionMenuOrder = textActionMenuItems
+                lastAppliedTextActionMenuItems = textActionMenuItems
             }
-            if (lastAppliedFloatMenuOrder != floatMenuOrder) {
-                view.floatMenuOrder = floatMenuOrder
-                lastAppliedFloatMenuOrder = floatMenuOrder
+            if (lastAppliedTextActionMenuHidden != textActionMenuHidden) {
+                view.textActionMenuHidden = textActionMenuHidden
+                lastAppliedTextActionMenuHidden = textActionMenuHidden
             }
-            if (lastAppliedFloatMenuVisible != floatMenuVisible) {
-                view.floatMenuVisible = floatMenuVisible
-                lastAppliedFloatMenuVisible = floatMenuVisible
-            }
-            if (lastAppliedFloatMenuTriggerDoubleTap != floatMenuTriggerDoubleTap) {
-                view.floatMenuTriggerDoubleTap = floatMenuTriggerDoubleTap
-                lastAppliedFloatMenuTriggerDoubleTap = floatMenuTriggerDoubleTap
-            }
-            if (lastAppliedFloatMenuTriggerLongPress != floatMenuTriggerLongPress) {
-                view.floatMenuTriggerLongPress = floatMenuTriggerLongPress
-                lastAppliedFloatMenuTriggerLongPress = floatMenuTriggerLongPress
+            if (lastAppliedTextActionMenuBgColor != textActionMenuBgColor) {
+                if (textActionMenuBgColor != "auto") {
+                    try {
+                        view.colorScheme.setColor(EditorColorScheme.TEXT_ACTION_WINDOW_BACKGROUND, android.graphics.Color.parseColor(textActionMenuBgColor))
+                    } catch (e: Exception) {}
+                }
+                lastAppliedTextActionMenuBgColor = textActionMenuBgColor
             }
             
             // Update font family
@@ -901,11 +891,9 @@ fun EditorScreen(
                         lineNumberColor = uiState.lineNumberColor,
                         lineDividerColor = uiState.lineDividerColor,
                         editorTextColor = uiState.editorTextColor,
-                        floatMenuBackgroundColor = uiState.floatMenuBackgroundColor,
-                        floatMenuOrder = uiState.floatMenuOrder,
-                        floatMenuVisible = uiState.floatMenuVisible,
-                        floatMenuTriggerDoubleTap = uiState.floatMenuTriggerDoubleTap,
-                        floatMenuTriggerLongPress = uiState.floatMenuTriggerLongPress
+                        textActionMenuItems = uiState.textActionMenuItems,
+                        textActionMenuHidden = uiState.textActionMenuHidden,
+                        textActionMenuBgColor = uiState.textActionMenuBgColor
                     )
                 }
                 
@@ -1362,71 +1350,6 @@ fun EditorSettingsScreen(
                     SettingsSwitchItem("区分大小写", "默认区分大小写", uiState.searchMatchCase) { viewModel.setSearchMatchCase(localContext, it) }
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("浮动菜单配置", style = MaterialTheme.typography.titleMedium)
-                    
-                    SettingsSwitchItem("双击弹出", "双击文本选择词语并弹出菜单", uiState.floatMenuTriggerDoubleTap) { viewModel.setFloatMenuTriggerDoubleTap(localContext, it) }
-                    SettingsSwitchItem("长按弹出", "长按文本选择词语并弹出菜单", uiState.floatMenuTriggerLongPress) { viewModel.setFloatMenuTriggerLongPress(localContext, it) }
-
-                    val itemsMap = mapOf(
-                        "select_all" to "全选",
-                        "cut" to "剪切",
-                        "copy" to "复制",
-                        "paste" to "粘贴"
-                    )
-                    
-                    val orderList = uiState.floatMenuOrder.split(",").filter { itemsMap.containsKey(it) }.toMutableList()
-                    val visibleList = uiState.floatMenuVisible.split(",")
-                    
-                    orderList.forEachIndexed { index, key ->
-                        val label = itemsMap[key] ?: key
-                        val isVisible = visibleList.contains(key)
-                        
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                            // Visibility
-                            androidx.compose.material3.Checkbox(
-                                checked = isVisible,
-                                onCheckedChange = { checked ->
-                                    val newList = visibleList.toMutableList()
-                                    if (checked) newList.add(key) else newList.remove(key)
-                                    viewModel.setFloatMenuVisible(localContext, newList.joinToString(","))
-                                }
-                            )
-                            Text(label, modifier = Modifier.weight(1f))
-                            
-                            // Ordering
-                            IconButton(
-                                onClick = {
-                                    if (index > 0) {
-                                        val newList = orderList.toMutableList()
-                                        val temp = newList[index]
-                                        newList[index] = newList[index - 1]
-                                        newList[index - 1] = temp
-                                        viewModel.setFloatMenuOrder(localContext, newList.joinToString(","))
-                                    }
-                                },
-                                enabled = index > 0
-                            ) {
-                                Icon(Icons.Default.KeyboardArrowUp, null)
-                            }
-                            IconButton(
-                                onClick = {
-                                    if (index < orderList.size - 1) {
-                                        val newList = orderList.toMutableList()
-                                        val temp = newList[index]
-                                        newList[index] = newList[index + 1]
-                                        newList[index + 1] = temp
-                                        viewModel.setFloatMenuOrder(localContext, newList.joinToString(","))
-                                    }
-                                },
-                                enabled = index < orderList.size - 1
-                            ) {
-                                Icon(Icons.Default.KeyboardArrowDown, null)
-                            }
-                        }
-                    }
-                }
-
                 EditorColorSettings(uiState, viewModel, localContext)
      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("滚动条样式", fontSize = 12.sp, color = Color.Gray)
@@ -1494,6 +1417,95 @@ fun EditorSettingsScreen(
                             }
                         }
                     }
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("编辑浮动菜单 (长按/双击弹出)", style = MaterialTheme.typography.titleMedium)
+                    
+                    val allItemLabels = mapOf(
+                        "select_all" to "全选",
+                        "copy" to "复制",
+                        "paste" to "粘贴",
+                        "cut" to "剪切",
+                        "long_select" to "自由选择"
+                    )
+                    
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        uiState.textActionMenuItems.forEachIndexed { index, id ->
+                            val label = allItemLabels[id] ?: id
+                            val isHidden = id in uiState.textActionMenuHidden
+                            
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isHidden) Color.LightGray.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.2f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    IconButton(
+                                        onClick = { viewModel.toggleTextActionMenuItemVisibility(localContext, id) },
+                                        modifier = Modifier.size(36.dp)
+                                    ) {
+                                        Icon(
+                                            if (isHidden) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp),
+                                            tint = if (isHidden) Color.Gray else MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    
+                                    Text(
+                                        text = label,
+                                        modifier = Modifier.weight(1f),
+                                        fontSize = 14.sp,
+                                        color = if (isHidden) Color.Gray else Color.Unspecified
+                                    )
+                                    
+                                    IconButton(
+                                        onClick = { 
+                                            if (index > 0) {
+                                                val newList = uiState.textActionMenuItems.toMutableList()
+                                                val item = newList.removeAt(index)
+                                                newList.add(index - 1, item)
+                                                viewModel.setTextActionMenuOrder(localContext, newList)
+                                            }
+                                        },
+                                        enabled = index > 0,
+                                        modifier = Modifier.size(36.dp)
+                                    ) {
+                                        Icon(Icons.Default.ArrowUpward, null, modifier = Modifier.size(18.dp), tint = if (index > 0) Color.Gray else Color.Transparent)
+                                    }
+                                    
+                                    IconButton(
+                                        onClick = { 
+                                            if (index < uiState.textActionMenuItems.size - 1) {
+                                                val newList = uiState.textActionMenuItems.toMutableList()
+                                                val item = newList.removeAt(index)
+                                                newList.add(index + 1, item)
+                                                viewModel.setTextActionMenuOrder(localContext, newList)
+                                            }
+                                        },
+                                        enabled = index < uiState.textActionMenuItems.size - 1,
+                                        modifier = Modifier.size(36.dp)
+                                    ) {
+                                        Icon(Icons.Default.ArrowDownward, null, modifier = Modifier.size(18.dp), tint = if (index < uiState.textActionMenuItems.size - 1) Color.Gray else Color.Transparent)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    Spacer(Modifier.height(4.dp))
+                    Text("浮动菜单背景颜色", fontSize = 12.sp, color = Color.Gray)
+                    val bgColors = listOf("auto" to "默认", "#FFFFFF" to "白", "#F5F5F5" to "灰", "#000000" to "黑", "#EFEBE9" to "米", "#E8EAF6" to "蓝灰")
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        bgColors.forEach { (c, l) -> 
+                            ColorOption(c, l, uiState.textActionMenuBgColor == c) { viewModel.setTextActionMenuBgColor(localContext, c) }
+                        }
+                    }
+                }
 
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("配置 JSON", style = MaterialTheme.typography.titleMedium)

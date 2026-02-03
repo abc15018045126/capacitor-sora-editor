@@ -1150,7 +1150,7 @@ class EditorTouchEventHandler(@NonNull private val editor: CodeEditor) :
         if (editor.cursor.isSelected() || e.pointerCount != 1) {
             return true
         }
-        editor.selectWord(line, column, SelectionChangeEvent.CAUSE_DOUBLE_TAP)
+        editor.selectWord(line, column)
         return true
     }
 
