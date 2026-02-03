@@ -25,8 +25,9 @@ class Cursor(private val content: Content) {
      * @param column The column position
      */
     fun set(line: Int, column: Int) {
-        setLeft(line, column)
-        setRight(line, column)
+        val pos = indexer.getCharPosition(line, column).fromThis()
+        leftSel = pos
+        rightSel = pos.fromThis()
     }
 
     /**
@@ -89,17 +90,27 @@ class Cursor(private val content: Content) {
      * @return Whether is in selected region
      */
     fun isInSelectedRegion(line: Int, column: Int): Boolean {
-        if (line in leftLine..rightLine) {
-            var yes = true
-            if (line == leftLine) {
-                yes = column >= leftColumn
-            }
-            if (line == rightLine) {
-                yes = yes && column < rightColumn
-            }
-            return yes
+        // Cached values to avoid property access overhead
+        val startLine = leftSel.line
+        val endLine = rightSel.line
+
+        if (line < startLine || line > endLine) {
+            return false
         }
-        return false
+        if (line == startLine) {
+            if (line == endLine) {
+                // Single line selection
+                return column >= leftSel.column && column < rightSel.column
+            }
+            // First line of multi-line selection
+            return column >= leftSel.column
+        }
+        if (line == endLine) {
+            // Last line of multi-line selection
+            return column < rightSel.column
+        }
+        // Middle line
+        return true
     }
 
     /**

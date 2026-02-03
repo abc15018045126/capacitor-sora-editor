@@ -64,9 +64,9 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         var minDistance = index
         var nearestCharPosition = startPosition
         var targetIndex = 0
-        for (i in cachedPositions.indices) {
+        for (i in cachedPositions.indices.reversed()) {
             val pos = cachedPositions[i]
-            val dis = abs(pos.index - index)
+            val dis = if (pos.index > index) pos.index - index else index - pos.index
             if (dis < minDistance) {
                 minDistance = dis
                 nearestCharPosition = pos
@@ -96,9 +96,9 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         var minDistance = line
         var nearestCharPosition = startPosition
         var targetIndex = 0
-        for (i in cachedPositions.indices) {
+        for (i in cachedPositions.indices.reversed()) {
             val pos = cachedPositions[i]
-            val dis = abs(pos.line - line)
+            val dis = if (pos.line > line) pos.line - line else line - pos.line
             if (dis < minDistance) {
                 minDistance = dis
                 nearestCharPosition = pos
@@ -133,15 +133,17 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
         var workIndex = start.index
         //Move the column to the line end
         run {
-            val addition = max(content.getLineSeparatorUnsafe(workLine).length - 1, 0)
-            val column = content.getColumnCountUnsafe(workLine) + addition
+            val sepLen = content.lines[workLine].lineSeparatorSafe.length
+            val addition = if (sepLen > 0) sepLen - 1 else 0
+            val column = content.lines[workLine].length + addition
             workIndex += column - workColumn
             workColumn = column
         }
         while (workIndex < index) {
             workLine++
-            val line = content.getLineUnsafe(workLine)
-            val addition = max(line.lineSeparatorSafe.length - 1, 0)
+            val line = content.lines[workLine]
+            val sepLen = line.lineSeparatorSafe.length
+            val addition = if (sepLen > 0) sepLen - 1 else 0
             workColumn = line.length + addition
             workIndex += workColumn + 1
         }
@@ -171,8 +173,9 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
             workIndex -= workColumn + 1
             workLine--
             if (workLine != -1) {
-                val line = content.getLineUnsafe(workLine)
-                val addition = max(line.lineSeparatorSafe.length - 1, 0)
+                val line = content.lines[workLine]
+                val sepLen = line.lineSeparatorSafe.length
+                val addition = if (sepLen > 0) sepLen - 1 else 0
                 workColumn = line.length + addition
             } else {
                 // Reached the start of text,we have to use findIndexForward() as this method can not handle it
@@ -209,7 +212,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
             workIndex = workIndex - start.column
         }
         while (workLine < line) {
-            val lineObj = content.getLineUnsafe(workLine)
+            val lineObj = content.lines[workLine]
             workIndex += lineObj.length + lineObj.lineSeparatorSafe.length
             workLine++
         }
@@ -238,7 +241,7 @@ class CachedIndexer internal constructor(private val content: Content) : Indexer
             workIndex = workIndex - start.column
         }
         while (workLine > line) {
-            val lineObj = content.getLineUnsafe(workLine - 1)
+            val lineObj = content.lines[workLine - 1]
             workIndex -= lineObj.length + lineObj.lineSeparatorSafe.length
             workLine--
         }

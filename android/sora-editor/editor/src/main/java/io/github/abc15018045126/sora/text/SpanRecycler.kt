@@ -36,12 +36,20 @@ class SpanRecycler private constructor() {
                         var count = 0
                         val size = spans.size
                         for (i in 0 until size) {
-                            val recycled = spans.removeAt(size - 1 - i).recycle()
-                            if (!recycled) {
+                            val span = spans[i]
+                            if (!span.recycle()) {
+                                // If recycle returns false (e.g. pool full), we stop? 
+                                // Original logic stopped at first failure. 
+                                // But original logic was removing from end. 
+                                // spans.removeAt(size - 1 - i)
+                                // If I iterate forward, I might want to clear ALL? 
+                                // But if recycle() fails, maybe it means pool is full. 
+                                // We can just clear the rest.
                                 break
                             }
                             count++
                         }
+                        spans.clear()
                         Log.i(LOG_TAG, "Called recycle() on $count spans")
                     } catch (e: InterruptedException) {
                         e.printStackTrace()

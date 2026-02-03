@@ -21,14 +21,15 @@ internal class InsertTextHelper {
         if (index == length) {
             return TYPE_EOF
         }
-        var ch = text!![index]
+        val t = text!!
+        var ch = t[index]
         when (ch) {
             '\n' -> {
                 indexNext = index + 1
                 return TYPE_NEWLINE
             }
             '\r' -> {
-                if (index + 1 < length && text!![index + 1] == '\n') {
+                if (index + 1 < length && t[index + 1] == '\n') {
                     indexNext = index + 2
                 } else {
                     indexNext = index + 1
@@ -38,7 +39,7 @@ internal class InsertTextHelper {
             else -> {
                 indexNext = index + 1
                 while (indexNext < length) {
-                    ch = text!![indexNext]
+                    ch = t[indexNext]
                     if (ch == '\n' || ch == '\r') {
                         break
                     }
