@@ -51,7 +51,7 @@ class WordwrapLayout(
         val text = text ?: return; val editor = editor ?: return; if (width <= 0) { editor.setLayoutBusy(false); return }
         if (text.lineCount <= 200 && editor.getInitialPreviewLines() > 0) {
             val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }; rt.clear(); val tr = TextRow(); val params = editor.renderer.createTextRowParams()
-            repeat(text.lineCount) { text.getLine(it)?.let { ln -> rt.addAll(breakLine(it, ln, null, tr, params)) } }; updateYOffsets(0); editor.setLayoutBusy(false); editor.touchHandler!!.scrollBy(0f, 0f); return
+            repeat(text.lineCount) { text.getLine(it)?.let { ln -> breakLine(it, ln, null, tr, params, rt) } }; updateYOffsets(0); editor.setLayoutBusy(false); editor.touchHandler!!.scrollBy(0f, 0f); return
         }
         val taskCount = min(SUBTASK_COUNT, ceil(text.lineCount.toFloat() / MIN_LINE_COUNT_FOR_SUBTASK).toInt()); val size = text.lineCount / taskCount; val monitor = TaskMonitor(taskCount, object : TaskMonitor.Callback {
             override fun onCompleted(results: Array<Any?>, cancelledCount: Int) {
@@ -61,7 +61,7 @@ class WordwrapLayout(
                     val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }; rt.clear(); r2.forEach { rt.addAll(it.regions) }; updateYOffsets(0); curEditor.setLayoutBusy(false); curEditor.touchHandler!!.scrollBy(0f, 0f)
                 }
             }
-        }); editor.setLayoutBusy(true)
+        }); // editor.setLayoutBusy(true) // Removed to prevent blocking UI
         repeat(taskCount) { val start = size * it; val end = if (it + 1 == taskCount) text.lineCount - 1 else size * (it + 1) - 1; submitTask(WordwrapAnalyzeTask(monitor, it, start, end)) }
     }
 
@@ -83,7 +83,7 @@ class WordwrapLayout(
         while (pos < rt.size) { if (rt[pos].line < startLine) pos++ else break }
         while (pos < rt.size) { if (rt[pos].line in startLine..endLine) rt.removeAt(pos) else break }
         val regions = mutableListOf<RowRegion>(); val tr = TextRow(); val params = editor?.renderer?.createTextRowParams()
-        for (i in startLine..endLine) text?.getLine(i)?.let { line -> regions.addAll(breakLine(i, line, null, tr, params)) }
+        for (i in startLine..endLine) text?.getLine(i)?.let { line -> breakLine(i, line, null, tr, params, regions) }
         rt.addAll(pos, regions); updateYOffsets(pos)
     }
 
@@ -99,11 +99,11 @@ class WordwrapLayout(
         updateYOffsets(0)
     }
 
-    private fun breakLine(line: Int, seq: ContentLine, paint: Paint?, cachedTr: TextRow? = null, cachedParams: io.github.abc15018045126.sora.graphics.TextRowParams? = null): List<RowRegion> {
+    private fun breakLine(line: Int, seq: ContentLine, paint: Paint?, cachedTr: TextRow? = null, cachedParams: io.github.abc15018045126.sora.graphics.TextRowParams? = null, output: MutableList<RowRegion>? = null): List<RowRegion> {
         val editor = editor ?: return emptyList(); val p = paint ?: Paint(editor.isRenderFunctionCharacters).apply { set(editor.textPaint) }; val tr = cachedTr ?: TextRow()
         val dirs = text?.getLineDirections(line) ?: return emptyList(); tr.set(seq, 0, seq.length, S_SPANS_FOR_WORDWRAP, getInlayHints(line), dirs, p, null, cachedParams ?: editor.renderer.createTextRowParams())
         var isRtlBased = false; if (supportRtlRow && seq.mayNeedBidi()) { var minLevel = Int.MAX_VALUE; repeat(dirs.runCount) { minLevel = min(minLevel, dirs.getRunLevel(it)) }; if ((minLevel and 1) != 0) isRtlBased = true }
-        val rows = tr.breakText(width, antiWordBreaking); val results = ArrayList<RowRegion>()
+        val rows = tr.breakText(width, antiWordBreaking); val results = output ?: ArrayList(rows.size)
         for (i in rows.indices) { val row = rows[i]; val isTrailing = i == rows.size - 1; val h = if (isTrailing) editor.logicalRowHeight else editor.wrapRowHeight; results.add(RowRegion(line, row.startColumn, row.endColumn, row.inlayHints, row.rowWidth, isRtlBased, h)) }
         return results
     }
@@ -216,7 +216,7 @@ class WordwrapLayout(
 
     private inner class WordwrapAnalyzeTask(monitor: TaskMonitor, val id: Int, val start: Int, val end: Int) : LayoutTask<WordwrapResult>(monitor) {
         private val paint = Paint(editor?.isRenderFunctionCharacters ?: false).apply { set(editor?.textPaint); onAttributeUpdate() }; private val tr = TextRow(); private val params = editor?.renderer?.createTextRowParams()
-        override fun compute(): WordwrapResult { val list = mutableListOf<RowRegion>(); text?.runReadActionsOnLines(start, end, object : Content.ContentLineConsumer2 { override fun accept(index: Int, line: ContentLine, abortFlag: Content.ContentLineConsumer2.AbortFlag) { list.addAll(breakLine(index, line, paint, tr, params)); if (!shouldRun()) abortFlag.set = true } }); return WordwrapResult(id, list) }
+        override fun compute(): WordwrapResult { val list = mutableListOf<RowRegion>(); text?.runReadActionsOnLines(start, end, object : Content.ContentLineConsumer2 { override fun accept(index: Int, line: ContentLine, abortFlag: Content.ContentLineConsumer2.AbortFlag) { breakLine(index, line, paint, tr, params, list); if (!shouldRun()) abortFlag.set = true } }); return WordwrapResult(id, list) }
     }
 
     companion object { private val S_SPANS_FOR_WORDWRAP = listOf(SpanFactory.obtainNoExt(0, TextStyle.makeStyle(0, 0, true, true, false))) }
