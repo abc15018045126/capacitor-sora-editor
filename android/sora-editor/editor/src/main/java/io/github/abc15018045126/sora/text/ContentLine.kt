@@ -18,6 +18,7 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
         internal set
 
     internal var rtlAffectingCount: Int = 0
+    internal var surrogateCount: Int = 0
     private var _lineSeparator: LineSeparator? = null
     var lineSeparator: LineSeparator?
         get() = _lineSeparator
@@ -39,6 +40,7 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
     constructor(src: ContentLine) : this(src.length + 16) {
         length = src.length
         rtlAffectingCount = src.rtlAffectingCount
+        surrogateCount = src.surrogateCount
         _lineSeparator = src.lineSeparator
         System.arraycopy(src.value, 0, value, 0, length)
     }
@@ -96,6 +98,9 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
             if (TextBidi.couldAffectRtl(ch)) {
                 rtlAffectingCount++
             }
+            if (Character.isSurrogate(ch)) {
+                surrogateCount++
+            }
         }
         length += len
         return this
@@ -108,6 +113,9 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
         }
         if (TextBidi.couldAffectRtl(c)) {
             rtlAffectingCount++
+        }
+        if (Character.isSurrogate(c)) {
+            surrogateCount++
         }
         value[offset] = c
         length += 1
@@ -131,6 +139,9 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
                 if (TextBidi.couldAffectRtl(value[i])) {
                     rtlAffectingCount--
                 }
+                if (Character.isSurrogate(value[i])) {
+                    surrogateCount--
+                }
             }
             System.arraycopy(value, start + len, value, start, length - e)
             length -= len
@@ -140,6 +151,10 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
 
     override fun mayNeedBidi(): Boolean {
         return rtlAffectingCount > 0
+    }
+
+    fun hasSurrogate(): Boolean {
+        return surrogateCount > 0
     }
 
     fun append(text: CharSequence): ContentLine {
@@ -176,6 +191,9 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
             for (i in 0 until res.length) {
                 if (TextBidi.couldAffectRtl(newValue[i])) {
                     res.rtlAffectingCount++
+                }
+                if (Character.isSurrogate(newValue[i])) {
+                    res.surrogateCount++
                 }
             }
         }
@@ -220,6 +238,7 @@ class ContentLine : CharSequence, GetChars, BidiRequirementChecker, ShareableDat
         clone.value = CharArray(value.size)
         System.arraycopy(value, 0, clone.value, 0, length)
         clone.rtlAffectingCount = rtlAffectingCount
+        clone.surrogateCount = surrogateCount
         clone._lineSeparator = _lineSeparator
         return clone
     }

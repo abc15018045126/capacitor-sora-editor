@@ -63,8 +63,8 @@ object MyCharacter {
         }
         bitsIsPart = IntArray(2048)
         bitsIsStart = IntArray(2048)
-        Arrays.fill(bitsIsPart, 0)
-        Arrays.fill(bitsIsStart, 0)
+        Arrays.fill(bitsIsPart!!, 0)
+        Arrays.fill(bitsIsStart!!, 0)
         for (i in 0..65535) {
             if (Character.isJavaIdentifierPart(i.toChar())) {
                 set(bitsIsPart, i)
@@ -82,7 +82,8 @@ object MyCharacter {
      */
     @JvmStatic
     fun isJavaIdentifierPart(key: Char): Boolean {
-        return get(bitsIsPart, key.code)
+        val i = key.code
+        return (bitsIsPart!![i shr 5] and (1 shl (i and 31))) != 0
     }
 
     /**
@@ -92,7 +93,8 @@ object MyCharacter {
      */
     @JvmStatic
     fun isJavaIdentifierStart(key: Char): Boolean {
-        return get(bitsIsStart, key.code)
+        val i = key.code
+        return (bitsIsStart!![i shr 5] and (1 shl (i and 31))) != 0
     }
 
     @JvmStatic

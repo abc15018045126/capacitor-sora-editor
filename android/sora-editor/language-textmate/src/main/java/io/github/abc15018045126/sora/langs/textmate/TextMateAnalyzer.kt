@@ -164,7 +164,7 @@ class TextMateAnalyzer(
     override fun tokenizeLine(lineC: CharSequence, state: MyState?, lineIndex: Int): IncrementalAnalyzeManager.LineTokenizeResult<MyState?, Span?> {
         val line = if (lineC is ContentLine) lineC.toStringWithNewline() else lineC.toString()
         val tokens = ArrayList<Span>()
-        val surrogate = StringUtils.checkSurrogate(line)
+        val surrogate = if (lineC is ContentLine) lineC.hasSurrogate() else StringUtils.checkSurrogate(line)
         val lineTokens = grammar.tokenizeLine2(line, state?.tokenizeState, Duration.ofSeconds(2L))
         val tokensLength = lineTokens.tokens.size / 2
         val identifiers = if (language.createIdentifiers) ArrayList<String>() else null
