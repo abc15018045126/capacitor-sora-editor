@@ -58,9 +58,11 @@ class WordwrapLayout(
         if (width > 0 && text != null && text.lineCount > 0 && (rowTable?.isEmpty() ?: true)) {
             val previewLines = if (editor.forceSyncBreakLines || oldLayout == null) min(text.lineCount, editor.getInitialPreviewLines()) else 0
             val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }
+            val cachedTextRow = TextRow()
+            val cachedParams = editor.renderer.createTextRowParams()
             for (i in 0 until previewLines) {
                 text.getLine(i)?.let { line ->
-                    rt.addAll(breakLine(i, line, null))
+                    rt.addAll(breakLine(i, line, null, cachedTextRow, cachedParams))
                 }
             }
             updateYOffsets(0)
@@ -83,9 +85,11 @@ class WordwrapLayout(
         if (text.lineCount <= 200) {
             val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }
             rt.clear()
+            val cachedTextRow = TextRow()
+            val cachedParams = editor.renderer.createTextRowParams()
             for (i in 0 until text.lineCount) {
                 text.getLine(i)?.let { line ->
-                    rt.addAll(breakLine(i, line, null))
+                    rt.addAll(breakLine(i, line, null, cachedTextRow, cachedParams))
                 }
             }
             updateYOffsets(0)
@@ -182,9 +186,11 @@ class WordwrapLayout(
             }
         }
         val newRegions = mutableListOf<RowRegion>()
+        val cachedTextRow = TextRow()
+        val cachedParams = editor?.renderer?.createTextRowParams()
         for (i in startLine..endLine) {
             text?.getLine(i)?.let { line ->
-                newRegions.addAll(breakLine(i, line, null))
+                newRegions.addAll(breakLine(i, line, null, cachedTextRow, cachedParams))
             }
         }
         rt.addAll(insertPosition, newRegions)
@@ -219,12 +225,18 @@ class WordwrapLayout(
         updateYOffsets(0)
     }
 
-    private fun breakLine(line: Int, sequence: ContentLine, paint: Paint?): List<RowRegion> {
+    private fun breakLine(
+        line: Int,
+        sequence: ContentLine,
+        paint: Paint?,
+        cachedTextRow: TextRow? = null,
+        cachedParams: io.github.abc15018045126.sora.graphics.TextRowParams? = null
+    ): List<RowRegion> {
         val editor = this.editor ?: return emptyList()
         val p = paint ?: Paint(editor.isRenderFunctionCharacters).apply {
             set(editor.textPaint)
         }
-        val tr = TextRow()
+        val tr = cachedTextRow ?: TextRow()
         val directions = text?.getLineDirections(line) ?: return emptyList()
         tr.set(
             sequence,
@@ -235,7 +247,7 @@ class WordwrapLayout(
             directions,
             p,
             null,
-            editor.renderer.createTextRowParams()
+            cachedParams ?: editor.renderer.createTextRowParams()
         )
 
         var isRtlBased = false
@@ -666,12 +678,14 @@ class WordwrapLayout(
             set(editor?.textPaint)
             onAttributeUpdate()
         }
+        private val cachedTextRow = TextRow()
+        private val cachedParams = editor?.renderer?.createTextRowParams()
 
         override fun compute(): WordwrapResult {
             val list = mutableListOf<RowRegion>()
             text?.runReadActionsOnLines(start, end, object : Content.ContentLineConsumer2 {
                 override fun accept(index: Int, line: ContentLine, abortFlag: Content.ContentLineConsumer2.AbortFlag) {
-                    list.addAll(breakLine(index, line, paint))
+                    list.addAll(breakLine(index, line, paint, cachedTextRow, cachedParams))
                     if (!shouldRun()) {
                         abortFlag.set = true
                     }
