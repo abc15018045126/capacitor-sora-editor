@@ -402,6 +402,7 @@ open class CodeEditor @JvmOverloads constructor(
     override fun setHorizontalScrollBarEnabled(enabled: Boolean) = super.setHorizontalScrollBarEnabled(enabled)
     private var cursorAnimation = false
     private var initialPreviewLines = 20
+    @JvmField var forceSyncBreakLines = false
     private var isLineNumberRightOfDivider = false
 
     /**
@@ -4121,6 +4122,7 @@ open class CodeEditor @JvmOverloads constructor(
         @Nullable text: CharSequence?, reuseContentObject: Boolean,
         @Nullable extraArguments: Bundle?
     ) {
+        forceSyncBreakLines = true
         var text = text
         if (text == null) {
             text = ""

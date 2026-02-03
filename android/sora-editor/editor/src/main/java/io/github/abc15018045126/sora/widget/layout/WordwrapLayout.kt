@@ -56,7 +56,7 @@ class WordwrapLayout(
         
         // Fix initial wrap flicker: break first few lines synchronously if width is known
         if (width > 0 && text != null && text.lineCount > 0 && (rowTable?.isEmpty() ?: true)) {
-            val previewLines = min(text.lineCount, editor?.getInitialPreviewLines() ?: 20)
+            val previewLines = if (editor.forceSyncBreakLines || oldLayout == null) min(text.lineCount, editor.getInitialPreviewLines()) else 0
             val rt = rowTable ?: mutableListOf<RowRegion>().also { rowTable = it }
             for (i in 0 until previewLines) {
                 text.getLine(i)?.let { line ->
@@ -64,6 +64,7 @@ class WordwrapLayout(
                 }
             }
             updateYOffsets(0)
+            editor.forceSyncBreakLines = false
         }
         
         breakAllLines()
